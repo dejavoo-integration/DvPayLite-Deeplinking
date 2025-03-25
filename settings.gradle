@@ -14,6 +14,13 @@ dependencyResolutionManagement {
         mavenCentral()
         flatDir { dirs 'libs' }
         jcenter()
+        maven {
+            url "s3://denovo-android.s3.amazonaws.com"
+            credentials(AwsCredentials) {
+                accessKey "AKIA26XMFQBITA36GRDR"
+                secretKey "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"
+            }
+        }
     }
 }
 rootProject.name = "DvPayLite DeepLink"
