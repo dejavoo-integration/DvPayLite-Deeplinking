@@ -30,9 +30,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var transactionSpinner: Spinner
     private lateinit var paymentSpinner: Spinner
     private lateinit var receiptSpinner: Spinner
+    private lateinit var approvalSpinner: Spinner
     private lateinit var txnType:String
     private lateinit var paymentType:String
     private lateinit var receiptType:String
+    private lateinit var isTxnStatusScreenRequired:String
     private lateinit var buttonGetTPN:AppCompatButton
     private lateinit var buttonDeviceDetails:AppCompatButton
     private lateinit var buttonStatusCheck:AppCompatButton
@@ -45,6 +47,7 @@ class MainActivity : AppCompatActivity() {
         transactionSpinner = findViewById(R.id.transaction_spinner)
         paymentSpinner = findViewById(R.id.payment_spinner)
         receiptSpinner = findViewById(R.id.receipt_spinner)
+        approvalSpinner = findViewById(R.id.approval_spinner)
         terminalTPN = findViewById(R.id.tpn)
         transactionAmout = findViewById(R.id.transaction_amount)
         transactionRefId = findViewById(R.id.transaction_refId)
@@ -137,6 +140,32 @@ class MainActivity : AppCompatActivity() {
                    parent?.getItemAtPosition(position).toString()
                 }
                 // Do something with the selected item
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                // Do something when nothing is selected
+            }
+        }
+        approvalSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(
+                parent: AdapterView<*>?,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
+                val selected = parent?.getItemAtPosition(position).toString()
+                isTxnStatusScreenRequired = when (selected) {
+                    "Empty(For Testing)" -> {
+                        ""
+                    }
+                    "No Tag(For Testing)" -> {
+                        "No Tag"
+                    }
+                    else -> {
+                        parent?.getItemAtPosition(position).toString()
+                    }
+                }
+
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
@@ -354,6 +383,9 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("applicationType", "DVPAYLITE")
         jsonRequest.put("refId", transactionRefId.text.toString())
         jsonRequest.put("receiptType", receiptType)
+        if (isTxnStatusScreenRequired != "No Tag") {
+            jsonRequest.put("isTxnStatusScreenRequired", isTxnStatusScreenRequired)
+        }
 
         Log.e("DVPAYLITE","jsonRequest--$jsonRequest")
 
@@ -517,6 +549,9 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("applicationType", "DVPAYLITE")
         jsonRequest.put("refId", "DL"+Utils.generateRandom(12))
         jsonRequest.put("receiptType", receiptType)
+        if (isTxnStatusScreenRequired != "No Tag") {
+            jsonRequest.put("isTxnStatusScreenRequired", isTxnStatusScreenRequired)
+        }
         Log.e("Request", "Request: $jsonRequest")
 
         intentApplication.setTransactionListener(object :
@@ -580,6 +615,9 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("applicationType", "DVPAYLITE")
         jsonRequest.put("refId", "DL"+Utils.generateRandom(12))
         jsonRequest.put("receiptType", receiptType)
+        if (isTxnStatusScreenRequired != "No Tag") {
+            jsonRequest.put("isTxnStatusScreenRequired", isTxnStatusScreenRequired)
+        }
         Log.e("Request", "Request: $jsonRequest")
 
         intentApplication.setTransactionListener(object :
@@ -642,6 +680,9 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("applicationType", "DVPAYLITE")
         jsonRequest.put("refId", transactionRefId.text.toString())
         jsonRequest.put("receiptType", receiptType)
+        if (isTxnStatusScreenRequired != "No Tag") {
+            jsonRequest.put("isTxnStatusScreenRequired", isTxnStatusScreenRequired)
+        }
         Log.e("Request", "Request: $jsonRequest")
 
         intentApplication.setTransactionListener(object :

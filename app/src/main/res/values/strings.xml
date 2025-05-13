@@ -23,4 +23,10 @@
         <item>Empty(For Testing)</item>
     </string-array>
     <string name="transactionDetails"><u>Transaction Details</u></string>
+    <string-array name="ApprovalType">
+        <item>Yes</item>
+        <item>No</item>
+        <item>No Tag(For Testing)</item>
+        <item>Empty(For Testing)</item>
+    </string-array>
 </resources>
