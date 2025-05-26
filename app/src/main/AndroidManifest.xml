@@ -9,14 +9,17 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/logo"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/logo"
+        android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
         android:theme="@style/Theme.DvPayLiteDeepLink"
         tools:targetApi="31" >
         <activity
             android:name=".MainActivity2"
+            android:exported="false" />
+        <activity
+            android:name=".cart.OptionSelectionActivity"
             android:exported="false" />
         <activity
             android:name=".MainActivity"

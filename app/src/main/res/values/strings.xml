@@ -1,5 +1,7 @@
 <resources>
-    <string name="app_name">DeepLinking app</string>
+    <string name="app_name">DvDemo</string>
+    <string name="configuration">Configuration</string>
+
     <string-array name="Transactions">
         <item>SALE</item>
         <item>REFUND</item>

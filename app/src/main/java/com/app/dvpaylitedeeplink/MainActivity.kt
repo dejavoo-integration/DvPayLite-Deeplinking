@@ -17,7 +17,6 @@ import com.denovo.app.invokeiposgo.enums.ApplicationType
 import com.denovo.app.invokeiposgo.enums.TransactionType
 import com.denovo.app.invokeiposgo.interfaces.*
 import com.denovo.app.invokeiposgo.launcher.IntentApplication
-import com.denovo.app.invokeiposgo.models.InvokeApp
 import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
@@ -27,6 +26,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var transactionAmout:AppCompatEditText
     private lateinit var transactionRefId:AppCompatEditText
     private lateinit var editTextTip:AppCompatEditText
+    private lateinit var editTextIsvID:AppCompatEditText
     private lateinit var transactionSpinner: Spinner
     private lateinit var paymentSpinner: Spinner
     private lateinit var receiptSpinner: Spinner
@@ -55,6 +55,7 @@ class MainActivity : AppCompatActivity() {
         buttonDeviceDetails = findViewById(R.id.buttonDeviceDetails)
         buttonStatusCheck = findViewById(R.id.buttonStatusCheck)
         editTextTip = findViewById(R.id.editTextTip)
+        editTextIsvID = findViewById(R.id.edittext_isvId)
         val intentApplication = IntentApplication(applicationContext)
 
         val activityResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -383,6 +384,7 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("applicationType", "DVPAYLITE")
         jsonRequest.put("refId", transactionRefId.text.toString())
         jsonRequest.put("receiptType", receiptType)
+        jsonRequest.put("IsvId", editTextIsvID.text.toString())
         if (isTxnStatusScreenRequired != "No Tag") {
             jsonRequest.put("isTxnStatusScreenRequired", isTxnStatusScreenRequired)
         }
@@ -486,6 +488,7 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("tip", editTextTip.text.toString())
         jsonRequest.put("applicationType", "DVPAYLITE")
         jsonRequest.put("refId", transactionRefId.text.toString())
+        jsonRequest.put("IsvId", editTextIsvID.text.toString())
 
         Log.e("DVPAYLITE","jsonRequest--$jsonRequest")
 
@@ -549,6 +552,7 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("applicationType", "DVPAYLITE")
         jsonRequest.put("refId", "DL"+Utils.generateRandom(12))
         jsonRequest.put("receiptType", receiptType)
+        jsonRequest.put("IsvId", editTextIsvID.text.toString())
         if (isTxnStatusScreenRequired != "No Tag") {
             jsonRequest.put("isTxnStatusScreenRequired", isTxnStatusScreenRequired)
         }
@@ -615,6 +619,7 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("applicationType", "DVPAYLITE")
         jsonRequest.put("refId", "DL"+Utils.generateRandom(12))
         jsonRequest.put("receiptType", receiptType)
+        jsonRequest.put("IsvId", editTextIsvID.text.toString())
         if (isTxnStatusScreenRequired != "No Tag") {
             jsonRequest.put("isTxnStatusScreenRequired", isTxnStatusScreenRequired)
         }
@@ -680,6 +685,7 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("applicationType", "DVPAYLITE")
         jsonRequest.put("refId", transactionRefId.text.toString())
         jsonRequest.put("receiptType", receiptType)
+        jsonRequest.put("IsvId", editTextIsvID.text.toString())
         if (isTxnStatusScreenRequired != "No Tag") {
             jsonRequest.put("isTxnStatusScreenRequired", isTxnStatusScreenRequired)
         }
@@ -773,5 +779,13 @@ class MainActivity : AppCompatActivity() {
             jsonRequest,
             activityResultLauncher
         )
+    }
+
+    private fun validateIsvID(isvId: String): String {
+        if (isvId.length !in 6..12) {
+            editTextIsvID.error = "ISV ID must be between 6 and 12 digits"
+            return ""
+        }
+        return isvId
     }
 }

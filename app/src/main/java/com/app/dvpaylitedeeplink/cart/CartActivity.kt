@@ -21,11 +21,15 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.AppCompatEditText
+import androidx.appcompat.widget.Toolbar
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
+import androidx.core.view.GravityCompat
 import androidx.core.widget.addTextChangedListener
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.app.dvpaylitedeeplink.BuildConfig
 import com.app.dvpaylitedeeplink.MainActivity
 import com.app.dvpaylitedeeplink.R
 import com.app.dvpaylitedeeplink.Utils
@@ -36,12 +40,13 @@ import com.app.dvpaylitedeeplink.dialogs.TxnCompletePopUp
 import com.denovo.app.invokeiposgo.interfaces.SettlementListener
 import com.denovo.app.invokeiposgo.interfaces.TransactionListener
 import com.denovo.app.invokeiposgo.launcher.IntentApplication
+import com.google.android.material.navigation.NavigationView
 import org.json.JSONArray
 import org.json.JSONObject
 
 class CartActivity : AppCompatActivity() {
 
-    companion object{
+    companion object {
         private const val EXTERNAL_RRN_PREFIX = "DL"
         private const val DEFAULT_VALUE = 0.00
     }
@@ -62,8 +67,16 @@ class CartActivity : AppCompatActivity() {
     private lateinit var externalRRNLinear: LinearLayout
     private var externalRRN: String? = null
     private var selectedTransactionType: String = LoadItems.SALE
-
+    private lateinit var drawerLayout: DrawerLayout
+    private lateinit var ivHamburger: ImageView
+    private lateinit var toolbar: Toolbar
     private val cart = LoadItems().cart
+    private var showApproval = false
+    private var showBreakup = false
+    private var showDual = false
+    private var enableLineItems = false
+    private var txnTotalAmount: Double =0.0
+    private var customerTip: Double = 0.0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,6 +96,47 @@ class CartActivity : AppCompatActivity() {
         referenceIDEditText = findViewById(R.id.ac_referenceIDEditText)
         proceedButton = findViewById(R.id.ac_proceedButton)
         externalRRNLinear = findViewById(R.id.ac_externalRRNLinear)
+
+        //For drawer
+        drawerLayout = findViewById(R.id.drawer_layout)
+
+
+        ivHamburger = findViewById(R.id.iv_hamburger)
+        toolbar = findViewById(R.id.toolbar)
+
+        setSupportActionBar(toolbar)
+
+        // Optional: disable default title if you have a custom one in layout
+        supportActionBar?.setDisplayShowTitleEnabled(false)
+
+
+
+/*
+        ivHamburger.setOnClickListener {
+            if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                drawerLayout.closeDrawer(GravityCompat.START)
+            } else {
+                drawerLayout.openDrawer(GravityCompat.START)
+            }
+        }
+        navigationView = findViewById(R.id.navigation_view)
+        navigationView.getHeaderView(0)
+            .findViewById<TextView>(R.id.tv_version)
+            .text = "Version: ${BuildConfig.VERSION_NAME}"
+        navigationView.setNavigationItemSelectedListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.nav_configure -> {
+                    val intent = Intent(this, OptionSelectionActivity::class.java)
+                    startActivity(intent)
+                    drawerLayout.closeDrawers()
+                }
+            }
+
+            drawerLayout.closeDrawer(GravityCompat.START)
+            true
+        }
+*/
+
 
         LoadItems().loadTransactionTypes(
             context,
@@ -163,8 +217,9 @@ class CartActivity : AppCompatActivity() {
         }
 
         checkoutButton.setOnClickListener {
-            val adapter = itemsRecyclerView.adapter as CartAdapter
-            val selectedItems = adapter.getSelectedItems()
+
+            val adapter = itemsRecyclerView.adapter as? CartAdapter
+            val selectedItems = adapter?.getSelectedItems().orEmpty()
 
             if (selectedItems.isEmpty()) {
                 Log.e("CartActivity", "No items selected!")
@@ -172,11 +227,82 @@ class CartActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            txnTotalAmount = selectedItems.sumOf { it.price * it.quantity }
+
+            Log.e("CartActivity", "txnTotalAmount before open user selection:::$txnTotalAmount")
+
+            val intent = Intent(this, OptionSelectionActivity::class.java).apply {
+                putExtra("txnAmount", txnTotalAmount)
+            }
+            startActivityForResult(intent, 123)
+        }
+        cancelButton.setOnClickListener {
+            clearCart()
+        }
+
+        imageViewMore.setOnClickListener {
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        getUserConfig()
+        Log.i("CartActivity",
+            "showApproval - $showApproval -showBreakup-$showBreakup-showDual-$showDual -enableLineItems-$enableLineItems")
+    }
+
+    private fun getUserConfig() {
+        showApproval = PrefsHelper.getApproval(this)
+        showBreakup = PrefsHelper.getBreakup(this)
+        showDual = PrefsHelper.getDual(this)
+        enableLineItems = PrefsHelper.getLineItems(this)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        Log.d("CartActivity", "onActivityResult called with requestCode: $requestCode, resultCode: $resultCode")
+
+        if (requestCode == 123 && resultCode == Activity.RESULT_OK) {
+            Log.d("CartActivity", "Request code matched and result OK")
+
+            getUserConfig()
+            Log.d("CartActivity", "User config loaded")
+
+            val intentApplication = IntentApplication(applicationContext)
+            val activityResultLauncher =
+                registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                    Log.d("CartActivity", "Nested activity result received")
+                    intentApplication.handleResultCallBack(result)
+                }
+
+            if (data != null) {
+                customerTip = data.getDoubleExtra("tip", 0.0)
+                Log.d("CartActivity", "Customer tip received: $customerTip")
+            } else {
+                Log.w("CartActivity", "Intent data is null; no tip received")
+            }
+
+            val adapter = itemsRecyclerView.adapter as CartAdapter
+            val selectedItems = adapter.getSelectedItems()
+            Log.d("CartActivity", "Selected items count: ${selectedItems.size}")
+
+            if (selectedItems.isEmpty()) {
+                Log.e("CartActivity", "No items selected in onActivityResult!")
+                return
+            }
+
             val totalAmount = selectedItems.sumOf { it.price * it.quantity }
             Log.d("CartActivity", "Calculated total amount: $totalAmount")
 
             externalRRN = Utils.generateRandom(12).toString()
-            val jsonRequest = getPayloadJSON(EXTERNAL_RRN_PREFIX+externalRRN,totalAmount)
+            Log.d("CartActivity", "Generated external RRN: $externalRRN")
+
+            val jsonRequest = getPayloadJSON(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount)
+            Log.d("CartActivity", "Initialized JSON payload")
+
             val cartObject = JSONObject()
 
             val itemsArray = JSONArray(selectedItems.map { item ->
@@ -203,7 +329,7 @@ class CartActivity : AppCompatActivity() {
                     }
                 }
             })
-            cartObject.put("Items", itemsArray)
+            Log.d("CartActivity", "Items array created with ${selectedItems.size} items")
 
             val amountsArray = JSONArray(cart.amounts.map { amount ->
                 JSONObject().apply {
@@ -211,28 +337,24 @@ class CartActivity : AppCompatActivity() {
                     put("Value", formatToTwoDecimalPlaces(amount.value))
                 }
             })
+            Log.d("CartActivity", "CashPrices array created with ${cart.amounts.size} entries")
+
+            cartObject.put("Items", itemsArray)
             cartObject.put("Amounts", amountsArray)
             cartObject.put("CashPrices", amountsArray)
 
-            if (lineItemCheckBox.isChecked) {
+            if (enableLineItems) {
                 jsonRequest.put("Cart", cartObject)
+                Log.d("CartActivity", "Line items enabled; cart object added to payload")
                 Log.d("CartActivity", "Final JSON Object: $jsonRequest")
             }
 
+            Log.d("CartActivity", "Processing sale transaction...")
             processSaleTxn(intentApplication, activityResultLauncher, jsonRequest)
-        }
-
-        cancelButton.setOnClickListener {
-            clearCart()
-        }
-
-        imageViewMore.setOnClickListener {
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
+        } else {
+            Log.d("CartActivity", "Request code or result code did not match expected values")
         }
     }
-
-
 
 
     private fun processSaleTxn(
@@ -391,14 +513,18 @@ class CartActivity : AppCompatActivity() {
 
     private fun getPayloadJSON(referenceId:String,totalAmount:Double):JSONObject{
         val totalAmt = formatToTwoDecimalPlaces(totalAmount)
+        txnTotalAmount = totalAmount
         return JSONObject().apply {
             put("type", selectedTransactionType)
             put("paymentType", "Credit")
             put("amount", totalAmt)
-            put("tip", "2.00")
+            put("tip", customerTip)
             put("applicationType", "DVPAYLITE")
             put("refId", referenceId)
             put("receiptType", "receiptType")
+            put("isTxnStatusScreenRequired", if (showApproval) "Yes" else "No")
+            put("isDeeplinkBreakupRequired", if (showBreakup) "Yes" else "No")
+            put("isDeeplinkDualPriceRequired", if (showDual) "Yes" else "No")
         }
     }
 
