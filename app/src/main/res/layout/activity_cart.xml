@@ -32,7 +32,7 @@
                     android:padding="10dp"
                     android:src="@drawable/ic_hamburger_menu"
                     android:contentDescription="Menu"
-                    android:visibility="gone"/>
+                    android:visibility="visible"/>
 
                 <TextView
                     android:id="@+id/tv_appName"
@@ -67,7 +67,8 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/transactionTypesRecyclerView"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:visibility="gone"/>
 
             <RelativeLayout
                 android:id="@+id/linearLayoutListContainer"
@@ -207,13 +208,13 @@
         </LinearLayout>
     </LinearLayout>
 
-<!--    <com.google.android.material.navigation.NavigationView-->
-<!--        android:id="@+id/navigation_view"-->
-<!--        android:layout_width="wrap_content"-->
-<!--        android:layout_height="match_parent"-->
-<!--        android:layout_gravity="start"-->
-<!--        app:menu="@menu/drawer_menu"-->
-<!--        app:headerLayout="@layout/nav_header"-->
-<!--        android:background="@android:color/white"-->
-<!--        android:visibility="gone"/>-->
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/navigation_view"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        app:menu="@menu/drawer_menu"
+        app:headerLayout="@layout/nav_header"
+        android:background="@android:color/white"
+        android:visibility="visible"/>
 </androidx.drawerlayout.widget.DrawerLayout>
