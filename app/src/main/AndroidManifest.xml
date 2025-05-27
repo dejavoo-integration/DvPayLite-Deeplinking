@@ -19,13 +19,19 @@
             android:name=".MainActivity2"
             android:exported="false" />
         <activity
-            android:name=".cart.OptionSelectionActivity"
+            android:name=".cart.ui.OptionSelectionActivity"
+            android:exported="false" />
+        <activity
+            android:name=".cart.ui.RegistrationActivity"
+            android:exported="false" />
+        <activity
+            android:name=".cart.ui.TipAndFeeActivity"
             android:exported="false" />
         <activity
             android:name=".MainActivity"
             android:exported="false" />
         <activity
-            android:name=".cart.CartActivity"
+            android:name=".cart.ui.CartActivity"
             android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -1,10 +1,10 @@
-package com.app.dvpaylitedeeplink.cart
+package com.app.dvpaylitedeeplink.cart.ui
 
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.TextView
+import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.AppCompatEditText
@@ -12,7 +12,6 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.SwitchCompat
 import com.app.dvpaylitedeeplink.R
-import com.app.dvpaylitedeeplink.cart.CartActivity
 import com.app.dvpaylitedeeplink.cart.PrefsHelper
 
 
@@ -28,12 +27,13 @@ class OptionSelectionActivity : AppCompatActivity() {
     private lateinit var tvTotalAmount: AppCompatTextView
     private lateinit var edtTipAmount: AppCompatEditText
     private lateinit var edtCustomFee: AppCompatEditText
-    private var txnAmount: Double = 0.00
+    private lateinit var linearTipFee: LinearLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_option_selection)
 
+        linearTipFee = findViewById(R.id.linearTipFee)
         switchApproval = findViewById(R.id.switchApproval)
         switchBreakup = findViewById(R.id.switchBreakup)
         switchDual = findViewById(R.id.switchDual)
@@ -45,7 +45,7 @@ class OptionSelectionActivity : AppCompatActivity() {
         edtTipAmount = findViewById<AppCompatEditText>(R.id.edtTipAmount)
         edtCustomFee = findViewById<AppCompatEditText>(R.id.edtFee)
 
-        getIntentValues()
+        linearTipFee.visibility = View.GONE
         switchApproval.isChecked = PrefsHelper.getApproval(this)
         switchBreakup.isChecked = PrefsHelper.getBreakup(this)
         switchTip.isChecked = PrefsHelper.getTipScreenStatus(this)
@@ -104,11 +104,7 @@ class OptionSelectionActivity : AppCompatActivity() {
             )
         }
         btnConfirm.setOnClickListener {
-            val resultIntent = Intent()
-            resultIntent.putExtra("tip", edtTipAmount.text.toString().toDoubleOrNull() ?: 0.0)
-            resultIntent.putExtra("fee", edtCustomFee.text.toString().toDoubleOrNull() ?: 0.0)
-            setResult(Activity.RESULT_OK, resultIntent)
-            finish()
+            onBackPressed()
         }
 
         ivBack.setOnClickListener {
@@ -117,24 +113,4 @@ class OptionSelectionActivity : AppCompatActivity() {
 
     }
 
-    override fun onBackPressed() {
-        super.onBackPressed()
-        val resultIntent = Intent()
-        resultIntent.putExtra("tip", "")
-        resultIntent.putExtra("fee", "")
-        setResult(Activity.RESULT_CANCELED, resultIntent)
-        finish()
-    }
-
-    private fun getIntentValues() {
-        if (intent.hasExtra("txnAmount")) {
-            txnAmount = intent.getDoubleExtra("txnAmount", 0.0)
-            if (txnAmount > 0) {
-                tvTotalAmount.visibility = View.VISIBLE
-                tvTotalAmount.text = String.format("$%.2f", txnAmount)
-            } else {
-                tvTotalAmount.visibility = View.GONE
-            }
-        }
-    }
 }

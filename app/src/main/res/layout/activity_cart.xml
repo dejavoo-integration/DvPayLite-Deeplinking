@@ -215,6 +215,8 @@
         android:layout_gravity="start"
         app:menu="@menu/drawer_menu"
         app:headerLayout="@layout/nav_header"
-        android:background="@android:color/white"
-        android:visibility="visible"/>
+        app:itemVerticalPadding="20dp"
+        app:itemBackground="@drawable/nav_background"
+        android:visibility="visible"
+        app:itemIconTint="@color/icon_purple"/>
 </androidx.drawerlayout.widget.DrawerLayout>

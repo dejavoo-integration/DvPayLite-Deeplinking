@@ -1,4 +1,4 @@
-package com.app.dvpaylitedeeplink.cart
+package com.app.dvpaylitedeeplink.cart.ui
 
 import android.app.Activity
 import android.content.Context
@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.text.InputType
 import android.util.Log
 import android.view.View
+import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.CheckBox
@@ -33,6 +34,7 @@ import com.app.dvpaylitedeeplink.BuildConfig
 import com.app.dvpaylitedeeplink.MainActivity
 import com.app.dvpaylitedeeplink.R
 import com.app.dvpaylitedeeplink.Utils
+import com.app.dvpaylitedeeplink.cart.PrefsHelper
 import com.app.dvpaylitedeeplink.cart.adapters.CartAdapter
 import com.app.dvpaylitedeeplink.cart.interfaces.TypeSelectionInterface
 import com.app.dvpaylitedeeplink.cart.models.LoadItems
@@ -126,6 +128,11 @@ class CartActivity : AppCompatActivity() {
             .text = "Version: ${BuildConfig.VERSION_NAME}"
         navigationView.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
+                R.id.nav_registration -> {
+                    val intent = Intent(this, RegistrationActivity::class.java)
+                    startActivity(intent)
+                    drawerLayout.closeDrawers()
+                }
                 R.id.nav_configure -> {
                     val intent = Intent(this, OptionSelectionActivity::class.java)
                     startActivity(intent)
@@ -264,7 +271,7 @@ class CartActivity : AppCompatActivity() {
 
             Log.e("CartActivity", "txnTotalAmount before open user selection:::$txnTotalAmount")
 
-            val intent = Intent(this, OptionSelectionActivity::class.java).apply {
+            val intent = Intent(this, TipAndFeeActivity::class.java).apply {
                 putExtra("txnAmount", txnTotalAmount)
             }
             startActivityForResult(intent, 123)
@@ -365,17 +372,25 @@ class CartActivity : AppCompatActivity() {
             })
             Log.d("CartActivity", "Items array created with ${selectedItems.size} items")
 
-            val amountsArray = JSONArray(cart.amounts.map { amount ->
+            val cardAmountsArray = JSONArray(cart.amounts.map { amount ->
                 JSONObject().apply {
                     put("Name", amount.name)
                     put("Value", formatToTwoDecimalPlaces(amount.value))
                 }
             })
+            val cashAmountsArray = JSONArray(cart.amounts.map { amount ->
+                val fee = (4.0 / 100) * (amount.value)
+                val cashPrice = ((amount.value) - fee)
+                JSONObject().apply {
+                    put("Name", amount.name)
+                    put("Value", formatToTwoDecimalPlaces(cashPrice))
+                }
+            })
             Log.d("CartActivity", "CashPrices array created with ${cart.amounts.size} entries")
 
             cartObject.put("Items", itemsArray)
-            cartObject.put("Amounts", amountsArray)
-            cartObject.put("CashPrices", amountsArray)
+            cartObject.put("Amounts", cardAmountsArray)
+            cartObject.put("CashPrices", cashAmountsArray)
 
             if (enableLineItems) {
                 jsonRequest.put("Cart", cartObject)
