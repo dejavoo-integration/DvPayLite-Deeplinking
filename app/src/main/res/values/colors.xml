@@ -11,5 +11,6 @@
     <color name="white">#FFFFFFFF</color>
     <color name="red">#F11919</color>
     <color name="grey">#A8A4A4</color>
+    <color name="icon_purple">#B75BE1</color>
 
 </resources>

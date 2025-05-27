@@ -70,10 +70,12 @@ class CartActivity : AppCompatActivity() {
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var ivHamburger: ImageView
     private lateinit var toolbar: Toolbar
+    private lateinit var navigationView: NavigationView
     private val cart = LoadItems().cart
     private var showApproval = false
     private var showBreakup = false
     private var showDual = false
+    private var showTipScreen = false
     private var enableLineItems = false
     private var txnTotalAmount: Double =0.0
     private var customerTip: Double = 0.0
@@ -111,7 +113,6 @@ class CartActivity : AppCompatActivity() {
 
 
 
-/*
         ivHamburger.setOnClickListener {
             if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
                 drawerLayout.closeDrawer(GravityCompat.START)
@@ -130,12 +131,44 @@ class CartActivity : AppCompatActivity() {
                     startActivity(intent)
                     drawerLayout.closeDrawers()
                 }
+                R.id.nav_sale -> {
+                    selectedTransactionType =LoadItems.SALE
+                    hideSoftKeyboard()
+                    showProductsListLayout()
+                }
+                R.id.nav_refund -> {
+                    selectedTransactionType =LoadItems.REFUND
+                    hideSoftKeyboard()
+                    showProductsListLayout()
+                }
+                R.id.nav_preAuth -> {
+                    selectedTransactionType =LoadItems.PRE_AUTH
+                    hideSoftKeyboard()
+                    showProductsListLayout()
+                }
+                R.id.nav_void -> {
+                    selectedTransactionType =LoadItems.VOID
+                    if (externalRRN != null) {
+                        referenceIDEditText.setText(externalRRN)
+                    }
+                    showReferenceIDLayout(true)
+                }
+                R.id.nav_ticket -> {
+                    selectedTransactionType =LoadItems.TICKET
+                        if (externalRRN != null) {
+                        referenceIDEditText.setText(externalRRN)
+                    }
+                    showReferenceIDLayout(true)
+                }
+                R.id.nav_settlement -> {
+                    selectedTransactionType = LoadItems.SETTLEMENT
+                    showReferenceIDLayout(false)
+                }
             }
 
             drawerLayout.closeDrawer(GravityCompat.START)
             true
         }
-*/
 
 
         LoadItems().loadTransactionTypes(
@@ -250,13 +283,14 @@ class CartActivity : AppCompatActivity() {
         super.onResume()
         getUserConfig()
         Log.i("CartActivity",
-            "showApproval - $showApproval -showBreakup-$showBreakup-showDual-$showDual -enableLineItems-$enableLineItems")
+            "Show Approval Screen: $showApproval------ Show Breakup Screen: $showBreakup---- Show Dual Screen: $showDual----- Enable Line Items $enableLineItems----- Show Tip Screen: $showTipScreen")
     }
 
     private fun getUserConfig() {
         showApproval = PrefsHelper.getApproval(this)
         showBreakup = PrefsHelper.getBreakup(this)
         showDual = PrefsHelper.getDual(this)
+        showTipScreen = PrefsHelper.getTipScreenStatus(this)
         enableLineItems = PrefsHelper.getLineItems(this)
     }
 
@@ -523,8 +557,9 @@ class CartActivity : AppCompatActivity() {
             put("refId", referenceId)
             put("receiptType", "receiptType")
             put("isTxnStatusScreenRequired", if (showApproval) "Yes" else "No")
-            put("isDeeplinkBreakupRequired", if (showBreakup) "Yes" else "No")
-            put("isDeeplinkDualPriceRequired", if (showDual) "Yes" else "No")
+            put("showBreakupScreen", if (showBreakup) "Yes" else "No")
+            put("showDualPriceScreen", if (showDual) "Yes" else "No")
+            put("showTipScreen", if (showTipScreen) "Yes" else "No")
         }
     }
 

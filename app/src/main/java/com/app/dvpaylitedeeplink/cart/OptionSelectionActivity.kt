@@ -21,6 +21,7 @@ class OptionSelectionActivity : AppCompatActivity() {
     private lateinit var switchApproval: SwitchCompat
     private lateinit var switchBreakup: SwitchCompat
     private lateinit var switchDual: SwitchCompat
+    private lateinit var switchTip: SwitchCompat
     private lateinit var switchLineItems: SwitchCompat
     private lateinit var btnConfirm: AppCompatButton
     private lateinit var ivBack: AppCompatImageView
@@ -36,6 +37,7 @@ class OptionSelectionActivity : AppCompatActivity() {
         switchApproval = findViewById(R.id.switchApproval)
         switchBreakup = findViewById(R.id.switchBreakup)
         switchDual = findViewById(R.id.switchDual)
+        switchTip = findViewById(R.id.switchTip)
         switchLineItems = findViewById(R.id.switchLineItems)
         btnConfirm = findViewById(R.id.btnConfirm)
         ivBack = findViewById<AppCompatImageView>(R.id.iv_back)
@@ -46,6 +48,7 @@ class OptionSelectionActivity : AppCompatActivity() {
         getIntentValues()
         switchApproval.isChecked = PrefsHelper.getApproval(this)
         switchBreakup.isChecked = PrefsHelper.getBreakup(this)
+        switchTip.isChecked = PrefsHelper.getTipScreenStatus(this)
         switchDual.isChecked = PrefsHelper.getDual(this)
         switchLineItems.isChecked = PrefsHelper.getLineItems(this)
 
@@ -54,6 +57,7 @@ class OptionSelectionActivity : AppCompatActivity() {
                 this,
                 isChecked,
                 switchBreakup.isChecked,
+                switchTip.isChecked,
                 switchDual.isChecked,
                 switchLineItems.isChecked
             )
@@ -64,16 +68,27 @@ class OptionSelectionActivity : AppCompatActivity() {
                 this,
                 switchApproval.isChecked,
                 isChecked,
+                switchTip.isChecked,
                 switchDual.isChecked,
                 switchLineItems.isChecked
             )
         }
-
+        switchTip.setOnCheckedChangeListener { _, isChecked ->
+            PrefsHelper.saveSettings(
+                this,
+                switchApproval.isChecked,
+                switchBreakup.isChecked,
+                isChecked,
+                switchDual.isChecked,
+                switchLineItems.isChecked
+            )
+        }
         switchDual.setOnCheckedChangeListener { _, isChecked ->
             PrefsHelper.saveSettings(
                 this,
                 switchApproval.isChecked,
                 switchBreakup.isChecked,
+                switchTip.isChecked,
                 isChecked,
                 switchLineItems.isChecked
             )
@@ -83,6 +98,7 @@ class OptionSelectionActivity : AppCompatActivity() {
                 this,
                 switchApproval.isChecked,
                 switchBreakup.isChecked,
+                switchTip.isChecked,
                 switchDual.isChecked,
                 isChecked
             )
@@ -111,8 +127,8 @@ class OptionSelectionActivity : AppCompatActivity() {
     }
 
     private fun getIntentValues() {
-        if (intent.hasExtra("txnAmount")){
-           txnAmount= intent.getDoubleExtra("txnAmount",0.0)
+        if (intent.hasExtra("txnAmount")) {
+            txnAmount = intent.getDoubleExtra("txnAmount", 0.0)
             if (txnAmount > 0) {
                 tvTotalAmount.visibility = View.VISIBLE
                 tvTotalAmount.text = String.format("$%.2f", txnAmount)
