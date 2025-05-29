@@ -350,6 +350,7 @@ class CartActivity : AppCompatActivity() {
                 JSONObject().apply {
                     put("Name", item.name)
                     put("Price", formatToTwoDecimalPlaces(item.price))
+                    put("CardPrice", formatToTwoDecimalPlaces(item.price * 1.04))
                     put("Quantity", item.quantity)
                     put("AdditionalInfo", item.additionalInfo)
 
@@ -373,17 +374,17 @@ class CartActivity : AppCompatActivity() {
             Log.d("CartActivity", "Items array created with ${selectedItems.size} items")
 
             val cardAmountsArray = JSONArray(cart.amounts.map { amount ->
+                val fee = (4.0 / 100) * (amount.value)
+                val cardPrice = ((amount.value) + fee)
                 JSONObject().apply {
                     put("Name", amount.name)
-                    put("Value", formatToTwoDecimalPlaces(amount.value))
+                    put("Value", formatToTwoDecimalPlaces(cardPrice))
                 }
             })
             val cashAmountsArray = JSONArray(cart.amounts.map { amount ->
-                val fee = (4.0 / 100) * (amount.value)
-                val cashPrice = ((amount.value) - fee)
                 JSONObject().apply {
                     put("Name", amount.name)
-                    put("Value", formatToTwoDecimalPlaces(cashPrice))
+                    put("Value", formatToTwoDecimalPlaces(amount.value))
                 }
             })
             Log.d("CartActivity", "CashPrices array created with ${cart.amounts.size} entries")
