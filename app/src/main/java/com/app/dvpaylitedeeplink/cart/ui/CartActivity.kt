@@ -80,7 +80,10 @@ class CartActivity : AppCompatActivity() {
     private var showTipScreen = false
     private var enableLineItems = false
     private var txnTotalAmount: Double =0.0
-    private var customerTip: Double = 0.0
+    private var customerTip: String = "0.00"
+
+    private lateinit var intentApplication: IntentApplication
+    private lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -211,11 +214,13 @@ class CartActivity : AppCompatActivity() {
                 }
             })
 
-        val intentApplication = IntentApplication(applicationContext)
-        val activityResultLauncher =
+        intentApplication = IntentApplication(context)
+        activityResultLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                 intentApplication.handleResultCallBack(result)
             }
+
+
         if (Build.MODEL == "P18") {
             itemsRecyclerView.layoutManager = GridLayoutManager(this, 3)
         } else {
@@ -311,16 +316,17 @@ class CartActivity : AppCompatActivity() {
 
             getUserConfig()
             Log.d("CartActivity", "User config loaded")
+            Log.d("CartActivity", "context--$context")
 
-            val intentApplication = IntentApplication(applicationContext)
-            val activityResultLauncher =
+
+          /*  val activityResultLauncher =
                 registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
                     Log.d("CartActivity", "Nested activity result received")
                     intentApplication.handleResultCallBack(result)
-                }
+                }*/
 
             if (data != null) {
-                customerTip = data.getDoubleExtra("tip", 0.0)
+                customerTip = data.getStringExtra("tip")!!
                 Log.d("CartActivity", "Customer tip received: $customerTip")
             } else {
                 Log.w("CartActivity", "Intent data is null; no tip received")

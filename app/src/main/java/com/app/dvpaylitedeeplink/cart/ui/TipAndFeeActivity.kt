@@ -53,7 +53,7 @@ class TipAndFeeActivity : AppCompatActivity() {
 
         btnConfirm.setOnClickListener {
             val resultIntent = Intent()
-            resultIntent.putExtra("tip", edtTipAmount.text.toString().toDoubleOrNull() ?: 0.0)
+            resultIntent.putExtra("tip", edtTipAmount.text.toString()/*.toDoubleOrNull()*/ ?: 0.0)
             resultIntent.putExtra("fee", edtCustomFee.text.toString().toDoubleOrNull() ?: 0.0)
             setResult(Activity.RESULT_OK, resultIntent)
             finish()
