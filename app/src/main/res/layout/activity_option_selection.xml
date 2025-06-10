@@ -80,6 +80,35 @@
                 android:paddingStart="12dp"
                 android:textColor="@color/black"
                 android:textSize="16sp" />
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/edtTax1"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_txt_curved"
+                android:gravity="center"
+                android:hint="Tax1"
+                android:inputType="numberDecimal"
+                android:paddingStart="12dp"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:visibility="gone"/>
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/edtTax2"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_txt_curved"
+                android:gravity="center"
+                android:hint="Tax2"
+                android:inputType="numberDecimal"
+                android:paddingStart="12dp"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:visibility="gone"/>
+
         </LinearLayout>
 
 
@@ -136,6 +165,7 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/linearShowBreakup"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
