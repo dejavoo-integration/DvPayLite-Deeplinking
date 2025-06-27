@@ -8,8 +8,15 @@
         <item>VOID</item>
         <item>TIP ADJUST</item>
         <item>PRE_AUTH</item>
+        <item>INC_AUTH</item>
         <item>TICKET</item>
         <item>SETTLE</item>
+    </string-array>
+    <string-array name="CardAcceptanceTime">
+        <item>Never</item>
+        <item>Empty(For Testing)</item>
+        <item>No Tag</item>
+        <item>Random Value(30sec)</item>
     </string-array>
     <string-array name="PaymentTypes">
         <item>CREDIT</item>
