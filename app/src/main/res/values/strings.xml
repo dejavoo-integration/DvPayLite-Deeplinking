@@ -14,6 +14,8 @@
         <item>DEBIT</item>
         <item>EBT_FOOD</item>
         <item>EBT_CASH</item>
+        <item>GIFT</item>
+        <item>LOYALTY</item>
     </string-array>
     <string-array name="RecieptTypes">
         <item>No</item>
@@ -28,5 +30,26 @@
         <item>No</item>
         <item>No Tag(For Testing)</item>
         <item>Empty(For Testing)</item>
+    </string-array>
+    <string-array name="Transactions_Gift">
+        <item>ACTIVATE</item>
+        <item>REDEEM</item>
+        <item>REFUND</item>
+        <item>RELOAD</item>
+        <item>INQUIRE</item>
+        <item>DEACTIVATE</item>
+        <item>REISSUE</item>
+        <item>VOID</item>
+    </string-array>
+    <string-array name="Transactions_Loyalty">
+        <item>ACTIVATE</item>
+        <item>REDEEM</item>
+        <item>REFUND</item>
+        <item>RELOAD</item>
+        <item>INQUIRE</item>
+        <item>DEACTIVATE</item>
+        <item>REISSUE</item>
+        <item>VOID</item>
+        <item>ADDPOINTS</item>
     </string-array>
 </resources>

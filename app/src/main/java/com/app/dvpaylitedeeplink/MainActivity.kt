@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.activity.result.ActivityResult
@@ -32,7 +33,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var receiptSpinner: Spinner
     private lateinit var approvalSpinner: Spinner
     private lateinit var txnType:String
-    private lateinit var paymentType:String
+    private var paymentType:String = ""
     private lateinit var receiptType:String
     private lateinit var isTxnStatusScreenRequired:String
     private lateinit var buttonGetTPN:AppCompatButton
@@ -125,6 +126,7 @@ class MainActivity : AppCompatActivity() {
         paymentSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 paymentType = parent?.getItemAtPosition(position).toString()
+                updateTransactionSpinner()
                 // Do something with the selected item
             }
 
@@ -174,7 +176,26 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        updateTransactionSpinner()
 
+    }
+
+    private fun updateTransactionSpinner() {
+        val transactionArray = when (paymentType) {
+            "GIFT" -> {
+                resources.getStringArray(R.array.Transactions_Gift)
+            }
+            "LOYALTY" -> {
+                resources.getStringArray(R.array.Transactions_Loyalty)
+            }
+            else -> {
+                resources.getStringArray(R.array.Transactions)
+            }
+        }
+
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, transactionArray)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        transactionSpinner.adapter = adapter
     }
 
     private fun processStatusCheck(
@@ -347,23 +368,32 @@ class MainActivity : AppCompatActivity() {
         activityResultLauncher: ActivityResultLauncher<Intent>
     ) {
         when(txnType) {
-            "SALE", "REFUND" -> {
+            "SALE", "REFUND", "ACTIVATE", "REDEEM", "RELOAD", "REISSUE", "ADDPOINTS" -> {
                 processSaleOrRefundTxn(intentApplication, activityResultLauncher)
             }
+
             "TIP ADJUST" -> {
                 processTipAdjustTxn(intentApplication, activityResultLauncher)
             }
+
             "SETTLE" -> {
                 processSettlement(intentApplication, activityResultLauncher)
             }
+
             "VOID" -> {
                 processVoidTxn(intentApplication, activityResultLauncher)
             }
+
             "PRE_AUTH" -> {
                 processAuthTxn(intentApplication, activityResultLauncher)
             }
+
             "TICKET" -> {
                 processTicketTransaction(intentApplication, activityResultLauncher)
+            }
+
+            "INQUIRE", "DEACTIVATE" -> {
+                processInquiryOrDeactivateGiftTxn(intentApplication, activityResultLauncher)
             }
         }
     }
@@ -788,4 +818,70 @@ class MainActivity : AppCompatActivity() {
         }
         return isvId
     }
+
+    private fun processInquiryOrDeactivateGiftTxn(
+        intentApplication: IntentApplication,
+        activityResultLauncher: ActivityResultLauncher<Intent>
+    ) {
+        val jsonRequest = JSONObject()
+        jsonRequest.put("type", txnType)
+        jsonRequest.put("paymentType", paymentType)
+        jsonRequest.put("applicationType", "DVPAYLITE")
+        jsonRequest.put("refId", "DL" + Utils.generateRandom(12))
+        jsonRequest.put("receiptType", receiptType)
+        jsonRequest.put("IsvId", editTextIsvID.text.toString())
+        if (isTxnStatusScreenRequired != "No Tag") {
+            jsonRequest.put("isTxnStatusScreenRequired", isTxnStatusScreenRequired)
+        }
+        Log.e("Request", "Request: $jsonRequest")
+
+        intentApplication.setTransactionListener(object :
+            TransactionListener {
+            override fun onApplicationLaunched(result: JSONObject?) {
+                //application launched success json data
+                Toast.makeText(
+                    this@MainActivity,
+                    "onApplicationLaunched: " + result.toString(),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+
+            override fun onApplicationLaunchFailed(errorResult: JSONObject) {
+                //application launched failed json data
+                Toast.makeText(
+                    this@MainActivity,
+                    "onApplicationLaunchFailed: $errorResult",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+
+            override fun onTransactionSuccess(transactionResult: JSONObject?) {
+                //Transaction Success json data
+                Log.e("DVPAYLITE", "transactionResult.toString() - ${transactionResult.toString()}")
+                Toast.makeText(
+                    this@MainActivity,
+                    "onTransactionSuccess: " + transactionResult.toString(),
+                    Toast.LENGTH_LONG
+                ).show()
+
+                var sign = transactionResult!!.get("sign")
+                Log.e("DVPAYLITE", "transactionResult.toString() - sign -- $sign")
+            }
+
+            override fun onTransactionFailed(errorResult: JSONObject) {
+                //Transaction Failed json data
+                Log.e("DVPAYLITE", "errorResult.toString() - ${errorResult.toString()}")
+                Toast.makeText(
+                    this@MainActivity,
+                    "onTransactionFailed: $errorResult",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        })
+        intentApplication.performTransaction(
+            jsonRequest,
+            activityResultLauncher
+        )
+    }
+
 }
