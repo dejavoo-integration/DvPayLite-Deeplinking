@@ -62,7 +62,7 @@ class TxnCompletePopUp(private val activity: Activity) {
             statusImageView.setImageResource(R.drawable.failure)
             when(type){
                 LoadItems.TRANSACTION->{
-                    statusMessageTextView.text = "Transaction Failed"
+                    statusMessageTextView.text = "Transaction Status"
                     statusDescriptionTextView.text = resultMessage
                 }
                 LoadItems.SETTLEMENT->{

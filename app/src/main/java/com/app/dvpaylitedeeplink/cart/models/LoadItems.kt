@@ -13,12 +13,13 @@ class LoadItems {
         amounts = mutableListOf(
             Amount("Discounts", 00.00),
             Amount("Subtotal", 00.00),
+            Amount("Tip", 00.00),
             Amount("Total", 00.00)
         ),
         items = mutableListOf(
             Item(
-                R.drawable.ic_icecream_pista, "Gelato Ice-Cream", 110.00, 0, "", listOf(CustomInfo("tax", 0.00), CustomInfo("Discount", 0.00)),listOf(
-                    Modifier("Toppings", listOf(Option("Pista", 110.00, 1)))
+                R.drawable.ic_icecream_pista, "Gelato Ice-Cream", 100.00, 0, "", listOf(CustomInfo("tax", 0.00), CustomInfo("Discount", 0.00)),listOf(
+                    Modifier("Toppings", listOf(Option("Pista", 100.00, 1)))
                 )
             ),
             Item(
@@ -42,13 +43,13 @@ class LoadItems {
                 )
             ),
             Item(
-                R.drawable.ic_strawberry, "Frozen Yogurt", 270.30, 0, "",listOf(CustomInfo("tax", 0.00)),listOf(
-                    Modifier("Toppings", listOf(Option("Pista", 270.30, 1)))
+                R.drawable.ic_strawberry, "Frozen Yogurt", 270.00, 0, "",listOf(CustomInfo("tax", 0.00)),listOf(
+                    Modifier("Toppings", listOf(Option("Pista", 270.00, 1)))
                 )
             ),
             Item(
-                R.drawable.ic_pizza2, "Pizza", 250.20, 0, "", listOf(CustomInfo("tax",0.00)), listOf(
-                    Modifier("Pizza", listOf(Option("Chicj", 250.20, 1)))
+                R.drawable.ic_pizza2, "Pizza", 250.00, 0, "", listOf(CustomInfo("tax",0.00)), listOf(
+                    Modifier("Pizza", listOf(Option("Chicj", 250.00, 1)))
                 )
             ),
             Item(
@@ -57,20 +58,20 @@ class LoadItems {
                 )
             ),
             Item(
-                R.drawable.ic_strwberry_faluda, "Japanese Mochi Ice-Cream ", 25.56, 0, "", listOf(
+                R.drawable.ic_strwberry_faluda, "Japanese Mochi Ice-Cream ", 25.00, 0, "", listOf(
                     CustomInfo("tax",0.00)
                 ), listOf(
-                    Modifier("Flavors", listOf(Option("Vanilla", 25.56, 1)))
+                    Modifier("Flavors", listOf(Option("Vanilla", 25.00, 1)))
                 )
             ),
             Item(
-                R.drawable.ic_food_cream, "cream", 25.56, 0, "", listOf(CustomInfo("tax",0.00)), listOf(
-                    Modifier("Flavors", listOf(Option("Vanilla", 25.56, 1)))
+                R.drawable.ic_food_cream, "cream", 80.00, 0, "", listOf(CustomInfo("tax",0.00)), listOf(
+                    Modifier("Flavors", listOf(Option("Vanilla", 80.00, 1)))
                 )
             ),
             Item(
-                R.drawable.ic_cream_pair, "Cream Pair", 25.56, 0, "", listOf(CustomInfo("tax",0.00)), listOf(
-                    Modifier("Flavors", listOf(Option("Vanilla", 25.56, 1)))
+                R.drawable.ic_cream_pair, "Cream Pair", 150.00, 0, "", listOf(CustomInfo("tax",0.00)), listOf(
+                    Modifier("Flavors", listOf(Option("Vanilla", 150.00, 1)))
                 )
             ),
             Item(
