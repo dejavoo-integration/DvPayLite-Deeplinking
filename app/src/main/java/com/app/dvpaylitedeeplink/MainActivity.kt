@@ -14,10 +14,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.AppCompatEditText
+import com.app.dvpaylitedeeplink.cart.PrefsHelper
 import com.denovo.app.invokeiposgo.enums.ApplicationType
 import com.denovo.app.invokeiposgo.enums.TransactionType
 import com.denovo.app.invokeiposgo.interfaces.*
 import com.denovo.app.invokeiposgo.launcher.IntentApplication
+import org.json.JSONArray
 import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
@@ -41,6 +43,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var buttonGetTPN:AppCompatButton
     private lateinit var buttonDeviceDetails:AppCompatButton
     private lateinit var buttonStatusCheck:AppCompatButton
+    private var enableL2L3Items = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -608,11 +611,19 @@ class MainActivity : AppCompatActivity() {
             "Never" -> {
                 jsonRequest.put("cardAcceptanceTime","Never")
             }
+
         }
 
         if (isTxnStatusScreenRequired != "No Tag") {
             jsonRequest.put("isTxnStatusScreenRequired", isTxnStatusScreenRequired)
         }
+            //  Attach L2/L3 only if enabled
+            if (enableL2L3Items) {
+                val l2l3Data = buildL2L3Data()
+                for (key in l2l3Data.keys()) {
+                    jsonRequest.put(key, l2l3Data.get(key))
+                }
+            }
         Log.e("Request", "Request: $jsonRequest")
 
         intentApplication.setTransactionListener(object :
@@ -983,5 +994,75 @@ class MainActivity : AppCompatActivity() {
             activityResultLauncher
         )
     }
+
+    override fun onResume() {
+        super.onResume()
+        enableL2L3Items = PrefsHelper.getL2L3LineItems(this)
+        Log.i("CartActivity", "Enable l2l3 Items $enableL2L3Items")
+    }
+
+    private fun buildL2L3Data(): JSONObject {
+        return JSONObject().apply {
+            put("TaxAmount", "12")
+            put("LocalTaxFlag", "TaxProvided")
+            put("NationalTaxAmount", "32")
+            put("DestZipCode", "42")
+            put("CustomerVatReg", "89")
+            put("SummaryCommodityCode", "987")
+            put("TaxRateApplied", "25")
+            put("TotalDiscountAmount", "9")
+            put("PoNumber", "171")
+            put("FreightAmount", "8")
+            put("DutyAmount", "12")
+            put("ShipfromZipCode", "90")
+            put("DestCountryCode", "17")
+            put("LineItemCount", "1")
+            put("AltTaxAmount", "12")
+            put("PurchaseIdentifier", "L")
+            put("CustomIdentifier", "y")
+            put("MerchantRefNumber", "1234")
+            put("merchantTaxId", "7878")
+            put("customerTaxId", "98989")
+            put("ShippingAmount", "50")
+            put("totalLTaxAmount", "38")
+
+          // Add line items
+            val group = JSONObject().apply {
+                put("CommodityCode", "10")
+                put("Description", "icecream")
+                put("ProductCode", "20")
+                put("Quantity", "1")
+                put("UnitOfMeasure", "Kg")
+                put("UnitCost", "90")
+                put("VatTaxAmount", "23")
+                put("VatTaxRate", "80")
+                put("DiscountAmount", "91")
+                put("DiscountRate", "92")
+                put("LocalTaxAmount", "38")
+                put("NationalTaxAmount", "26")
+                put("LocalTaxRate", "901")
+                put("StateTaxRate", "121")
+                put("TaxAmount", "12891")
+                put("TaxRate", "981")
+                put("TotalAmount", "135")
+                put("DiscountIndicator", "Y")
+                put("NetGrossIndicator", "Y")
+                put("DebitCreditIndicator", "N")
+                put("QuantityExpIndicator", "Y")
+                put("DiscountRateExp", "70")
+                put("ExtLineAmount", "455")
+                put("AltTaxAmount", "899")
+                put("AltTaxID", "7865")
+                put("TaxTypeApplied", "Y")
+            }
+
+            val groupArray = JSONArray().apply { put(group) }
+            val level3LineItems = JSONObject().apply {
+                put("group", groupArray)
+            }
+            put("Level3LineItems", level3LineItems)
+        }
+    }
+
 
 }

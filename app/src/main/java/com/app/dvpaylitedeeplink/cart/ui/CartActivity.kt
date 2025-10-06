@@ -36,11 +36,14 @@ import com.app.dvpaylitedeeplink.Utils
 import com.app.dvpaylitedeeplink.cart.PrefsHelper
 import com.app.dvpaylitedeeplink.cart.adapters.CartAdapter
 import com.app.dvpaylitedeeplink.cart.interfaces.TypeSelectionInterface
+import com.app.dvpaylitedeeplink.cart.models.Item
 import com.app.dvpaylitedeeplink.cart.models.LoadItems
 import com.app.dvpaylitedeeplink.dialogs.TxnCompletePopUp
 import com.denovo.app.invokeiposgo.interfaces.SettlementListener
 import com.denovo.app.invokeiposgo.interfaces.TransactionListener
 import com.denovo.app.invokeiposgo.launcher.IntentApplication
+import com.denovo.app.invokeiposgo.models.Level3ItemData
+import com.denovo.app.invokeiposgo.models.Level3ItemDataList
 import com.google.android.material.navigation.NavigationView
 import org.json.JSONArray
 import org.json.JSONObject
@@ -78,6 +81,7 @@ class CartActivity : AppCompatActivity() {
     private var showDual = false
     private var showTipScreen = false
     private var enableLineItems = false
+    private var enableL2L3Items = false
     private var txnTotalAmount: Double =0.0
     private var customerTip: Double = 0.00
 
@@ -173,6 +177,11 @@ class CartActivity : AppCompatActivity() {
                     selectedTransactionType = LoadItems.SETTLEMENT
                     showReferenceIDLayout(false)
                 }
+                R.id.nav_peripheral -> {
+                    val intent = Intent(this, PeripheralActivity::class.java)
+                    startActivity(intent)
+                    drawerLayout.closeDrawers()
+                }
             }
 
             drawerLayout.closeDrawer(GravityCompat.START)
@@ -247,8 +256,10 @@ class CartActivity : AppCompatActivity() {
                 LoadItems.TICKET -> {
                     val refIdFromEditText = referenceIDEditText.text.toString()
                     if (refIdFromEditText.isNotEmpty()) {
+                        val adapter = itemsRecyclerView.adapter as CartAdapter
+                        val selectedItems = adapter.getSelectedItems()
                         val externalRRN = EXTERNAL_RRN_PREFIX+refIdFromEditText
-                        val jsonRequest = getPayloadJSON(externalRRN,DEFAULT_VALUE)
+                        val jsonRequest = getPayloadJSON(externalRRN,DEFAULT_VALUE,selectedItems)
                         processSaleTxn(intentApplication, activityResultLauncher, jsonRequest)
                     }else{
                         Toast.makeText(this, "Please enter External RRN", Toast.LENGTH_SHORT).show()
@@ -270,6 +281,8 @@ class CartActivity : AppCompatActivity() {
                 Toast.makeText(this, "Please select at least one item", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
+            val selectedItemNames = selectedItems.map { it.name }
+            Log.e("CartActivity", "Selected Item Names: $selectedItemNames")
 
             txnTotalAmount = selectedItems.sumOf { it.price * it.quantity }
 
@@ -294,7 +307,7 @@ class CartActivity : AppCompatActivity() {
         super.onResume()
         getUserConfig()
         Log.i("CartActivity",
-            "Show Approval Screen: $showApproval------ Show Breakup Screen: $showBreakup---- Show Dual Screen: $showDual----- Enable Line Items $enableLineItems----- Show Tip Screen: $showTipScreen")
+            "Show Approval Screen: $showApproval------ Show Breakup Screen: $showBreakup---- Show Dual Screen: $showDual----- Enable Line Items $enableLineItems----- Show Tip Screen: $showTipScreen----- Enable l2l3 Items $enableL2L3Items")
     }
 
     private fun getUserConfig() {
@@ -303,6 +316,7 @@ class CartActivity : AppCompatActivity() {
         showDual = PrefsHelper.getDual(this)
         showTipScreen = PrefsHelper.getTipScreenStatus(this)
         enableLineItems = PrefsHelper.getLineItems(this)
+        enableL2L3Items = PrefsHelper.getL2L3LineItems(this)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -347,7 +361,7 @@ class CartActivity : AppCompatActivity() {
             externalRRN = Utils.generateRandom(12).toString()
             Log.d("CartActivity", "Generated external RRN: $externalRRN")
 
-            val jsonRequest = getPayloadJSON(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount)
+            val jsonRequest = getPayloadJSON(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems)
             Log.d("CartActivity", "Initialized JSON payload")
 
             val cartObject = JSONObject()
@@ -585,7 +599,7 @@ class CartActivity : AppCompatActivity() {
         itemsRecyclerView.visibility = View.GONE
     }
 
-    private fun getPayloadJSON(referenceId:String,totalAmount:Double):JSONObject{
+    private fun getPayloadJSON(referenceId:String,totalAmount:Double, items: List<Item>):JSONObject{
         val totalAmt = formatToTwoDecimalPlaces(totalAmount)
         txnTotalAmount = totalAmount
         return JSONObject().apply {
@@ -600,6 +614,15 @@ class CartActivity : AppCompatActivity() {
             put("showBreakupScreen", if (showBreakup) "Yes" else "No")
             put("showDualPriceScreen", if (showDual) "Yes" else "No")
             put("showTipScreen", if (showTipScreen) "Yes" else "No")
+            if (enableL2L3Items) {
+                val l2l3Data = buildL2L3Data(items)
+                for (key in l2l3Data.keys()) {
+                    if (key != "Level3LineItems") {
+                        put(key, l2l3Data.get(key))
+                    }
+                }
+                put("Level3LineItems", l2l3Data.getJSONObject("Level3LineItems"))
+            }
         }
     }
 
@@ -608,5 +631,95 @@ class CartActivity : AppCompatActivity() {
         imm.hideSoftInputFromWindow(referenceIDEditText.windowToken, 0)
     }
 
+    private fun buildL2L3Data(selectedItems: List<Item>): JSONObject {
+        var totalBaseAmt = 0.0
+        var totalDiscountAmt = 0.0
+        var totalLocalTax = 0.0
+        var totalStateTax = 0.0
+        var totalTaxRate = 0.0
+        var totalTaxAmount = 0.0
+        val groupArray = JSONArray().apply {
+            selectedItems.forEach { item ->
+
+                val basePrice = item.price
+                val quantity = item.quantity
+                val itemBaseAmount = basePrice * quantity
+
+                // Example tax values; replace with actual logic if available in your Item
+                val discountRate = 5.00
+                val localTaxRate = 5.00
+                val stateTaxRate = 5.00
+                val totalTaxRatePerItem = localTaxRate + stateTaxRate
+
+                    val discountAmt = (itemBaseAmount * discountRate) / 100
+                val localTaxAmt = (itemBaseAmount * localTaxRate) / 100
+                val stateTaxAmt = (itemBaseAmount * stateTaxRate) / 100
+                val totalTaxAmt = localTaxAmt + stateTaxAmt
+                val itemTotalAmount = itemBaseAmount - discountAmt + totalTaxAmt
+
+                // sanitize description
+                val description = item.name.replace(Regex("[^A-Za-z0-9]"), "")
+                put(JSONObject().apply {
+                    put("CommodityCode", "10") // Optional: static or map from your Item model
+                    put("Description", description)
+                    put("ProductCode", "20") // optional
+                    put("Quantity", quantity)
+                    put("UnitOfMeasure", "Nos") // You can change to Kg, Pcs, etc.
+                    put("UnitCost",formatToTwoDecimalPlaces(basePrice) )
+                    put("VatTaxAmount", "0") // set dynamically if you have tax info
+                    put("VatTaxRate", "0")
+                    put("DiscountAmount", formatToTwoDecimalPlaces(discountAmt))
+                    put("DiscountRate", "0")
+                    put("LocalTaxAmount", formatToTwoDecimalPlaces(localTaxAmt))
+                    put("NationalTaxAmount",formatToTwoDecimalPlaces(stateTaxAmt))
+                    put("LocalTaxRate", "0")
+                    put("StateTaxRate", "0")
+                    put("TaxAmount", formatToTwoDecimalPlaces(totalTaxAmt))
+                    put("TaxRate", "12")
+                    put("TotalAmount",formatToTwoDecimalPlaces(itemTotalAmount))
+                    put("DiscountIndicator", "N")
+                    put("NetGrossIndicator", "Y")
+                    put("DebitCreditIndicator", "N")
+                    put("QuantityExpIndicator", "N")
+                    put("DiscountRateExp", "N")
+                    put("ExtLineAmount", "")
+                    put("AltTaxAmount", "0")
+                    put("AltTaxID", "")
+                    put("TaxTypeApplied", "N")
+                    put("unitMeasureLabel", "Nos")
+                })
+            }
+        }
+        val level3LineItems = JSONObject().apply {
+            put("group", groupArray)
+        }
+        return JSONObject().apply {
+            put("IsvId", "")
+            put("cardAcceptanceTime", "")
+            put("TaxAmount", "12")
+            put("LocalTaxFlag", "TaxProvided")
+            put("NationalTaxAmount", "32")
+            put("DestZipCode", "42")
+            put("CustomerVatReg", "89")
+            put("SummaryCommodityCode", "987")
+            put("TaxRateApplied", "25")
+            put("TotalDiscountAmount", "9")
+            put("PoNumber", "")
+            put("FreightAmount", "8")
+            put("DutyAmount", "12")
+            put("ShipfromZipCode", "90")
+            put("DestCountryCode", "17")
+            put("LineItemCount", "2") // matches number of items
+            put("AltTaxAmount", "123")
+            put("PurchaseIdentifier", "L")
+            put("CustomIdentifier", "Y")
+            put("MerchantRefNumber", "4563")
+            put("merchantTaxId", "7878")
+            put("customerTaxId", "98989")
+            put("ShippingAmount", "")
+            put("totalLTaxAmount", "38")
+            put("Level3LineItems", level3LineItems)
+        }
+    }
 
 }

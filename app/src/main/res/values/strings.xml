@@ -1,6 +1,17 @@
 <resources>
     <string name="app_name">DvDemo</string>
     <string name="configuration">Configuration</string>
+    <string name="peripheral">Peripheral</string>
+    <string name="scanner_text">SCANNER</string>
+    <string name="start">START</string>
+    <string name="stop">STOP</string>
+    <string name="read">READ</string>
+    <string name="printer">PRINTER</string>
+    <string name="scanned_data">Scanned Data:</string>
+    <string name="printed_status">Print Status:</string>
+    <string name="swiped_data">Swiped Data:</string>
+    <string name="print">PRINT</string>
+    <string name="swipe_test">SWIPE_TEST</string>
 
     <string-array name="Transactions">
         <item>SALE</item>

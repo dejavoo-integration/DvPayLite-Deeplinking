@@ -30,6 +30,7 @@ class OptionSelectionActivity : AppCompatActivity() {
     private lateinit var edtCustomFee: AppCompatEditText
     private lateinit var linearTipFee: LinearLayout
     private lateinit var linearShowBreakup: LinearLayout
+    private lateinit var sendL2L3Data: SwitchCompat
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,6 +48,7 @@ class OptionSelectionActivity : AppCompatActivity() {
         tvTotalAmount = findViewById<AppCompatTextView>(R.id.tvTotalAmount)
         edtTipAmount = findViewById<AppCompatEditText>(R.id.edtTipAmount)
         edtCustomFee = findViewById<AppCompatEditText>(R.id.edtFee)
+        sendL2L3Data = findViewById(R.id.set_l2l3_data)
 
         linearTipFee.visibility = View.GONE
         linearShowBreakup.visibility = if (Build.MODEL.equals("P18", ignoreCase = true)) View.GONE else View.VISIBLE //As of now, this feature not handled in DVAmphi
@@ -56,6 +58,7 @@ class OptionSelectionActivity : AppCompatActivity() {
         switchTip.isChecked = PrefsHelper.getTipScreenStatus(this)
         switchDual.isChecked = PrefsHelper.getDual(this)
         switchLineItems.isChecked = PrefsHelper.getLineItems(this)
+        sendL2L3Data.isChecked = PrefsHelper.getL2L3LineItems(this)
 
         switchApproval.setOnCheckedChangeListener { _, isChecked ->
             PrefsHelper.saveSettings(
@@ -64,7 +67,8 @@ class OptionSelectionActivity : AppCompatActivity() {
                 switchBreakup.isChecked,
                 switchTip.isChecked,
                 switchDual.isChecked,
-                switchLineItems.isChecked
+                switchLineItems.isChecked,
+                sendL2L3Data.isChecked
             )
         }
 
@@ -75,7 +79,8 @@ class OptionSelectionActivity : AppCompatActivity() {
                 isChecked,
                 switchTip.isChecked,
                 switchDual.isChecked,
-                switchLineItems.isChecked
+                switchLineItems.isChecked,
+                sendL2L3Data.isChecked
             )
         }
         switchTip.setOnCheckedChangeListener { _, isChecked ->
@@ -85,7 +90,8 @@ class OptionSelectionActivity : AppCompatActivity() {
                 switchBreakup.isChecked,
                 isChecked,
                 switchDual.isChecked,
-                switchLineItems.isChecked
+                switchLineItems.isChecked,
+                sendL2L3Data.isChecked
             )
         }
         switchDual.setOnCheckedChangeListener { _, isChecked ->
@@ -95,7 +101,8 @@ class OptionSelectionActivity : AppCompatActivity() {
                 switchBreakup.isChecked,
                 switchTip.isChecked,
                 isChecked,
-                switchLineItems.isChecked
+                switchLineItems.isChecked,
+                sendL2L3Data.isChecked
             )
         }
         switchLineItems.setOnCheckedChangeListener { _, isChecked ->
@@ -105,7 +112,8 @@ class OptionSelectionActivity : AppCompatActivity() {
                 switchBreakup.isChecked,
                 switchTip.isChecked,
                 switchDual.isChecked,
-                isChecked
+                isChecked,
+                sendL2L3Data.isChecked
             )
         }
         btnConfirm.setOnClickListener {
@@ -116,6 +124,17 @@ class OptionSelectionActivity : AppCompatActivity() {
             onBackPressed()
         }
 
+        sendL2L3Data.setOnCheckedChangeListener { _, isChecked ->
+            PrefsHelper.saveSettings(
+                this,
+                switchApproval.isChecked,
+                switchBreakup.isChecked,
+                switchTip.isChecked,
+                switchDual.isChecked,
+                switchLineItems.isChecked,
+                isChecked
+            )
+        }
     }
 
 }

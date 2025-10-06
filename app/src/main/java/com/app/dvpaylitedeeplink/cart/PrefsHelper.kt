@@ -9,8 +9,9 @@ object PrefsHelper {
     private const val KEY_DUAL = "dual_screen"
     private const val KEY_TIP_SCREEN = "tip_screen"
     private const val KEY_LINE_ITEM = "line_items"
+    private const val KEY_L2L3_LINE_ITEM = "l2l3_line_items"
 
-    fun saveSettings(context: Context, approval: Boolean, breakup: Boolean, tipScreen: Boolean, dual: Boolean , showLineItems:Boolean) {
+    fun saveSettings(context: Context, approval: Boolean, breakup: Boolean, tipScreen: Boolean, dual: Boolean , showLineItems:Boolean, sendL2L3: Boolean) {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
         prefs.edit().apply {
             putBoolean(KEY_APPROVAL, approval)
@@ -18,6 +19,7 @@ object PrefsHelper {
             putBoolean(KEY_TIP_SCREEN, tipScreen)
             putBoolean(KEY_DUAL, dual)
             putBoolean(KEY_LINE_ITEM, showLineItems)
+            putBoolean(KEY_L2L3_LINE_ITEM, sendL2L3)
             apply()
         }
     }
@@ -36,4 +38,7 @@ object PrefsHelper {
 
     fun getLineItems(context: Context): Boolean =
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE).getBoolean(KEY_LINE_ITEM, false)
+
+    fun getL2L3LineItems(context: Context): Boolean =
+        context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE).getBoolean(KEY_L2L3_LINE_ITEM, false)
 }

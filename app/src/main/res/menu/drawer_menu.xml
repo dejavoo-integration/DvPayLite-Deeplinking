@@ -33,4 +33,8 @@
         android:id="@+id/nav_configure"
         android:icon="@drawable/configure"
         android:title="Configure" />
+    <item
+        android:id="@+id/nav_peripheral"
+        android:icon="@drawable/pheripherals"
+        android:title="Peripheral" />
 </menu>
