@@ -97,6 +97,15 @@
                 android:padding="15dp" />
 
             <Spinner
+                android:id="@+id/acceptance_spinner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="45dp"
+                android:background="@android:drawable/btn_dropdown"
+                android:entries="@array/CardAcceptanceTime"
+                android:padding="15dp" />
+
+            <Spinner
                 android:id="@+id/payment_spinner"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

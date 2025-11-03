@@ -32,7 +32,8 @@
             android:exported="false" />
         <activity
             android:name=".cart.ui.CartActivity"
-            android:exported="true" >
+            android:exported="true"
+            android:theme="@style/Theme.DvPayLiteDeepLink">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

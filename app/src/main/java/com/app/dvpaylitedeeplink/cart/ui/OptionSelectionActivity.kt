@@ -2,6 +2,7 @@ package com.app.dvpaylitedeeplink.cart.ui
 
 import android.app.Activity
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.LinearLayout
@@ -28,12 +29,14 @@ class OptionSelectionActivity : AppCompatActivity() {
     private lateinit var edtTipAmount: AppCompatEditText
     private lateinit var edtCustomFee: AppCompatEditText
     private lateinit var linearTipFee: LinearLayout
+    private lateinit var linearShowBreakup: LinearLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_option_selection)
 
         linearTipFee = findViewById(R.id.linearTipFee)
+        linearShowBreakup = findViewById(R.id.linearShowBreakup)
         switchApproval = findViewById(R.id.switchApproval)
         switchBreakup = findViewById(R.id.switchBreakup)
         switchDual = findViewById(R.id.switchDual)
@@ -46,6 +49,8 @@ class OptionSelectionActivity : AppCompatActivity() {
         edtCustomFee = findViewById<AppCompatEditText>(R.id.edtFee)
 
         linearTipFee.visibility = View.GONE
+        linearShowBreakup.visibility = if (Build.MODEL.equals("P18", ignoreCase = true)) View.GONE else View.VISIBLE //As of now, this feature not handled in DVAmphi
+
         switchApproval.isChecked = PrefsHelper.getApproval(this)
         switchBreakup.isChecked = PrefsHelper.getBreakup(this)
         switchTip.isChecked = PrefsHelper.getTipScreenStatus(this)

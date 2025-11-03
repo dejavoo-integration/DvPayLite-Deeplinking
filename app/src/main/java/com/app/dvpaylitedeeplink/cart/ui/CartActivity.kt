@@ -347,8 +347,9 @@ class CartActivity : AppCompatActivity() {
                   }*/
 
             if (data != null) {
-                customerTip = data.getStringExtra("tip")!!
+                customerTip = data.getDoubleExtra("tip",0.00)!!
                 Log.d("CartActivity", "Customer tip received: $customerTip")
+                updateTotalAmount(txnTotalAmount)
             } else {
                 Log.w("CartActivity", "Intent data is null; no tip received")
             }
@@ -401,17 +402,30 @@ class CartActivity : AppCompatActivity() {
             Log.d("CartActivity", "Items array created with ${selectedItems.size} items")
 
             val cardAmountsArray = JSONArray(cart.amounts.map { amount ->
-                val fee = (4.0 / 100) * (amount.value)
-                val cardPrice = ((amount.value) + fee)
+                val cardPrice = if (amount.name.equals("Tip", ignoreCase = true)) {
+                    amount.value
+                } else if (amount.name.equals("Total", ignoreCase = true)) {
+                    val fee = (4.0 / 100) * amount.value
+                    amount.value + fee + customerTip
+                } else {
+                    val fee = (4.0 / 100) * amount.value
+                    amount.value + fee
+                }
+
                 JSONObject().apply {
                     put("Name", amount.name)
                     put("Value", formatToTwoDecimalPlaces(cardPrice))
                 }
             })
             val cashAmountsArray = JSONArray(cart.amounts.map { amount ->
+                val cashPrice = if (amount.name.equals("Total", ignoreCase = true)) {
+                    amount.value+customerTip
+                }else{
+                    amount.value
+                }
                 JSONObject().apply {
                     put("Name", amount.name)
-                    put("Value", formatToTwoDecimalPlaces(amount.value))
+                    put("Value", formatToTwoDecimalPlaces(cashPrice))
                 }
             })
             Log.d("CartActivity", "CashPrices array created with ${cart.amounts.size} entries")
@@ -423,11 +437,11 @@ class CartActivity : AppCompatActivity() {
             if (enableLineItems) {
                 jsonRequest.put("Cart", cartObject)
                 Log.d("CartActivity", "Line items enabled; cart object added to payload")
-                Log.d("CartActivity", "Final JSON Object: $jsonRequest")
             }
-
+            Log.d("CartActivity", "Final JSON Object: $jsonRequest")
             Log.d("CartActivity", "Processing sale transaction...")
             processSaleTxn(intentApplication, activityResultLauncher, jsonRequest)
+            customerTip = 0.00
         } else {
             Log.d("CartActivity", "Request code or result code did not match expected values")
         }
@@ -528,9 +542,12 @@ class CartActivity : AppCompatActivity() {
         } else {
             cardViewAmountSection.visibility = View.VISIBLE
         }
+        Log.d("CartActivity","pragada TT"+totalAmount.toString())
+        Log.d("CartActivity","pragada"+customerTip.toString())
         val formattedTotal = String.format("%.2f", totalAmount).toDouble()
-        cart.amounts.find { it.name == "Subtotal" }?.value = formattedTotal
-        cart.amounts.find { it.name == "Total" }?.value = formattedTotal
+        cart.amounts.find { it.name == "Subtotal" }?.value = (formattedTotal)
+        cart.amounts.find { it.name == "Tip" }?.value = customerTip
+        cart.amounts.find { it.name == "Total" }?.value = (formattedTotal)
         updateAmounts()
     }
 
@@ -574,7 +591,9 @@ class CartActivity : AppCompatActivity() {
 
             layout.addView(nameEditText)
             layout.addView(valueEditText)
-            amountsContainer.addView(layout)
+            if (amount.value > 0) {
+                amountsContainer.addView(layout)
+            }
         }
     }
 
@@ -616,7 +635,7 @@ class CartActivity : AppCompatActivity() {
             put("type", selectedTransactionType)
             put("paymentType", "Credit")
             put("amount", totalAmt)
-            put("tip", customerTip)
+            put("tip",  String.format("%.2f", customerTip))
             put("applicationType", "DVPAYLITE")
             put("refId", referenceId)
             put("receiptType", "receiptType")

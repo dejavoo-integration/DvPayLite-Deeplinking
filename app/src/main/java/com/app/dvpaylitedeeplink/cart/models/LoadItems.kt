@@ -13,6 +13,7 @@ class LoadItems {
         amounts = mutableListOf(
             Amount("Discounts", 00.00),
             Amount("Subtotal", 00.00),
+            Amount("Tip", 00.00),
             Amount("Total", 00.00)
         ),
         items = mutableListOf(
