@@ -5,10 +5,10 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.text.Html
 import android.text.InputType
 import android.util.Log
 import android.view.View
-import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.CheckBox
@@ -43,14 +43,21 @@ import com.denovo.app.invokeiposgo.interfaces.SettlementListener
 import com.denovo.app.invokeiposgo.interfaces.TransactionListener
 import com.denovo.app.invokeiposgo.launcher.IntentApplication
 import com.google.android.material.navigation.NavigationView
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonParser
 import org.json.JSONArray
 import org.json.JSONObject
+import java.net.URLDecoder
 
 class CartActivity : AppCompatActivity() {
 
     companion object {
         private const val EXTERNAL_RRN_PREFIX = "DL"
         private const val DEFAULT_VALUE = 0.00
+        private const val PAYLOAD = "PAYLOAD"
+        private const val RESPONSE = "RESPONSE"
+        private const val SUCCESS = "SUCCESS"
+        private const val FAILURE = "FAILURE"
     }
 
     private lateinit var context: Context
@@ -79,7 +86,7 @@ class CartActivity : AppCompatActivity() {
     private var showDual = false
     private var showTipScreen = false
     private var enableLineItems = false
-    private var txnTotalAmount: Double =0.0
+    private var txnTotalAmount: Double = 0.0
     private var customerTip: String = "0.00"
 
     private lateinit var intentApplication: IntentApplication
@@ -136,40 +143,47 @@ class CartActivity : AppCompatActivity() {
                     startActivity(intent)
                     drawerLayout.closeDrawers()
                 }
+
                 R.id.nav_configure -> {
                     val intent = Intent(this, OptionSelectionActivity::class.java)
                     startActivity(intent)
                     drawerLayout.closeDrawers()
                 }
+
                 R.id.nav_sale -> {
-                    selectedTransactionType =LoadItems.SALE
+                    selectedTransactionType = LoadItems.SALE
                     hideSoftKeyboard()
                     showProductsListLayout()
                 }
+
                 R.id.nav_refund -> {
-                    selectedTransactionType =LoadItems.REFUND
+                    selectedTransactionType = LoadItems.REFUND
                     hideSoftKeyboard()
                     showProductsListLayout()
                 }
+
                 R.id.nav_preAuth -> {
-                    selectedTransactionType =LoadItems.PRE_AUTH
+                    selectedTransactionType = LoadItems.PRE_AUTH
                     hideSoftKeyboard()
                     showProductsListLayout()
                 }
+
                 R.id.nav_void -> {
-                    selectedTransactionType =LoadItems.VOID
+                    selectedTransactionType = LoadItems.VOID
                     if (externalRRN != null) {
                         referenceIDEditText.setText(externalRRN)
                     }
                     showReferenceIDLayout(true)
                 }
+
                 R.id.nav_ticket -> {
-                    selectedTransactionType =LoadItems.TICKET
-                        if (externalRRN != null) {
+                    selectedTransactionType = LoadItems.TICKET
+                    if (externalRRN != null) {
                         referenceIDEditText.setText(externalRRN)
                     }
                     showReferenceIDLayout(true)
                 }
+
                 R.id.nav_settlement -> {
                     selectedTransactionType = LoadItems.SETTLEMENT
                     showReferenceIDLayout(false)
@@ -198,11 +212,12 @@ class CartActivity : AppCompatActivity() {
 
                         LoadItems.VOID,
                         LoadItems.TICKET -> {
-                            if (externalRRN!=null){
+                            if (externalRRN != null) {
                                 referenceIDEditText.setText(externalRRN)
                             }
                             showReferenceIDLayout(true)
                         }
+
                         LoadItems.SETTLEMENT -> {
                             showReferenceIDLayout(false)
                         }
@@ -242,20 +257,21 @@ class CartActivity : AppCompatActivity() {
 
         updateAmounts()
 
-        proceedButton.setOnClickListener{
+        proceedButton.setOnClickListener {
             when (selectedTransactionType) {
                 LoadItems.VOID,
                 LoadItems.TICKET -> {
                     val refIdFromEditText = referenceIDEditText.text.toString()
                     if (refIdFromEditText.isNotEmpty()) {
-                        val externalRRN = EXTERNAL_RRN_PREFIX+refIdFromEditText
-                        val jsonRequest = getPayloadJSON(externalRRN,DEFAULT_VALUE)
+                        val externalRRN = EXTERNAL_RRN_PREFIX + refIdFromEditText
+                        val jsonRequest = getPayloadJSON(externalRRN, DEFAULT_VALUE)
                         processSaleTxn(intentApplication, activityResultLauncher, jsonRequest)
-                    }else{
+                    } else {
                         Toast.makeText(this, "Please enter External RRN", Toast.LENGTH_SHORT).show()
                     }
                 }
-                LoadItems.SETTLEMENT ->{
+
+                LoadItems.SETTLEMENT -> {
                     processSettlement(intentApplication, activityResultLauncher)
                 }
             }
@@ -294,8 +310,10 @@ class CartActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         getUserConfig()
-        Log.i("CartActivity",
-            "Show Approval Screen: $showApproval------ Show Breakup Screen: $showBreakup---- Show Dual Screen: $showDual----- Enable Line Items $enableLineItems----- Show Tip Screen: $showTipScreen")
+        Log.i(
+            "CartActivity",
+            "Show Approval Screen: $showApproval------ Show Breakup Screen: $showBreakup---- Show Dual Screen: $showDual----- Enable Line Items $enableLineItems----- Show Tip Screen: $showTipScreen"
+        )
     }
 
     private fun getUserConfig() {
@@ -309,7 +327,10 @@ class CartActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        Log.d("CartActivity", "onActivityResult called with requestCode: $requestCode, resultCode: $resultCode")
+        Log.d(
+            "CartActivity",
+            "onActivityResult called with requestCode: $requestCode, resultCode: $resultCode"
+        )
 
         if (requestCode == 123 && resultCode == Activity.RESULT_OK) {
             Log.d("CartActivity", "Request code matched and result OK")
@@ -319,11 +340,11 @@ class CartActivity : AppCompatActivity() {
             Log.d("CartActivity", "context--$context")
 
 
-          /*  val activityResultLauncher =
-                registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                    Log.d("CartActivity", "Nested activity result received")
-                    intentApplication.handleResultCallBack(result)
-                }*/
+            /*  val activityResultLauncher =
+                  registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                      Log.d("CartActivity", "Nested activity result received")
+                      intentApplication.handleResultCallBack(result)
+                  }*/
 
             if (data != null) {
                 customerTip = data.getStringExtra("tip")!!
@@ -427,7 +448,11 @@ class CartActivity : AppCompatActivity() {
                 clearCart()
                 val errorMessage = errorResult.get("error_message")
                 val txnCompletePopUp = TxnCompletePopUp(activity)
-                txnCompletePopUp.showPopUpDialog(false, LoadItems.TRANSACTION,errorMessage.toString())
+                txnCompletePopUp.showPopUpDialog(
+                    false,
+                    LoadItems.TRANSACTION,
+                    errorMessage.toString()
+                )
             }
 
             override fun onTransactionSuccess(transactionResult: JSONObject?) {
@@ -438,7 +463,7 @@ class CartActivity : AppCompatActivity() {
                 clearCart()
                 val txnCompletePopUp = TxnCompletePopUp(activity)
                 txnCompletePopUp.transactionResult = transactionResult
-                txnCompletePopUp.showPopUpDialog(true, LoadItems.TRANSACTION,"")
+                txnCompletePopUp.showPopUpDialog(true, LoadItems.TRANSACTION, "")
             }
 
             override fun onTransactionFailed(errorResult: JSONObject) {
@@ -446,7 +471,11 @@ class CartActivity : AppCompatActivity() {
                 clearCart()
                 val errorMessage = errorResult.get("error_message")
                 val txnCompletePopUp = TxnCompletePopUp(activity)
-                txnCompletePopUp.showPopUpDialog(false,LoadItems.TRANSACTION, errorMessage.toString())
+                txnCompletePopUp.showPopUpDialog(
+                    false,
+                    LoadItems.TRANSACTION,
+                    errorMessage.toString()
+                )
             }
         })
         intentApplication.performTransaction(
@@ -455,31 +484,42 @@ class CartActivity : AppCompatActivity() {
         )
     }
 
-    private fun processSettlement(intentApplication: IntentApplication, activityResultLauncher: ActivityResultLauncher<Intent>) {
+    private fun processSettlement(
+        intentApplication: IntentApplication,
+        activityResultLauncher: ActivityResultLauncher<Intent>
+    ) {
         val jsonRequest = JSONObject()
         jsonRequest.put("type", "SETTLE")
         jsonRequest.put("applicationType", "DVPAYLITE")
 
         intentApplication.setSettlementListener(object :
             SettlementListener {
-
             override fun onSettlementSuccess(p0: JSONObject?) {
                 Log.e("DVPAYLITE", "onSettlementSuccess-- ${p0.toString()}")
                 val txnCompletePopUp = TxnCompletePopUp(activity)
-                txnCompletePopUp.showPopUpDialog(true, LoadItems.SETTLEMENT,"")
+                txnCompletePopUp.showPopUpDialog(true, LoadItems.SETTLEMENT, "")
+                showPayLoadAndResponseLayout(RESPONSE, SUCCESS,(p0.toString()))
             }
 
             override fun onSettlementFailed(p0: JSONObject?) {
                 val txnCompletePopUp = TxnCompletePopUp(activity)
                 val errorMessage = p0?.optString("error_message")
-                txnCompletePopUp.showPopUpDialog(false, LoadItems.SETTLEMENT,errorMessage.toString())
+                txnCompletePopUp.showPopUpDialog(
+                    false,
+                    LoadItems.SETTLEMENT,
+                    errorMessage.toString()
+                )
                 Log.e("DVPAYLITE", "onSettlementFailed-- ${p0.toString()}")
+                showPayLoadAndResponseLayout(RESPONSE, FAILURE,(p0.toString()))
             }
         })
         intentApplication.settleBatch(
             jsonRequest,
             activityResultLauncher
         )
+        runOnUiThread(kotlinx.coroutines.Runnable {
+            showPayLoadAndResponseLayout(PAYLOAD,"",(jsonRequest.toString()))
+        })
     }
 
     private fun updateTotalAmount(totalAmount: Double) {
@@ -544,7 +584,7 @@ class CartActivity : AppCompatActivity() {
     }
 
     private fun formatToTwoDecimalPlaces(value: Double): String {
-        return if (value==DEFAULT_VALUE) "0.00" else (String.format("%.2f", value))
+        return if (value == DEFAULT_VALUE) "0.00" else (String.format("%.2f", value))
     }
 
     private fun clearCart() {
@@ -557,17 +597,19 @@ class CartActivity : AppCompatActivity() {
         if (itemsRecyclerView.visibility == View.GONE) {
             itemsRecyclerView.visibility = View.VISIBLE
             referenceIDLinear.visibility = View.GONE
+            hidePayLoadAndResponseLayout()
         }
     }
 
-    private fun showReferenceIDLayout(showRRNLinear:Boolean) {
+    private fun showReferenceIDLayout(showRRNLinear: Boolean) {
         clearCart()
         referenceIDLinear.visibility = View.VISIBLE
         externalRRNLinear.visibility = if (showRRNLinear) View.VISIBLE else View.GONE
         itemsRecyclerView.visibility = View.GONE
+        hidePayLoadAndResponseLayout()
     }
 
-    private fun getPayloadJSON(referenceId:String,totalAmount:Double):JSONObject{
+    private fun getPayloadJSON(referenceId: String, totalAmount: Double): JSONObject {
         val totalAmt = formatToTwoDecimalPlaces(totalAmount)
         txnTotalAmount = totalAmount
         return JSONObject().apply {
@@ -585,10 +627,83 @@ class CartActivity : AppCompatActivity() {
         }
     }
 
-    private fun hideSoftKeyboard(){
+    private fun hideSoftKeyboard() {
         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(referenceIDEditText.windowToken, 0)
     }
 
+    private fun showPayLoadAndResponseLayout(callbackType: String,status:String, data: String) {
+        val payloadCallbackLinear = findViewById<LinearLayout>(R.id.ac_payloadCallbackLinear)
+        if (payloadCallbackLinear.visibility == View.GONE) {
+            payloadCallbackLinear.visibility = View.VISIBLE
+        }
+
+        if (callbackType == PAYLOAD) {
+            val prettyJson =  GsonBuilder().setPrettyPrinting().create().toJson(data)
+            val payLoadInputTextView = findViewById<TextView>(R.id.ac_payLoadInputTextView)
+            payLoadInputTextView.text = prettyJson
+        } else if (callbackType == RESPONSE) {
+
+            val prettyJson =  GsonBuilder().setPrettyPrinting().create().toJson(data)
+            val outPutResponseTextView = findViewById<TextView>(R.id.ac_outPutResponseTextView)
+            outPutResponseTextView.text = prettyJson
+
+            if (status == SUCCESS) {
+                val receiptString = getReceiptFromResponseData(data)
+                Log.e("CartActivity","receiptString--${receiptString}")
+                if (receiptString.isNotEmpty()){
+                    val receiptTextView = findViewById<TextView>(R.id.ac_receiptTextView)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        receiptTextView.text = (Html.fromHtml(receiptString, Html.FROM_HTML_MODE_LEGACY))
+                    }
+                }
+            }
+        }
+    }
+
+    private fun hidePayLoadAndResponseLayout() {
+        val payloadCallbackLinear = findViewById<LinearLayout>(R.id.ac_payloadCallbackLinear)
+        if (payloadCallbackLinear.visibility == View.VISIBLE) {
+            payloadCallbackLinear.visibility = View.GONE
+        }
+
+        val payLoadInputTextView = findViewById<TextView>(R.id.ac_payLoadInputTextView)
+        payLoadInputTextView.text = ""
+
+        val outPutResponseTextView = findViewById<TextView>(R.id.ac_outPutResponseTextView)
+        outPutResponseTextView.text = ""
+    }
+
+
+    private fun getReceiptFromResponseData(data:String):String{
+        try {
+            val jsonObject = JSONObject(data)
+            val dataString = jsonObject.optString("data")
+            val dataObject = JSONObject(dataString)
+            val extDataString = dataObject.optString("ExtData")
+            Log.e("CartActivity","extData--${extDataString}")
+
+
+            //val extData = jsonObject.getJSONObject("data").getString("ExtData")
+
+            val parts = extDataString.split(",")
+            val receiptPart = parts.firstOrNull { it.trim().startsWith("Receipt=") }
+
+            val receiptValue = receiptPart?.substringAfter("Receipt=")?.trim()
+
+            if (receiptValue != null) {
+                val decodedReceipt = URLDecoder.decode(receiptValue, "UTF-8")
+                    .replace("\\\"", "\"")
+
+                return decodedReceipt
+            } else {
+                return ""
+            }
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return ""
+        }
+    }
 
 }
