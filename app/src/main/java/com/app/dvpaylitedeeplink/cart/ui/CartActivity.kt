@@ -87,7 +87,8 @@ class CartActivity : AppCompatActivity() {
     private var showTipScreen = false
     private var enableLineItems = false
     private var txnTotalAmount: Double = 0.0
-    private var customerTip: String = "0.00"
+    private var customerTip: Double = 0.00
+    private var isDefaultDvPay = false
 
     private lateinit var intentApplication: IntentApplication
     private lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
