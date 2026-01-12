@@ -31,6 +31,9 @@
             android:name=".cart.ui.TipAndFeeActivity"
             android:exported="false" />
         <activity
+            android:name=".JsonPreviewActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="false" />
         <activity

@@ -21,6 +21,9 @@ import com.denovo.app.invokeiposgo.interfaces.*
 import com.denovo.app.invokeiposgo.launcher.IntentApplication
 import org.json.JSONArray
 import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
     private lateinit var registerApp:AppCompatButton
@@ -43,7 +46,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var buttonGetTPN:AppCompatButton
     private lateinit var buttonDeviceDetails:AppCompatButton
     private lateinit var buttonStatusCheck:AppCompatButton
-    private var enableL2L3Items = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -617,13 +619,13 @@ class MainActivity : AppCompatActivity() {
         if (isTxnStatusScreenRequired != "No Tag") {
             jsonRequest.put("isTxnStatusScreenRequired", isTxnStatusScreenRequired)
         }
-            //  Attach L2/L3 only if enabled
+            /*//  Attach L2/L3 only if enabled
             if (enableL2L3Items) {
                 val l2l3Data = buildL2L3Data()
                 for (key in l2l3Data.keys()) {
                     jsonRequest.put(key, l2l3Data.get(key))
                 }
-            }
+            }*/
         Log.e("Request", "Request: $jsonRequest")
 
         intentApplication.setTransactionListener(object :
@@ -995,74 +997,102 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    override fun onResume() {
+   /* override fun onResume() {
         super.onResume()
         enableL2L3Items = PrefsHelper.getL2L3LineItems(this)
         Log.i("CartActivity", "Enable l2l3 Items $enableL2L3Items")
     }
 
     private fun buildL2L3Data(): JSONObject {
+
+
+        val basePrice = transactionAmout.text.toString().toDoubleOrNull() ?: 0.0
+        val quantity = 1
+        var shippingAmount = 0.0
+        var freightAmount = 0.0
+        val itemBaseAmount = basePrice * quantity
+        val discountRate = 0.5
+        val localTaxRate = 0.5
+        val stateTaxRate = 0.5
+        val discountAmt = (itemBaseAmount * discountRate) / 100
+        val localTaxAmt = (itemBaseAmount * localTaxRate) / 100
+        val stateTaxAmt = (itemBaseAmount * stateTaxRate) / 100
+        val totalTaxAmt = localTaxAmt + stateTaxAmt
+        val totalTaxRate = stateTaxRate + localTaxRate
+        val itemTotalAmount = itemBaseAmount - discountAmt + totalTaxAmt
+        var altTaxAmount = 0.0
+        var dutyAmount = 0.0
         return JSONObject().apply {
-            put("TaxAmount", "12")
-            put("LocalTaxFlag", "TaxProvided")
-            put("NationalTaxAmount", "32")
-            put("DestZipCode", "42")
-            put("CustomerVatReg", "89")
-            put("SummaryCommodityCode", "987")
-            put("TaxRateApplied", "25")
-            put("TotalDiscountAmount", "9")
-            put("PoNumber", "171")
-            put("FreightAmount", "8")
-            put("DutyAmount", "12")
+            put("IsvId", "23454")
+            put("cardAcceptanceTime", "")
+            put("TaxAmount", formatToTwoDecimalPlaces(totalTaxAmt))
+            put("LocalTaxFlag", "1")
+            put("NationalTaxAmount", formatToTwoDecimalPlaces(stateTaxAmt))
+            put("LocalTaxAmount", formatToTwoDecimalPlaces(localTaxAmt))
+            put("DestZipCode", "840")
+            put("CustomerVatReg", "")
+            put("SummaryCommodityCode", "0987")
+            put("TaxRateApplied", "")
+            put("TotalDiscountAmount", formatToTwoDecimalPlaces(discountAmt))
+            put("PoNumber",  Utils.generateRandom(6))
+            put("QuantityExpIndicator", "0")
+            put("FreightAmount", formatToTwoDecimalPlaces(freightAmount))
+            put("DutyAmount", formatToTwoDecimalPlaces(dutyAmount))
             put("ShipfromZipCode", "90")
-            put("DestCountryCode", "17")
+            put("DestCountryCode", "840")
             put("LineItemCount", "1")
-            put("AltTaxAmount", "12")
-            put("PurchaseIdentifier", "L")
-            put("CustomIdentifier", "y")
-            put("MerchantRefNumber", "1234")
-            put("merchantTaxId", "7878")
-            put("customerTaxId", "98989")
-            put("ShippingAmount", "50")
-            put("totalLTaxAmount", "38")
+            put("AltTaxAmount", "")
+            put("PurchaseIdentifier", Utils.generateRandom(9))
+            put("CustomIdentifier", "")
+            put("MerchantTaxId", "0")
+            put("VatInvNum", "98989")
+            put("ShippingAmount", formatToTwoDecimalPlaces(shippingAmount))
+            put("totalLTaxAmount", formatToTwoDecimalPlaces(localTaxAmt))
+            put("PurchaseIdFormatCode","")
+            put("OrderDate",Utils.getCurrentDateYYMMDD())
+            put("AltTaxIndicator","1")
 
           // Add line items
             val group = JSONObject().apply {
-                put("CommodityCode", "10")
-                put("Description", "icecream")
-                put("ProductCode", "20")
-                put("Quantity", "1")
-                put("UnitOfMeasure", "Kg")
-                put("UnitCost", "90")
-                put("VatTaxAmount", "23")
-                put("VatTaxRate", "80")
-                put("DiscountAmount", "91")
-                put("DiscountRate", "92")
-                put("LocalTaxAmount", "38")
-                put("NationalTaxAmount", "26")
-                put("LocalTaxRate", "901")
-                put("StateTaxRate", "121")
-                put("TaxAmount", "12891")
-                put("TaxRate", "981")
-                put("TotalAmount", "135")
+                put("CommodityCode", "10") // Optional: static or map from your Item model
+                put("Description", "this is the product description")
+                put("ProductCode", "2012") // optional
+                put("Quantity", quantity)
+                put("UnitOfMeasure", "ITM") // You can change to Kg, Pcs, etc.
+                put("UnitCost",formatToTwoDecimalPlaces(basePrice) )
+                put("DiscountAmount", formatToTwoDecimalPlaces(discountAmt))
+                put("DiscountRate", discountRate)
+                put("LocalTaxAmount", formatToTwoDecimalPlaces(localTaxAmt))
+                put("NationalTaxAmount",formatToTwoDecimalPlaces(stateTaxAmt))
+                put("NationalTaxRate","")
+                put("LocalTaxRate", localTaxRate)
+                put("StateTaxRate", stateTaxRate)
+                put("TaxAmount", formatToTwoDecimalPlaces(totalTaxAmt))
+                put("TaxRate", totalTaxRate)
+                put("TotalAmount",formatToTwoDecimalPlaces(itemTotalAmount))
                 put("DiscountIndicator", "Y")
-                put("NetGrossIndicator", "Y")
-                put("DebitCreditIndicator", "N")
-                put("QuantityExpIndicator", "Y")
-                put("DiscountRateExp", "70")
-                put("ExtLineAmount", "455")
-                put("AltTaxAmount", "899")
-                put("AltTaxID", "7865")
-                put("TaxTypeApplied", "Y")
+                put("NetGrossIndicator", "N")
+                put("DebitCreditIndicator", "D")
+                put("QuantityExpIndicator", "N")
+                put("DiscountRateExp", "2")
+                put("ExtLineAmount", formatToTwoDecimalPlaces(itemBaseAmount))
+                put("AltTaxAmount",formatToTwoDecimalPlaces(altTaxAmount))
+                put("AltTaxID", "")
+                put("ItemQuantityDecimal", "2")
+                put("TaxTypeApplied", "")
+                put("UnitPriceDecimal", "2")
+                put("TaxIndicator", "1")
             }
 
-            val groupArray = JSONArray().apply { put(group) }
+            val groupArray = JSONArray  ().apply { put(group) }
             val level3LineItems = JSONObject().apply {
                 put("group", groupArray)
             }
             put("Level3LineItems", level3LineItems)
         }
     }
-
+    private fun formatToTwoDecimalPlaces(value: Double): String {
+        return if (value==DEFAULT_VALUE) "0.00" else (String.format("%.2f", value))
+    }*/
 
 }

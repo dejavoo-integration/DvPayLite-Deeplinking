@@ -30,6 +30,7 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.app.dvpaylitedeeplink.BuildConfig
+import com.app.dvpaylitedeeplink.JsonPreviewActivity
 import com.app.dvpaylitedeeplink.MainActivity
 import com.app.dvpaylitedeeplink.R
 import com.app.dvpaylitedeeplink.Utils
@@ -47,6 +48,9 @@ import com.denovo.app.invokeiposgo.models.Level3ItemDataList
 import com.google.android.material.navigation.NavigationView
 import org.json.JSONArray
 import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class CartActivity : AppCompatActivity() {
 
@@ -82,6 +86,7 @@ class CartActivity : AppCompatActivity() {
     private var showTipScreen = false
     private var enableLineItems = false
     private var enableL2L3Items = false
+    private var showJsonPreview = false
     private var txnTotalAmount: Double =0.0
     private var customerTip: Double = 0.00
 
@@ -178,8 +183,8 @@ class CartActivity : AppCompatActivity() {
                     showReferenceIDLayout(false)
                 }
                 R.id.nav_peripheral -> {
-                    val intent = Intent(this, PeripheralActivity::class.java)
-                    startActivity(intent)
+//                    val intent = Intent(this, PeripheralActivity::class.java)
+//                    startActivity(intent)
                     drawerLayout.closeDrawers()
                 }
             }
@@ -307,7 +312,7 @@ class CartActivity : AppCompatActivity() {
         super.onResume()
         getUserConfig()
         Log.i("CartActivity",
-            "Show Approval Screen: $showApproval------ Show Breakup Screen: $showBreakup---- Show Dual Screen: $showDual----- Enable Line Items $enableLineItems----- Show Tip Screen: $showTipScreen----- Enable l2l3 Items $enableL2L3Items")
+            "Show Approval Screen: $showApproval------ Show Breakup Screen: $showBreakup---- Show Dual Screen: $showDual----- Enable Line Items $enableLineItems----- Show Tip Screen: $showTipScreen----- Enable l2l3 Items $enableL2L3Items----show Json Preview $showJsonPreview")
     }
 
     private fun getUserConfig() {
@@ -317,6 +322,7 @@ class CartActivity : AppCompatActivity() {
         showTipScreen = PrefsHelper.getTipScreenStatus(this)
         enableLineItems = PrefsHelper.getLineItems(this)
         enableL2L3Items = PrefsHelper.getL2L3LineItems(this)
+        showJsonPreview =PrefsHelper.getJsonPreviewStatus(this)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -427,14 +433,29 @@ class CartActivity : AppCompatActivity() {
             cartObject.put("CashPrices", cashAmountsArray)
 
             if (enableLineItems) {
-                jsonRequest.put("Cart", cartObject)
+             //   jsonRequest.put("Cart", cartObject)
                 Log.d("CartActivity", "Line items enabled; cart object added to payload")
             }
             Log.d("CartActivity", "Final JSON Object: $jsonRequest")
             Log.d("CartActivity", "Processing sale transaction...")
-            processSaleTxn(intentApplication, activityResultLauncher, jsonRequest)
+            if(showJsonPreview){
+                val intent = Intent(this, JsonPreviewActivity::class.java)
+                intent.putExtra("jsonPayload", jsonRequest.toString(2))
+                startActivityForResult(intent, 456)
+            }else{
+                processSaleTxn(intentApplication, activityResultLauncher, jsonRequest)
+            }
             customerTip = 0.00
-        } else {
+        }
+        if (requestCode == 456 && resultCode == Activity.RESULT_OK) {
+            val editedJsonString = data?.getStringExtra("editedJson")
+            if (!editedJsonString.isNullOrEmpty()) {
+                val finalJson = JSONObject(editedJsonString)
+                Log.d("CartActivity", "Confirmed JSON: $finalJson")
+                processSaleTxn(intentApplication, activityResultLauncher, finalJson)
+            }
+        }
+        else {
             Log.d("CartActivity", "Request code or result code did not match expected values")
         }
     }
@@ -632,61 +653,62 @@ class CartActivity : AppCompatActivity() {
     }
 
     private fun buildL2L3Data(selectedItems: List<Item>): JSONObject {
-        var totalBaseAmt = 0.0
+
         var totalDiscountAmt = 0.0
-        var totalLocalTax = 0.0
+        var dutyAmount = 0.0
         var totalStateTax = 0.0
-        var totalTaxRate = 0.0
+        var totalLocalTax = 0.0
+        var totalAltTaxAmount = 0.0
         var totalTaxAmount = 0.0
+        var shippingAmount = 0.0
+        var freightAmount = 0.0
+        var taxRate = 0.0
         val groupArray = JSONArray().apply {
             selectedItems.forEach { item ->
 
                 val basePrice = item.price
                 val quantity = item.quantity
                 val itemBaseAmount = basePrice * quantity
+                var altTaxAmount = 0.0
 
                 // Example tax values; replace with actual logic if available in your Item
-                val discountRate = 5.00
-                val localTaxRate = 5.00
-                val stateTaxRate = 5.00
-                val totalTaxRatePerItem = localTaxRate + stateTaxRate
+                val discountRate = item.discountRate
+                val localTaxRate = item.localTaxRate
+                val stateTaxRate = item.stateTaxRate
 
-                    val discountAmt = (itemBaseAmount * discountRate) / 100
-                val localTaxAmt = (itemBaseAmount * localTaxRate) / 100
-                val stateTaxAmt = (itemBaseAmount * stateTaxRate) / 100
+                    val discountAmt =  itemBaseAmount * 0.5
+                val localTaxAmt =  itemBaseAmount * 0.20
+                val stateTaxAmt =  itemBaseAmount * 0.10
                 val totalTaxAmt = localTaxAmt + stateTaxAmt
+                val totalTaxRate = stateTaxRate + localTaxRate
                 val itemTotalAmount = itemBaseAmount - discountAmt + totalTaxAmt
+                totalTaxAmount += totalTaxAmt
+                totalStateTax += stateTaxAmt
+                totalLocalTax += localTaxAmt
+                totalDiscountAmt += discountAmt
+                taxRate = totalTaxRate
 
-                // sanitize description
                 val description = item.name.replace(Regex("[^A-Za-z0-9]"), "")
                 put(JSONObject().apply {
-                    put("CommodityCode", "10") // Optional: static or map from your Item model
+                    put("CommodityCode", "10")
                     put("Description", description)
-                    put("ProductCode", "20") // optional
-                    put("Quantity", quantity)
-                    put("UnitOfMeasure", "Nos") // You can change to Kg, Pcs, etc.
-                    put("UnitCost",formatToTwoDecimalPlaces(basePrice) )
-                    put("VatTaxAmount", "0") // set dynamically if you have tax info
-                    put("VatTaxRate", "0")
-                    put("DiscountAmount", formatToTwoDecimalPlaces(discountAmt))
-                    put("DiscountRate", "0")
-                    put("LocalTaxAmount", formatToTwoDecimalPlaces(localTaxAmt))
-                    put("NationalTaxAmount",formatToTwoDecimalPlaces(stateTaxAmt))
-                    put("LocalTaxRate", "0")
-                    put("StateTaxRate", "0")
-                    put("TaxAmount", formatToTwoDecimalPlaces(totalTaxAmt))
-                    put("TaxRate", "12")
-                    put("TotalAmount",formatToTwoDecimalPlaces(itemTotalAmount))
+                    put("ProductCode", "2012")
+                    put("Quantity", item.quantity.toString())
+                    put("UnitOfMeasure", "ITM")
+                    put("UnitCost",formatToTwoDecimalPlaces(basePrice))
+                    put("TaxRate",formatToTwoDecimalPlaces(localTaxRate))
+                    put("TaxAmount", formatToTwoDecimalPlaces(localTaxAmt))
+                    put("DiscountAmount", "0.00")
+                    put("DiscountRate", "0.00")
                     put("DiscountIndicator", "N")
-                    put("NetGrossIndicator", "Y")
-                    put("DebitCreditIndicator", "N")
-                    put("QuantityExpIndicator", "N")
-                    put("DiscountRateExp", "N")
-                    put("ExtLineAmount", "")
-                    put("AltTaxAmount", "0")
-                    put("AltTaxID", "")
-                    put("TaxTypeApplied", "N")
-                    put("unitMeasureLabel", "Nos")
+                    put("NetGrossIndicator", "N")
+                    put("DebitCreditIndicator", "D")
+                    put("ExtLineAmount",formatToTwoDecimalPlaces(itemTotalAmount))
+                    put("AltTaxID", "0")
+                    put("TaxTypeApplied", "")
+                    put("NationalTaxAmount",formatToTwoDecimalPlaces(stateTaxAmt))
+                    put("NationalTaxRate",formatToTwoDecimalPlaces((stateTaxRate)))
+                    put("TaxIndicator", "1")
                 })
             }
         }
@@ -694,30 +716,30 @@ class CartActivity : AppCompatActivity() {
             put("group", groupArray)
         }
         return JSONObject().apply {
-            put("IsvId", "")
+            put("IsvId", "23454")
             put("cardAcceptanceTime", "")
-            put("TaxAmount", "12")
-            put("LocalTaxFlag", "TaxProvided")
-            put("NationalTaxAmount", "32")
-            put("DestZipCode", "42")
-            put("CustomerVatReg", "89")
-            put("SummaryCommodityCode", "987")
-            put("TaxRateApplied", "25")
-            put("TotalDiscountAmount", "9")
-            put("PoNumber", "")
-            put("FreightAmount", "8")
-            put("DutyAmount", "12")
+            put("TaxAmount", Utils.removeDouble(totalTaxAmount))
+            put("LocalTaxFlag", "1")
+            put("NationalTaxAmount", formatToTwoDecimalPlaces(totalStateTax))
+//            put("LocalTaxAmount", formatToTwoDecimalPlaces(totalLocalTax))
+            put("DestZipCode", "840")
+            put("SummaryCommodityCode", "0987")
+            put("TaxRateApplied", "")
+            put("TotalDiscountAmount", formatToTwoDecimalPlaces(totalDiscountAmt))
+            put("PoNumber", Utils.generateRandom(6).toString())
+            put("FreightAmount", formatToTwoDecimalPlaces(freightAmount))
+            put("DutyAmount", formatToTwoDecimalPlaces(dutyAmount))
             put("ShipfromZipCode", "90")
-            put("DestCountryCode", "17")
-            put("LineItemCount", "2") // matches number of items
-            put("AltTaxAmount", "123")
-            put("PurchaseIdentifier", "L")
-            put("CustomIdentifier", "Y")
-            put("MerchantRefNumber", "4563")
-            put("merchantTaxId", "7878")
-            put("customerTaxId", "98989")
-            put("ShippingAmount", "")
-            put("totalLTaxAmount", "38")
+            put("DestCountryCode", "840")
+            put("LineItemCount", selectedItems.size.toString())
+            put("AltTaxAmount", "0")
+            put("PurchaseIdentifier", Utils.generateRandom(9).toString())
+            put("PurchaseIdFormatCode","")
+            put("MerchantTaxId", "0")
+//            put("VatInvNum", "98989")
+//            put("totalLTaxAmount", formatToTwoDecimalPlaces(totalLocalTax))
+            put("AltTaxIndicator","")
+            put("OrderDate",Utils.getCurrentDateYYMMDD())
             put("Level3LineItems", level3LineItems)
         }
     }
