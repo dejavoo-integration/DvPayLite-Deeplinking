@@ -10,8 +10,9 @@ object PrefsHelper {
     private const val KEY_TIP_SCREEN = "tip_screen"
     private const val KEY_LINE_ITEM = "line_items"
     private const val KEY_L2L3_LINE_ITEM = "l2l3_line_items"
+    private const val KEY_JSON_PREVIEW = "json_preview"
 
-    fun saveSettings(context: Context, approval: Boolean, breakup: Boolean, tipScreen: Boolean, dual: Boolean , showLineItems:Boolean, sendL2L3: Boolean) {
+    fun saveSettings(context: Context, approval: Boolean, breakup: Boolean, tipScreen: Boolean, dual: Boolean , showLineItems:Boolean, sendL2L3: Boolean,showJsonPreview :Boolean) {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
         prefs.edit().apply {
             putBoolean(KEY_APPROVAL, approval)
@@ -20,6 +21,7 @@ object PrefsHelper {
             putBoolean(KEY_DUAL, dual)
             putBoolean(KEY_LINE_ITEM, showLineItems)
             putBoolean(KEY_L2L3_LINE_ITEM, sendL2L3)
+            putBoolean(KEY_JSON_PREVIEW, showJsonPreview)
             apply()
         }
     }
@@ -41,4 +43,7 @@ object PrefsHelper {
 
     fun getL2L3LineItems(context: Context): Boolean =
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE).getBoolean(KEY_L2L3_LINE_ITEM, false)
+
+    fun getJsonPreviewStatus(context: Context): Boolean =
+        context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE).getBoolean(KEY_JSON_PREVIEW, false)
 }

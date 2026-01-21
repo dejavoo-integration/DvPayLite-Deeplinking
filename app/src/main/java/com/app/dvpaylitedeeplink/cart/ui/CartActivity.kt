@@ -1,8 +1,14 @@
 package com.app.dvpaylitedeeplink.cart.ui
 
 import android.app.Activity
+import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.PackageManager
+import android.hardware.usb.UsbDevice
+import android.hardware.usb.UsbManager
 import android.os.Build
 import android.os.Bundle
 import android.text.InputType
@@ -29,7 +35,9 @@ import androidx.core.widget.addTextChangedListener
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.transition.Visibility
 import com.app.dvpaylitedeeplink.BuildConfig
+import com.app.dvpaylitedeeplink.JsonPreviewActivity
 import com.app.dvpaylitedeeplink.MainActivity
 import com.app.dvpaylitedeeplink.R
 import com.app.dvpaylitedeeplink.Utils
@@ -39,12 +47,16 @@ import com.app.dvpaylitedeeplink.cart.interfaces.TypeSelectionInterface
 import com.app.dvpaylitedeeplink.cart.models.Item
 import com.app.dvpaylitedeeplink.cart.models.LoadItems
 import com.app.dvpaylitedeeplink.dialogs.TxnCompletePopUp
+import com.app.dvpaylitedeeplink.usb.UsbPosManager
 import com.denovo.app.invokeiposgo.interfaces.SettlementListener
 import com.denovo.app.invokeiposgo.interfaces.TransactionListener
 import com.denovo.app.invokeiposgo.launcher.IntentApplication
 import com.denovo.app.invokeiposgo.models.Level3ItemData
 import com.denovo.app.invokeiposgo.models.Level3ItemDataList
 import com.google.android.material.navigation.NavigationView
+import com.hoho.android.usbserial.driver.UsbSerialDriver
+import com.hoho.android.usbserial.driver.UsbSerialPort
+import com.hoho.android.usbserial.driver.UsbSerialProber
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -82,8 +94,14 @@ class CartActivity : AppCompatActivity() {
     private var showTipScreen = false
     private var enableLineItems = false
     private var enableL2L3Items = false
+    private var showJsonPreview = false
     private var txnTotalAmount: Double =0.0
     private var customerTip: Double = 0.00
+    private lateinit var usbManager: UsbManager
+    private var serialPort: UsbSerialPort? = null
+    private lateinit var usbPosManager: UsbPosManager
+    private val ACTION_USB_PERMISSION =
+        "com.app.dvpaylitedeeplink.USB_PERMISSION"
 
     private lateinit var intentApplication: IntentApplication
     private lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
@@ -94,6 +112,18 @@ class CartActivity : AppCompatActivity() {
         activity = this
         context = this as Context
 
+        usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
+
+        if (!isUsbHostSupported()) {
+            Toast.makeText(this, "USB Host not supported", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        usbPosManager = UsbPosManager(this)
+        usbPosManager.init()
+       // registerUsbReceiver()
+
+       // autoConnectUsb()
         transactionTypesRecyclerView = findViewById(R.id.transactionTypesRecyclerView)
         lineItemCheckBox = findViewById(R.id.ac_lineItemCheckBox)
         itemsRecyclerView = findViewById(R.id.itemsRecyclerView)
@@ -178,8 +208,8 @@ class CartActivity : AppCompatActivity() {
                     showReferenceIDLayout(false)
                 }
                 R.id.nav_peripheral -> {
-                    val intent = Intent(this, PeripheralActivity::class.java)
-                    startActivity(intent)
+//                    val intent = Intent(this, PeripheralActivity::class.java)
+//                    startActivity(intent)
                     drawerLayout.closeDrawers()
                 }
             }
@@ -307,7 +337,7 @@ class CartActivity : AppCompatActivity() {
         super.onResume()
         getUserConfig()
         Log.i("CartActivity",
-            "Show Approval Screen: $showApproval------ Show Breakup Screen: $showBreakup---- Show Dual Screen: $showDual----- Enable Line Items $enableLineItems----- Show Tip Screen: $showTipScreen----- Enable l2l3 Items $enableL2L3Items")
+            "Show Approval Screen: $showApproval------ Show Breakup Screen: $showBreakup---- Show Dual Screen: $showDual----- Enable Line Items $enableLineItems----- Show Tip Screen: $showTipScreen----- Enable l2l3 Items $enableL2L3Items----show Json Preview $showJsonPreview")
     }
 
     private fun getUserConfig() {
@@ -317,6 +347,7 @@ class CartActivity : AppCompatActivity() {
         showTipScreen = PrefsHelper.getTipScreenStatus(this)
         enableLineItems = PrefsHelper.getLineItems(this)
         enableL2L3Items = PrefsHelper.getL2L3LineItems(this)
+        showJsonPreview =PrefsHelper.getJsonPreviewStatus(this)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -427,14 +458,38 @@ class CartActivity : AppCompatActivity() {
             cartObject.put("CashPrices", cashAmountsArray)
 
             if (enableLineItems) {
-                jsonRequest.put("Cart", cartObject)
+             //   jsonRequest.put("Cart", cartObject)
                 Log.d("CartActivity", "Line items enabled; cart object added to payload")
             }
             Log.d("CartActivity", "Final JSON Object: $jsonRequest")
             Log.d("CartActivity", "Processing sale transaction...")
-            processSaleTxn(intentApplication, activityResultLauncher, jsonRequest)
+            val editedJsonString = data?.getStringExtra("editedJson")
+            if (!editedJsonString.isNullOrEmpty()) {
+                val finalJson = JSONObject(editedJsonString)
+                Log.d("CartActivity", "Confirmed JSON: $finalJson")
+               // usbrequest(finalJson)
+                // processSaleTxn(intentApplication, activityResultLauncher, finalJson)
+            }
+            if(showJsonPreview){
+                val intent = Intent(this, JsonPreviewActivity::class.java)
+                intent.putExtra("jsonPayload", jsonRequest.toString(2))
+                startActivityForResult(intent, 456)
+            }else{
+              //  usbrequest(jsonRequest)
+               // processSaleTxn(intentApplication, activityResultLauncher, jsonRequest)
+            }
             customerTip = 0.00
-        } else {
+        }
+        if (requestCode == 456 && resultCode == Activity.RESULT_OK) {
+            val editedJsonString = data?.getStringExtra("editedJson")
+            if (!editedJsonString.isNullOrEmpty()) {
+                val finalJson = JSONObject(editedJsonString)
+                Log.d("CartActivity", "Confirmed JSON: $finalJson")
+               // usbrequest(finalJson)
+               // processSaleTxn(intentApplication, activityResultLauncher, finalJson)
+            }
+        }
+        else {
             Log.d("CartActivity", "Request code or result code did not match expected values")
         }
     }
@@ -632,61 +687,62 @@ class CartActivity : AppCompatActivity() {
     }
 
     private fun buildL2L3Data(selectedItems: List<Item>): JSONObject {
-        var totalBaseAmt = 0.0
+
         var totalDiscountAmt = 0.0
-        var totalLocalTax = 0.0
+        var dutyAmount = 0.0
         var totalStateTax = 0.0
-        var totalTaxRate = 0.0
+        var totalLocalTax = 0.0
+        var totalAltTaxAmount = 0.0
         var totalTaxAmount = 0.0
+        var shippingAmount = 0.0
+        var freightAmount = 0.0
+        var taxRate = 0.0
         val groupArray = JSONArray().apply {
             selectedItems.forEach { item ->
 
                 val basePrice = item.price
                 val quantity = item.quantity
                 val itemBaseAmount = basePrice * quantity
+                var altTaxAmount = 0.0
 
                 // Example tax values; replace with actual logic if available in your Item
-                val discountRate = 5.00
-                val localTaxRate = 5.00
-                val stateTaxRate = 5.00
-                val totalTaxRatePerItem = localTaxRate + stateTaxRate
+                val discountRate = item.discountRate
+                val localTaxRate = item.localTaxRate
+                val stateTaxRate = item.stateTaxRate
 
-                    val discountAmt = (itemBaseAmount * discountRate) / 100
-                val localTaxAmt = (itemBaseAmount * localTaxRate) / 100
-                val stateTaxAmt = (itemBaseAmount * stateTaxRate) / 100
+                    val discountAmt =  itemBaseAmount * 0.5
+                val localTaxAmt =  itemBaseAmount * 0.20
+                val stateTaxAmt =  itemBaseAmount * 0.10
                 val totalTaxAmt = localTaxAmt + stateTaxAmt
+                val totalTaxRate = stateTaxRate + localTaxRate
                 val itemTotalAmount = itemBaseAmount - discountAmt + totalTaxAmt
+                totalTaxAmount += totalTaxAmt
+                totalStateTax += stateTaxAmt
+                totalLocalTax += localTaxAmt
+                totalDiscountAmt += discountAmt
+                taxRate = totalTaxRate
 
-                // sanitize description
                 val description = item.name.replace(Regex("[^A-Za-z0-9]"), "")
                 put(JSONObject().apply {
-                    put("CommodityCode", "10") // Optional: static or map from your Item model
+                    put("CommodityCode", "10")
                     put("Description", description)
-                    put("ProductCode", "20") // optional
-                    put("Quantity", quantity)
-                    put("UnitOfMeasure", "Nos") // You can change to Kg, Pcs, etc.
-                    put("UnitCost",formatToTwoDecimalPlaces(basePrice) )
-                    put("VatTaxAmount", "0") // set dynamically if you have tax info
-                    put("VatTaxRate", "0")
-                    put("DiscountAmount", formatToTwoDecimalPlaces(discountAmt))
-                    put("DiscountRate", "0")
-                    put("LocalTaxAmount", formatToTwoDecimalPlaces(localTaxAmt))
-                    put("NationalTaxAmount",formatToTwoDecimalPlaces(stateTaxAmt))
-                    put("LocalTaxRate", "0")
-                    put("StateTaxRate", "0")
-                    put("TaxAmount", formatToTwoDecimalPlaces(totalTaxAmt))
-                    put("TaxRate", "12")
-                    put("TotalAmount",formatToTwoDecimalPlaces(itemTotalAmount))
+                    put("ProductCode", "2012")
+                    put("Quantity", item.quantity.toString())
+                    put("UnitOfMeasure", "ITM")
+                    put("UnitCost",formatToTwoDecimalPlaces(basePrice))
+                    put("TaxRate",formatToTwoDecimalPlaces(localTaxRate))
+                    put("TaxAmount", formatToTwoDecimalPlaces(localTaxAmt))
+                    put("DiscountAmount", "0.00")
+                    put("DiscountRate", "0.00")
                     put("DiscountIndicator", "N")
-                    put("NetGrossIndicator", "Y")
-                    put("DebitCreditIndicator", "N")
-                    put("QuantityExpIndicator", "N")
-                    put("DiscountRateExp", "N")
-                    put("ExtLineAmount", "")
-                    put("AltTaxAmount", "0")
-                    put("AltTaxID", "")
-                    put("TaxTypeApplied", "N")
-                    put("unitMeasureLabel", "Nos")
+                    put("NetGrossIndicator", "N")
+                    put("DebitCreditIndicator", "D")
+                    put("ExtLineAmount",formatToTwoDecimalPlaces(itemTotalAmount))
+                    put("AltTaxID", "0")
+                    put("TaxTypeApplied", "")
+                    put("NationalTaxAmount",formatToTwoDecimalPlaces(stateTaxAmt))
+                    put("NationalTaxRate",formatToTwoDecimalPlaces((stateTaxRate)))
+                    put("TaxIndicator", "1")
                 })
             }
         }
@@ -694,32 +750,210 @@ class CartActivity : AppCompatActivity() {
             put("group", groupArray)
         }
         return JSONObject().apply {
-            put("IsvId", "")
+            put("IsvId", "23454")
             put("cardAcceptanceTime", "")
-            put("TaxAmount", "12")
-            put("LocalTaxFlag", "TaxProvided")
-            put("NationalTaxAmount", "32")
-            put("DestZipCode", "42")
-            put("CustomerVatReg", "89")
-            put("SummaryCommodityCode", "987")
-            put("TaxRateApplied", "25")
-            put("TotalDiscountAmount", "9")
-            put("PoNumber", "")
-            put("FreightAmount", "8")
-            put("DutyAmount", "12")
+            put("TaxAmount", Utils.removeDouble(totalTaxAmount))
+            put("LocalTaxFlag", "1")
+            put("NationalTaxAmount", formatToTwoDecimalPlaces(totalStateTax))
+//            put("LocalTaxAmount", formatToTwoDecimalPlaces(totalLocalTax))
+            put("DestZipCode", "840")
+            put("SummaryCommodityCode", "0987")
+            put("TaxRateApplied", "")
+            put("TotalDiscountAmount", formatToTwoDecimalPlaces(totalDiscountAmt))
+            put("PoNumber", Utils.generateRandom(6).toString())
+            put("FreightAmount", formatToTwoDecimalPlaces(freightAmount))
+            put("DutyAmount", formatToTwoDecimalPlaces(dutyAmount))
             put("ShipfromZipCode", "90")
-            put("DestCountryCode", "17")
-            put("LineItemCount", "2") // matches number of items
-            put("AltTaxAmount", "123")
-            put("PurchaseIdentifier", "L")
-            put("CustomIdentifier", "Y")
-            put("MerchantRefNumber", "4563")
-            put("merchantTaxId", "7878")
-            put("customerTaxId", "98989")
-            put("ShippingAmount", "")
-            put("totalLTaxAmount", "38")
+            put("DestCountryCode", "840")
+            put("LineItemCount", selectedItems.size.toString())
+            put("AltTaxAmount", "0")
+            put("PurchaseIdentifier", Utils.generateRandom(9).toString())
+            put("PurchaseIdFormatCode","")
+            put("MerchantTaxId", "0")
+//            put("VatInvNum", "98989")
+//            put("totalLTaxAmount", formatToTwoDecimalPlaces(totalLocalTax))
+            put("AltTaxIndicator","")
+            put("OrderDate",Utils.getCurrentDateYYMMDD())
             put("Level3LineItems", level3LineItems)
         }
     }
+
+
+    private fun isUsbHostSupported(): Boolean {
+        return packageManager.hasSystemFeature(
+            PackageManager.FEATURE_USB_HOST
+        )
+    }
+
+    private fun autoConnectUsb() {
+        if (serialPort?.isOpen == true) return
+
+        val drivers = UsbSerialProber.getDefaultProber()
+            .findAllDrivers(usbManager)
+
+        if (drivers.isEmpty()) return
+
+        val driver = drivers.first()
+        val port = driver.ports.first()
+
+        if (usbManager.hasPermission(driver.device)) {
+            openPort(driver, port)
+        } else {
+            requestUsbPermission(driver.device)
+        }
+    }
+
+    private fun requestUsbPermission(device: UsbDevice) {
+        val intent = Intent(ACTION_USB_PERMISSION)
+        intent.setPackage(packageName)
+
+        val permissionIntent = PendingIntent.getBroadcast(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        usbManager.requestPermission(device, permissionIntent)
+    }
+
+    private fun openPort(
+        driver: UsbSerialDriver,
+        port: UsbSerialPort
+    ) {
+        try {
+            val connection = usbManager.openDevice(driver.device)
+                ?: return
+
+            port.open(connection)
+            port.setParameters(
+                9600,
+                8,
+                UsbSerialPort.STOPBITS_1,
+                UsbSerialPort.PARITY_NONE
+            )
+
+            serialPort = port
+
+            Toast.makeText(
+                this,
+                "USB Connected (POS)",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            Log.d("USB", "POS connected")
+
+        } catch (e: Exception) {
+            Log.e("USB", "Failed to open port", e)
+        }
+    }
+
+    private val usbReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+
+            if (intent.action == ACTION_USB_PERMISSION) {
+
+                val device =
+                    intent.getParcelableExtra<UsbDevice>(UsbManager.EXTRA_DEVICE)
+
+                val granted =
+                    intent.getBooleanExtra(
+                        UsbManager.EXTRA_PERMISSION_GRANTED,
+                        false
+                    )
+
+                if (granted && device != null) {
+                    Toast.makeText(context, "USB Permission Granted", Toast.LENGTH_SHORT).show()
+                    autoConnectUsb()
+                } else {
+                    Toast.makeText(context, "USB Permission Denied", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            if (intent.action == UsbManager.ACTION_USB_DEVICE_ATTACHED) {
+                autoConnectUsb()
+            }
+
+            if (intent.action == UsbManager.ACTION_USB_DEVICE_DETACHED) {
+                serialPort?.close()
+                serialPort = null
+                Toast.makeText(context, "USB Disconnected", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun registerUsbReceiver() {
+        val filter = IntentFilter().apply {
+            addAction(ACTION_USB_PERMISSION)
+            addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED)
+            addAction(UsbManager.ACTION_USB_DEVICE_DETACHED)
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(
+                usbReceiver,
+                filter,
+                Context.RECEIVER_NOT_EXPORTED
+            )
+        } else {
+            registerReceiver(usbReceiver, filter)
+        }
+    }
+
+    override fun onDestroy() {
+        unregisterReceiver(usbReceiver)
+        serialPort?.close()
+        super.onDestroy()
+    }
+
+   /* fun usbrequest(jsonRequest: JSONObject) {
+        Log.d("USB_REQUEST", "Sending to POS: ${jsonRequest.toString()}")
+
+        val jsonRequest1 = JSONObject().apply {
+            put("Amount", 25)
+            put("TipAmount", 2.5)
+            put("ExternalReceipt", "")
+            put("PaymentType", "Credit")
+            put("ReferenceId", "111")
+            put("PrintReceipt", "No")
+            put("GetReceipt", "No")
+            put("MerchantNumber", JSONObject.NULL) // null value
+            put("InvoiceNumber", "")
+            put("CaptureSignature", false)
+            put("GetExtendedData", true)
+            put("IsReadyForIS", false)
+            put("Tpn", "170725957498")
+            put("RegisterId", "1234")
+            put("Authkey", "zbhRAW9N6x")
+            put("CustomFields", JSONObject()) // empty object
+            put("TransType", "Sale")
+        }
+        val st1= "<request><PaymentType>Credit</PaymentType><TransType>Sale</TransType><Amount>1.00</Amount><Tip>0.00</Tip><CashbackAmount>0.00</CashbackAmount><Frequency>OneTime</Frequency><CustomFee>0.00</CustomFee><RefId>55</RefId><RegisterId>1234</RegisterId><AuthKey>vPXjq5X8fn</AuthKey><PrintReceipt>No</PrintReceipt><SigCapture>No</SigCapture></request>"
+        // 1️⃣ Create a Progress Dialog
+        val progressDialog = android.app.AlertDialog.Builder(this)
+            .setTitle("Please wait")
+            .setMessage("Processing transaction...")
+            .setCancelable(false) // cannot dismiss by tapping outside
+            .create()
+
+        progressDialog.show()
+        // 2️⃣ Send request to POS
+        usbPosManager.sendAndReceive(st1) { response ->
+            runOnUiThread {
+                // 3️⃣ Dismiss loader when response is received
+                if (progressDialog.isShowing) {
+                    progressDialog.dismiss()
+                }
+
+                // 4️⃣ Handle POS response
+                if (response != null) {
+                    Log.d("USB_RESPONSE", "Received from POS: $response")
+                    Toast.makeText(this, response, Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(this, "No POS response", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }*/
 
 }

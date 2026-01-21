@@ -4,6 +4,9 @@
     package="com.app.dvpaylitedeeplink">
 
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <uses-permission android:name="android.permission.USB_PERMISSION" />
+    <uses-feature android:name="android.hardware.usb.host" />
+    <uses-feature android:name="android.hardware.usb.accessory" />
 
     <application
         android:allowBackup="true"
@@ -15,6 +18,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.DvPayLiteDeepLink"
         tools:targetApi="31">
+        <activity
+            android:name=".UsbActivity"
+            android:exported="false" />
         <activity
             android:name=".cart.ui.PeripheralActivity"
             android:exported="false" />
@@ -31,6 +37,9 @@
             android:name=".cart.ui.TipAndFeeActivity"
             android:exported="false" />
         <activity
+            android:name=".JsonPreviewActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="false" />
         <activity
@@ -43,6 +52,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <receiver
+            android:name=".UsbReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.app.dvpaylitedeeplink.USB_PERMISSION" />
+                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+                <action android:name="android.hardware.usb.action.USB_DEVICE_DETACHED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

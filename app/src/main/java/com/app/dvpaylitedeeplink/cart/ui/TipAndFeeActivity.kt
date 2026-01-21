@@ -1,9 +1,22 @@
 package com.app.dvpaylitedeeplink.cart.ui
 
+import android.R.attr.text
 import android.app.Activity
+import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.PackageManager
+import android.graphics.Color
+import android.hardware.usb.UsbDevice
+import android.hardware.usb.UsbManager
+import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.AppCompatEditText
@@ -11,8 +24,21 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.SwitchCompat
 import com.app.dvpaylitedeeplink.R
+import com.app.dvpaylitedeeplink.UsbActivity
+import com.app.dvpaylitedeeplink.UsbConnectionState
+import com.app.dvpaylitedeeplink.UsbStatusListener
 import com.app.dvpaylitedeeplink.cart.PrefsHelper
+import com.app.dvpaylitedeeplink.usb.UsbPosManager
 import com.google.android.material.card.MaterialCardView
+import com.hoho.android.usbserial.driver.UsbSerialDriver
+import com.hoho.android.usbserial.driver.UsbSerialPort
+import com.hoho.android.usbserial.driver.UsbSerialProber
+import kotlin.concurrent.thread
+
+private lateinit var usbManager: UsbManager
+private var serialPort: UsbSerialPort? = null
+private val ACTION_USB_PERMISSION =
+    "com.app.dvpaylitedeeplink.USB_PERMISSION"
 
 
 class TipAndFeeActivity : AppCompatActivity() {
@@ -30,10 +56,15 @@ class TipAndFeeActivity : AppCompatActivity() {
     private lateinit var edtCustomFee: AppCompatEditText
     private lateinit var userConfigLayout: MaterialCardView
     private var txnAmount: Double = 0.00
+    private lateinit var usbImage: TextView
+    private lateinit var usbPosManager: UsbPosManager
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_option_selection)
+        usbImage = findViewById(R.id.usbImage)
         userConfigLayout = findViewById<MaterialCardView>(R.id.userConfigLayout)
         tvTitle = findViewById(R.id.tv_appName)
         tvTitle.text = "Confirmation"
@@ -48,21 +79,97 @@ class TipAndFeeActivity : AppCompatActivity() {
         edtTipAmount = findViewById<AppCompatEditText>(R.id.edtTipAmount)
         edtCustomFee = findViewById<AppCompatEditText>(R.id.edtFee)
 
+     //   usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
+
+        usbPosManager = UsbPosManager(this)
+
+        usbPosManager.setStatusListener(object : UsbStatusListener {
+            override fun onStatusChanged(state: UsbConnectionState, message: String?) {
+                runOnUiThread {
+                    when (state) {
+                        UsbConnectionState.CONNECTING -> {
+                            usbImage.text = "Connecting..."
+                        }
+                        UsbConnectionState.CONNECTED -> {
+                            usbImage.text = "POS Connected"
+                            usbImage.setTextColor(Color.GREEN)
+                        }
+                        UsbConnectionState.PERMISSION_DENIED -> {
+                            usbImage.text = "Permission Denied"
+                            usbImage.setTextColor(Color.RED)
+                        }
+                        UsbConnectionState.DISCONNECTED -> {
+                            usbImage.text = "POS Disconnected"
+                            usbImage.setTextColor(Color.RED)
+                        }
+                        UsbConnectionState.ERROR -> {
+                            usbImage.text = message ?: "USB Error"
+                            usbImage.setTextColor(Color.RED)
+                        }
+                    }
+                }
+            }
+        })
+
+        usbPosManager.init()
+
+      /*  if (!isUsbHostSupported()) {
+            Toast.makeText(this, "USB Host not supported", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        registerUsbReceiver()
+
+        autoConnectUsb()*/
+
         userConfigLayout.visibility = View.GONE
         getIntentValues()
 
         btnConfirm.setOnClickListener {
-            val resultIntent = Intent()
+        /*  val resultIntent = Intent()
             resultIntent.putExtra("tip", edtTipAmount.text.toString().toDoubleOrNull() ?: 0.0)
             resultIntent.putExtra("fee", edtCustomFee.text.toString().toDoubleOrNull() ?: 0.0)
             setResult(Activity.RESULT_OK, resultIntent)
-            finish()
+            finish()*/
+           /* Toast.makeText(this, "Going usb connection", Toast.LENGTH_SHORT).show()
+            sendData()*/
+            if (!usbPosManager.isConnected()) {
+                Toast.makeText(this, "POS not connected", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val progressDialog = android.app.AlertDialog.Builder(this)
+                .setTitle("Please wait")
+                .setMessage("Processing transaction...")
+                .setCancelable(false) // cannot dismiss by tapping outside
+                .create()
+            progressDialog.show()
+
+            val refId = getNextRefId()
+            val amount = intent.getDoubleExtra("txnAmount", 0.0)
+
+
+            val request = "<request><PaymentType>Credit</PaymentType><TransType>Sale</TransType><Amount>$amount</Amount><Tip>0.00</Tip><CashbackAmount>0.00</CashbackAmount><Frequency>OneTime</Frequency><CustomFee>0.00</CustomFee><RefId>$refId</RefId><RegisterId>1234</RegisterId><AuthKey>vPXjq5X8fn</AuthKey><PrintReceipt>No</PrintReceipt><SigCapture>No</SigCapture></request>"
+            usbPosManager.sendAndReceive(request) { response ->
+                runOnUiThread {
+                    if (progressDialog.isShowing) {
+                        progressDialog.dismiss()
+                    }
+                    // Automatically trigger ivBack click
+                    ivBack.performClick()
+                    if (response != null) {
+
+                        Toast.makeText(this, response, Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(this, "No POS response", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
         }
 
         ivBack.setOnClickListener {
             onBackPressed()
         }
-
     }
 
     override fun onBackPressed() {
@@ -85,4 +192,19 @@ class TipAndFeeActivity : AppCompatActivity() {
             }
         }
     }
+
+
+    override fun onDestroy() {
+        usbPosManager.release()
+        super.onDestroy()
+    }
+
+    private fun getNextRefId(): Int {
+        val prefs = getSharedPreferences("pos_prefs", MODE_PRIVATE)
+        val currentRefId = prefs.getInt("ref_id", 900) // starting RefId, e.g., 100
+        val nextRefId = currentRefId + 1
+        prefs.edit().putInt("ref_id", nextRefId).apply()
+        return nextRefId
+    }
+
 }

@@ -46,6 +46,7 @@
                     android:textSize="20sp"
                     android:textStyle="bold" />
 
+
                 <ImageView
                     android:id="@+id/imageViewMore"
                     android:layout_width="40dp"

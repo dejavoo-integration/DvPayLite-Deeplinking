@@ -28,23 +28,23 @@ class LoadItems {
                 )
             ),
             Item(
-                R.drawable.ic_biscuit, "Ice Cream Biscuit", 45.00, 0, "", listOf(CustomInfo("tax", 0.00)),listOf(
-                    Modifier("Toppings", listOf(Option("Pista", 50.00, 1)))
+                R.drawable.ic_biscuit, "Ice Cream Biscuit", 5.00, 0, "", listOf(CustomInfo("tax", 0.00)),listOf(
+                    Modifier("Toppings", listOf(Option("Pista", 0.50, 1)))
                 )
             ),
             Item(
-                R.drawable.ic_orange, "Orange Ice Cream", 90.00, 0, "", listOf(CustomInfo("tax", 0.00)),listOf(
-                    Modifier("Toppings", listOf(Option("Pista", 50.00, 1)))
+                R.drawable.ic_orange, "Orange Ice Cream", 3.00, 0, "", listOf(CustomInfo("tax", 0.00)),listOf(
+                    Modifier("Toppings", listOf(Option("Pista", 0.30, 1)))
                 )
             ),
             Item(
-                R.drawable.ic_ic, "Ice Special", 50.00, 0, "", listOf(CustomInfo("tax", 0.00)),listOf(
-                    Modifier("Toppings", listOf(Option("Pista", 50.00, 1)))
+                R.drawable.ic_ic, "Ice Special", 7.00, 0, "", listOf(CustomInfo("tax", 0.00)),listOf(
+                    Modifier("Toppings", listOf(Option("Pista", 0.70, 1)))
                 )
             ),
             Item(
-                R.drawable.ic_strawberry, "Frozen Yogurt", 270.00, 0, "",listOf(CustomInfo("tax", 0.00)),listOf(
-                    Modifier("Toppings", listOf(Option("Pista", 270.00, 1)))
+                R.drawable.ic_strawberry, "Frozen Yogurt", 15.00, 0, "",listOf(CustomInfo("tax", 0.00)),listOf(
+                    Modifier("Toppings", listOf(Option("Pista", 0.15, 1)))
                 )
             ),
             Item(

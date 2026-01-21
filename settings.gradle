@@ -5,6 +5,7 @@ pluginManagement {
         mavenCentral()
         flatDir { dirs 'libs' }
         jcenter()
+        maven { url "https://jitpack.io" }
     }
 }
 dependencyResolutionManagement {
@@ -20,6 +21,10 @@ dependencyResolutionManagement {
                 accessKey "AKIA26XMFQBITA36GRDR"
                 secretKey "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"
             }
+        }
+        // JitPack repository
+        maven {
+            url "https://jitpack.io"
         }
     }
 }

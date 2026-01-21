@@ -17,7 +17,13 @@ data class Item(
     var quantity: Int,
     var additionalInfo: String,
     var customInfo: List<CustomInfo>? = null, // Optional field
-    var modifiers: List<Modifier>? = null // Optional field
+    var modifiers: List<Modifier>? = null, // Optional field
+
+    // Tax and discount fields (newly added)
+    var discountRate: Double = 0.5,
+    var localTaxRate: Double = 0.5,
+    var stateTaxRate: Double = 0.5,
+    var vatTaxRate: Double = 0.5
 )
 
 data class Modifier(
