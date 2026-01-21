@@ -1,13 +1,8 @@
 package com.app.dvpaylitedeeplink.cart.ui
 
 import android.app.Activity
-import android.app.PendingIntent
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
-import android.content.pm.PackageManager
-import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.os.Build
 import android.os.Bundle
@@ -35,10 +30,10 @@ import androidx.core.widget.addTextChangedListener
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.transition.Visibility
 import com.app.dvpaylitedeeplink.BuildConfig
 import com.app.dvpaylitedeeplink.JsonPreviewActivity
 import com.app.dvpaylitedeeplink.MainActivity
+import com.app.dvpaylitedeeplink.MyApp
 import com.app.dvpaylitedeeplink.R
 import com.app.dvpaylitedeeplink.Utils
 import com.app.dvpaylitedeeplink.cart.PrefsHelper
@@ -51,12 +46,8 @@ import com.app.dvpaylitedeeplink.usb.UsbPosManager
 import com.denovo.app.invokeiposgo.interfaces.SettlementListener
 import com.denovo.app.invokeiposgo.interfaces.TransactionListener
 import com.denovo.app.invokeiposgo.launcher.IntentApplication
-import com.denovo.app.invokeiposgo.models.Level3ItemData
-import com.denovo.app.invokeiposgo.models.Level3ItemDataList
 import com.google.android.material.navigation.NavigationView
-import com.hoho.android.usbserial.driver.UsbSerialDriver
 import com.hoho.android.usbserial.driver.UsbSerialPort
-import com.hoho.android.usbserial.driver.UsbSerialProber
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -100,8 +91,7 @@ class CartActivity : AppCompatActivity() {
     private lateinit var usbManager: UsbManager
     private var serialPort: UsbSerialPort? = null
     private lateinit var usbPosManager: UsbPosManager
-    private val ACTION_USB_PERMISSION =
-        "com.app.dvpaylitedeeplink.USB_PERMISSION"
+
 
     private lateinit var intentApplication: IntentApplication
     private lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
@@ -112,18 +102,8 @@ class CartActivity : AppCompatActivity() {
         activity = this
         context = this as Context
 
-        usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
+        usbPosManager = (application as MyApp).usbPosManager
 
-        if (!isUsbHostSupported()) {
-            Toast.makeText(this, "USB Host not supported", Toast.LENGTH_LONG).show()
-            return
-        }
-
-        usbPosManager = UsbPosManager(this)
-        usbPosManager.init()
-       // registerUsbReceiver()
-
-       // autoConnectUsb()
         transactionTypesRecyclerView = findViewById(R.id.transactionTypesRecyclerView)
         lineItemCheckBox = findViewById(R.id.ac_lineItemCheckBox)
         itemsRecyclerView = findViewById(R.id.itemsRecyclerView)
@@ -301,6 +281,7 @@ class CartActivity : AppCompatActivity() {
             }
         }
 
+
         checkoutButton.setOnClickListener {
 
             val adapter = itemsRecyclerView.adapter as? CartAdapter
@@ -461,6 +442,7 @@ class CartActivity : AppCompatActivity() {
              //   jsonRequest.put("Cart", cartObject)
                 Log.d("CartActivity", "Line items enabled; cart object added to payload")
             }
+            usbRequest(jsonRequest)
             Log.d("CartActivity", "Final JSON Object: $jsonRequest")
             Log.d("CartActivity", "Processing sale transaction...")
             val editedJsonString = data?.getStringExtra("editedJson")
@@ -488,8 +470,7 @@ class CartActivity : AppCompatActivity() {
                // usbrequest(finalJson)
                // processSaleTxn(intentApplication, activityResultLauncher, finalJson)
             }
-        }
-        else {
+        } else {
             Log.d("CartActivity", "Request code or result code did not match expected values")
         }
     }
@@ -778,158 +759,25 @@ class CartActivity : AppCompatActivity() {
         }
     }
 
-
-    private fun isUsbHostSupported(): Boolean {
-        return packageManager.hasSystemFeature(
-            PackageManager.FEATURE_USB_HOST
-        )
-    }
-
-    private fun autoConnectUsb() {
-        if (serialPort?.isOpen == true) return
-
-        val drivers = UsbSerialProber.getDefaultProber()
-            .findAllDrivers(usbManager)
-
-        if (drivers.isEmpty()) return
-
-        val driver = drivers.first()
-        val port = driver.ports.first()
-
-        if (usbManager.hasPermission(driver.device)) {
-            openPort(driver, port)
-        } else {
-            requestUsbPermission(driver.device)
-        }
-    }
-
-    private fun requestUsbPermission(device: UsbDevice) {
-        val intent = Intent(ACTION_USB_PERMISSION)
-        intent.setPackage(packageName)
-
-        val permissionIntent = PendingIntent.getBroadcast(
-            this,
-            0,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        usbManager.requestPermission(device, permissionIntent)
-    }
-
-    private fun openPort(
-        driver: UsbSerialDriver,
-        port: UsbSerialPort
-    ) {
-        try {
-            val connection = usbManager.openDevice(driver.device)
-                ?: return
-
-            port.open(connection)
-            port.setParameters(
-                9600,
-                8,
-                UsbSerialPort.STOPBITS_1,
-                UsbSerialPort.PARITY_NONE
-            )
-
-            serialPort = port
-
-            Toast.makeText(
-                this,
-                "USB Connected (POS)",
-                Toast.LENGTH_SHORT
-            ).show()
-
-            Log.d("USB", "POS connected")
-
-        } catch (e: Exception) {
-            Log.e("USB", "Failed to open port", e)
-        }
-    }
-
-    private val usbReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-
-            if (intent.action == ACTION_USB_PERMISSION) {
-
-                val device =
-                    intent.getParcelableExtra<UsbDevice>(UsbManager.EXTRA_DEVICE)
-
-                val granted =
-                    intent.getBooleanExtra(
-                        UsbManager.EXTRA_PERMISSION_GRANTED,
-                        false
-                    )
-
-                if (granted && device != null) {
-                    Toast.makeText(context, "USB Permission Granted", Toast.LENGTH_SHORT).show()
-                    autoConnectUsb()
-                } else {
-                    Toast.makeText(context, "USB Permission Denied", Toast.LENGTH_SHORT).show()
-                }
-            }
-
-            if (intent.action == UsbManager.ACTION_USB_DEVICE_ATTACHED) {
-                autoConnectUsb()
-            }
-
-            if (intent.action == UsbManager.ACTION_USB_DEVICE_DETACHED) {
-                serialPort?.close()
-                serialPort = null
-                Toast.makeText(context, "USB Disconnected", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    private fun registerUsbReceiver() {
-        val filter = IntentFilter().apply {
-            addAction(ACTION_USB_PERMISSION)
-            addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED)
-            addAction(UsbManager.ACTION_USB_DEVICE_DETACHED)
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(
-                usbReceiver,
-                filter,
-                Context.RECEIVER_NOT_EXPORTED
-            )
-        } else {
-            registerReceiver(usbReceiver, filter)
-        }
-    }
-
-    override fun onDestroy() {
-        unregisterReceiver(usbReceiver)
+    /*override fun onDestroy() {
         serialPort?.close()
         super.onDestroy()
-    }
+    }*/
 
-   /* fun usbrequest(jsonRequest: JSONObject) {
-        Log.d("USB_REQUEST", "Sending to POS: ${jsonRequest.toString()}")
+    fun usbRequest(jsonObject: JSONObject) {
 
-        val jsonRequest1 = JSONObject().apply {
-            put("Amount", 25)
-            put("TipAmount", 2.5)
-            put("ExternalReceipt", "")
-            put("PaymentType", "Credit")
-            put("ReferenceId", "111")
-            put("PrintReceipt", "No")
-            put("GetReceipt", "No")
-            put("MerchantNumber", JSONObject.NULL) // null value
-            put("InvoiceNumber", "")
-            put("CaptureSignature", false)
-            put("GetExtendedData", true)
-            put("IsReadyForIS", false)
-            put("Tpn", "170725957498")
-            put("RegisterId", "1234")
-            put("Authkey", "zbhRAW9N6x")
-            put("CustomFields", JSONObject()) // empty object
-            put("TransType", "Sale")
-        }
-        val st1= "<request><PaymentType>Credit</PaymentType><TransType>Sale</TransType><Amount>1.00</Amount><Tip>0.00</Tip><CashbackAmount>0.00</CashbackAmount><Frequency>OneTime</Frequency><CustomFee>0.00</CustomFee><RefId>55</RefId><RegisterId>1234</RegisterId><AuthKey>vPXjq5X8fn</AuthKey><PrintReceipt>No</PrintReceipt><SigCapture>No</SigCapture></request>"
-        // 1️⃣ Create a Progress Dialog
+     Log.i("usbrequest","usbRequest : ${jsonObject.toString()}")
+        val amount = jsonObject
+            .optString("amount", "0.00")
+            .toDoubleOrNull() ?: 0.0
+
+        val tip = jsonObject
+            .optString("tip", "0.00")
+            .toDoubleOrNull() ?: 0.0
+        Log.i("usbrequest","usbRequest : ${amount}")
+        Log.i("usbrequest","usbRequest : ${tip}")
+        val refId = getNextRefId()
+       val st1= "<request><PaymentType>Credit</PaymentType><TransType>Sale</TransType><Amount>$amount</Amount><Tip>$tip</Tip><CashbackAmount>0.00</CashbackAmount><Frequency>OneTime</Frequency><CustomFee>0.00</CustomFee><RefId>$refId</RefId><RegisterId>1234</RegisterId><AuthKey>vPXjq5X8fn</AuthKey><PrintReceipt>No</PrintReceipt><SigCapture>No</SigCapture></request>"
         val progressDialog = android.app.AlertDialog.Builder(this)
             .setTitle("Please wait")
             .setMessage("Processing transaction...")
@@ -937,15 +785,11 @@ class CartActivity : AppCompatActivity() {
             .create()
 
         progressDialog.show()
-        // 2️⃣ Send request to POS
         usbPosManager.sendAndReceive(st1) { response ->
             runOnUiThread {
-                // 3️⃣ Dismiss loader when response is received
                 if (progressDialog.isShowing) {
                     progressDialog.dismiss()
                 }
-
-                // 4️⃣ Handle POS response
                 if (response != null) {
                     Log.d("USB_RESPONSE", "Received from POS: $response")
                     Toast.makeText(this, response, Toast.LENGTH_LONG).show()
@@ -954,6 +798,14 @@ class CartActivity : AppCompatActivity() {
                 }
             }
         }
-    }*/
+    }
+
+    private fun getNextRefId(): Int {
+        val prefs = getSharedPreferences("pos_prefs", MODE_PRIVATE)
+        val currentRefId = prefs.getInt("ref_id", 400) // starting RefId, e.g., 100
+        val nextRefId = currentRefId + 1
+        prefs.edit().putInt("ref_id", nextRefId).apply()
+        return nextRefId
+    }
 
 }

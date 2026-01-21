@@ -12,6 +12,14 @@ import com.hoho.android.usbserial.driver.*
 import kotlin.concurrent.thread
 
 class UsbPosManager(private val context: Context) {
+    private val appContext = context.applicationContext
+
+    @Volatile
+    private var lastState: UsbConnectionState? = null
+
+    @Volatile
+    private var lastMessage: String? = null
+
 
     companion object {
         const val ACTION_USB_PERMISSION = "com.app.dvpaylitedeeplink.USB_PERMISSION"
@@ -19,7 +27,7 @@ class UsbPosManager(private val context: Context) {
     }
 
     private val usbManager =
-        context.getSystemService(Context.USB_SERVICE) as UsbManager
+        appContext.getSystemService(Context.USB_SERVICE) as UsbManager
 
     private var serialPort: UsbSerialPort? = null
     private var statusListener: UsbStatusListener? = null
@@ -33,12 +41,17 @@ class UsbPosManager(private val context: Context) {
     }
 
     fun release() {
-        try { context.unregisterReceiver(usbReceiver) } catch (_: Exception) {}
+        try { appContext.unregisterReceiver(usbReceiver) } catch (_: Exception) {}
         closeDevice()
     }
 
     fun setStatusListener(listener: UsbStatusListener) {
         statusListener = listener
+
+        //  Immediately notify current state
+        lastState?.let {
+            listener.onStatusChanged(it, lastMessage)
+        }
     }
 
     fun isConnected(): Boolean = serialPort?.isOpen == true
@@ -67,7 +80,7 @@ class UsbPosManager(private val context: Context) {
     private fun requestPermission(device: UsbDevice) {
         val intent = Intent(ACTION_USB_PERMISSION)
         val pendingIntent = PendingIntent.getBroadcast(
-            context,
+            appContext,
             0,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
@@ -103,10 +116,9 @@ class UsbPosManager(private val context: Context) {
             serialPort = port
             Log.d(TAG, "USB PORT OPENED SUCCESSFULLY")
             showToast("POS Connected")
-            statusListener?.onStatusChanged(
-                UsbConnectionState.CONNECTED,
-                "POS Connected"
-            )
+            lastState = UsbConnectionState.CONNECTED
+            lastMessage = "POS Connected"
+            statusListener?.onStatusChanged(lastState!!, lastMessage)
 
         } catch (e: Exception) {
             Log.e(TAG, "Failed to open port", e)
@@ -235,7 +247,7 @@ class UsbPosManager(private val context: Context) {
     /* ================= USB RECEIVER ================= */
 
     private val usbReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
+        override fun onReceive(appContext: Context, intent: Intent) {
             when (intent.action) {
 
                 ACTION_USB_PERMISSION -> {
@@ -279,13 +291,13 @@ class UsbPosManager(private val context: Context) {
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.registerReceiver(
+            appContext.registerReceiver(
                 usbReceiver,
                 filter,
                 Context.RECEIVER_NOT_EXPORTED
             )
         } else {
-            context.registerReceiver(usbReceiver, filter)
+            appContext.registerReceiver(usbReceiver, filter)
         }
     }
 
@@ -296,16 +308,15 @@ class UsbPosManager(private val context: Context) {
         serialPort = null
         Log.d(TAG, "USB port closed")
       //  showToast("POS Disconnected")
-        statusListener?.onStatusChanged(
-            UsbConnectionState.DISCONNECTED,
-            "POS Disconnected"
-        )
+        lastState = UsbConnectionState.DISCONNECTED
+        lastMessage = "POS Disconnected"
+        statusListener?.onStatusChanged(lastState!!, lastMessage)
     }
 
     private fun showToast(message: String) {
         android.os.Handler(android.os.Looper.getMainLooper()).post {
             android.widget.Toast.makeText(
-                context.applicationContext,
+                appContext.applicationContext,
                 message,
                 android.widget.Toast.LENGTH_SHORT
             ).show()

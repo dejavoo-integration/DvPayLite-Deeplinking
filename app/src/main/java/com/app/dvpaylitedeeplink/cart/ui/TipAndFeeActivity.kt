@@ -23,6 +23,7 @@ import androidx.appcompat.widget.AppCompatEditText
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.SwitchCompat
+import com.app.dvpaylitedeeplink.MyApp
 import com.app.dvpaylitedeeplink.R
 import com.app.dvpaylitedeeplink.UsbActivity
 import com.app.dvpaylitedeeplink.UsbConnectionState
@@ -81,7 +82,7 @@ class TipAndFeeActivity : AppCompatActivity() {
 
      //   usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
 
-        usbPosManager = UsbPosManager(this)
+        usbPosManager = (application as MyApp).usbPosManager
 
         usbPosManager.setStatusListener(object : UsbStatusListener {
             override fun onStatusChanged(state: UsbConnectionState, message: String?) {
@@ -111,7 +112,7 @@ class TipAndFeeActivity : AppCompatActivity() {
             }
         })
 
-        usbPosManager.init()
+      //  usbPosManager.init()
 
       /*  if (!isUsbHostSupported()) {
             Toast.makeText(this, "USB Host not supported", Toast.LENGTH_LONG).show()
@@ -126,18 +127,18 @@ class TipAndFeeActivity : AppCompatActivity() {
         getIntentValues()
 
         btnConfirm.setOnClickListener {
-        /*  val resultIntent = Intent()
+     val resultIntent = Intent()
             resultIntent.putExtra("tip", edtTipAmount.text.toString().toDoubleOrNull() ?: 0.0)
             resultIntent.putExtra("fee", edtCustomFee.text.toString().toDoubleOrNull() ?: 0.0)
             setResult(Activity.RESULT_OK, resultIntent)
-            finish()*/
-           /* Toast.makeText(this, "Going usb connection", Toast.LENGTH_SHORT).show()
-            sendData()*/
-            if (!usbPosManager.isConnected()) {
+            finish()
+            Toast.makeText(this, "Going usb connection", Toast.LENGTH_SHORT).show()
+          //  sendData()
+          /*  if (!usbPosManager.isConnected()) {
                 Toast.makeText(this, "POS not connected", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
-            }
-            //rrrrrrrrrrrr
+            }*/
+           /* //rrrrrrrrrrrr
             val progressDialog = android.app.AlertDialog.Builder(this)
                 .setTitle("Please wait")
                 .setMessage("Processing transaction...")
@@ -164,7 +165,7 @@ class TipAndFeeActivity : AppCompatActivity() {
                         Toast.makeText(this, "No POS response", Toast.LENGTH_SHORT).show()
                     }
                 }
-            }
+            }*/
         }
 
         ivBack.setOnClickListener {
@@ -194,17 +195,17 @@ class TipAndFeeActivity : AppCompatActivity() {
     }
 
 
-    override fun onDestroy() {
+  /*  override fun onDestroy() {
         usbPosManager.release()
         super.onDestroy()
-    }
+    }*/
 
-    private fun getNextRefId(): Int {
+  /*  private fun getNextRefId(): Int {
         val prefs = getSharedPreferences("pos_prefs", MODE_PRIVATE)
         val currentRefId = prefs.getInt("ref_id", 900) // starting RefId, e.g., 100
         val nextRefId = currentRefId + 1
         prefs.edit().putInt("ref_id", nextRefId).apply()
         return nextRefId
-    }
+    }*/
 
 }
