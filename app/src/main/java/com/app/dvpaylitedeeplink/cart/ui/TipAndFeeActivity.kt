@@ -137,7 +137,7 @@ class TipAndFeeActivity : AppCompatActivity() {
                 Toast.makeText(this, "POS not connected", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-
+            //rrrrrrrrrrrr
             val progressDialog = android.app.AlertDialog.Builder(this)
                 .setTitle("Please wait")
                 .setMessage("Processing transaction...")
