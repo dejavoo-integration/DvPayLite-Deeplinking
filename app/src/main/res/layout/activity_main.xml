@@ -86,6 +86,41 @@
                 android:layout_marginTop="45dp"
                 android:gravity="center"
                 android:hint="Enter Ref Id if Tip Adjust/Ticket" />
+            <LinearLayout
+                android:id="@+id/mmidLinear"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="30dp"
+                android:layout_marginHorizontal="10dp"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/editTextTpn"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_txt_curved"
+                    android:gravity="center"
+                    android:hint="Enter TPN"
+                    android:inputType="numberDecimal"
+                    android:paddingStart="12dp"
+                    android:textColor="@color/black"
+                    android:textSize="16sp" />
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/editTextMerchantId"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_txt_curved"
+                    android:gravity="center"
+                    android:hint="Enter Merchant ID"
+                    android:inputType="numberDecimal"
+                    android:paddingStart="12dp"
+                    android:textColor="@color/black"
+                    android:textSize="16sp" />
+            </LinearLayout>
 
             <Spinner
                 android:id="@+id/transaction_spinner"

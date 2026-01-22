@@ -4,6 +4,7 @@
     package="com.app.dvpaylitedeeplink">
 
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <uses-permission android:name="android.permission.INTERNET"/>
 
     <application
         android:allowBackup="true"
@@ -35,6 +36,9 @@
             android:exported="false" />
         <activity
             android:name=".MainActivity"
+            android:exported="false" />
+        <activity
+            android:name="sampleurideeplinkapp.SampleUriActivity"
             android:exported="false" />
         <activity
             android:name=".cart.ui.CartActivity"

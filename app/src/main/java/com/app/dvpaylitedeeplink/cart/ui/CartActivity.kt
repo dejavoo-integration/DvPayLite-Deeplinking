@@ -48,6 +48,7 @@ import com.denovo.app.invokeiposgo.models.Level3ItemDataList
 import com.google.android.material.navigation.NavigationView
 import org.json.JSONArray
 import org.json.JSONObject
+import sampleurideeplinkapp.SampleUriActivity
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -89,7 +90,9 @@ class CartActivity : AppCompatActivity() {
     private var showJsonPreview = false
     private var txnTotalAmount: Double =0.0
     private var customerTip: Double = 0.00
-
+    private lateinit var editTextTpn: AppCompatEditText
+    private lateinit var editTextMerchantId: AppCompatEditText
+    private lateinit var mmIdLinearLayout: LinearLayout
     private lateinit var intentApplication: IntentApplication
     private lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
 
@@ -118,7 +121,9 @@ class CartActivity : AppCompatActivity() {
 
         ivHamburger = findViewById(R.id.iv_hamburger)
         toolbar = findViewById(R.id.toolbar)
-
+        editTextTpn = findViewById<AppCompatEditText>(R.id.editTextTpn)
+        editTextMerchantId = findViewById<AppCompatEditText>(R.id.editTextMerchantId)
+        mmIdLinearLayout = findViewById<LinearLayout>(R.id.mmidLinear)
         setSupportActionBar(toolbar)
 
         // Optional: disable default title if you have a custom one in layout
@@ -169,22 +174,28 @@ class CartActivity : AppCompatActivity() {
                     if (externalRRN != null) {
                         referenceIDEditText.setText(externalRRN)
                     }
-                    showReferenceIDLayout(true)
+                    showReferenceIDLayout(true, true)
                 }
                 R.id.nav_ticket -> {
                     selectedTransactionType =LoadItems.TICKET
                         if (externalRRN != null) {
                         referenceIDEditText.setText(externalRRN)
                     }
-                    showReferenceIDLayout(true)
+                    showReferenceIDLayout(true, true)
                 }
                 R.id.nav_settlement -> {
                     selectedTransactionType = LoadItems.SETTLEMENT
-                    showReferenceIDLayout(false)
+                    showReferenceIDLayout(false, true)
+
                 }
                 R.id.nav_peripheral -> {
 //                    val intent = Intent(this, PeripheralActivity::class.java)
 //                    startActivity(intent)
+                    drawerLayout.closeDrawers()
+                }
+                R.id.nav_uri -> {
+                    val intent = Intent(this, SampleUriActivity::class.java)
+                    startActivity(intent)
                     drawerLayout.closeDrawers()
                 }
             }
@@ -214,14 +225,14 @@ class CartActivity : AppCompatActivity() {
                             if (externalRRN!=null){
                                 referenceIDEditText.setText(externalRRN)
                             }
-                            showReferenceIDLayout(true)
+                            showReferenceIDLayout(true, true)
                         }
                         LoadItems.SETTLEMENT -> {
-                            showReferenceIDLayout(false)
+                            showReferenceIDLayout(false, true)
                         }
 
                         else -> {
-                            showReferenceIDLayout(true)
+                            showReferenceIDLayout(true, true)
                         }
                     }
                 }
@@ -259,12 +270,15 @@ class CartActivity : AppCompatActivity() {
             when (selectedTransactionType) {
                 LoadItems.VOID,
                 LoadItems.TICKET -> {
+                    val tpn = editTextTpn.text.toString().trim()
+                    val merchantId = editTextMerchantId.text.toString().trim()
                     val refIdFromEditText = referenceIDEditText.text.toString()
                     if (refIdFromEditText.isNotEmpty()) {
                         val adapter = itemsRecyclerView.adapter as CartAdapter
                         val selectedItems = adapter.getSelectedItems()
                         val externalRRN = EXTERNAL_RRN_PREFIX+refIdFromEditText
-                        val jsonRequest = getPayloadJSON(externalRRN,DEFAULT_VALUE,selectedItems)
+                        val jsonRequest = getPayloadJSON(externalRRN,DEFAULT_VALUE,selectedItems, tpn, merchantId)
+                        Log.e("DL", "Request: $jsonRequest")
                         processSaleTxn(intentApplication, activityResultLauncher, jsonRequest)
                     }else{
                         Toast.makeText(this, "Please enter External RRN", Toast.LENGTH_SHORT).show()
@@ -329,7 +343,8 @@ class CartActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
 
         Log.d("CartActivity", "onActivityResult called with requestCode: $requestCode, resultCode: $resultCode")
-
+        var tpn = ""
+        var merchantId = ""
         if (requestCode == 123 && resultCode == Activity.RESULT_OK) {
             Log.d("CartActivity", "Request code matched and result OK")
 
@@ -346,7 +361,11 @@ class CartActivity : AppCompatActivity() {
 
             if (data != null) {
                 customerTip = data.getDoubleExtra("tip",0.00)!!
+                tpn = data.getStringExtra("TPN").toString()
+                merchantId = data.getStringExtra("MerchantId").toString()
                 Log.d("CartActivity", "Customer tip received: $customerTip")
+                Log.d("CartActivity", "tpn received: $tpn")
+                Log.d("CartActivity", "merchantId received: $merchantId")
                 updateTotalAmount(txnTotalAmount)
             } else {
                 Log.w("CartActivity", "Intent data is null; no tip received")
@@ -367,7 +386,7 @@ class CartActivity : AppCompatActivity() {
             externalRRN = Utils.generateRandom(12).toString()
             Log.d("CartActivity", "Generated external RRN: $externalRRN")
 
-            val jsonRequest = getPayloadJSON(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems)
+            val jsonRequest = getPayloadJSON(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems, tpn, merchantId)
             Log.d("CartActivity", "Initialized JSON payload")
 
             val cartObject = JSONObject()
@@ -507,7 +526,9 @@ class CartActivity : AppCompatActivity() {
         val jsonRequest = JSONObject()
         jsonRequest.put("type", "SETTLE")
         jsonRequest.put("applicationType", "DVPAYLITE")
-
+        jsonRequest.put("TPN", editTextTpn.text.toString().trim())
+        jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
+        Log.e("DL", "Settlement request: $jsonRequest")
         intentApplication.setSettlementListener(object :
             SettlementListener {
 
@@ -613,14 +634,16 @@ class CartActivity : AppCompatActivity() {
         }
     }
 
-    private fun showReferenceIDLayout(showRRNLinear:Boolean) {
+    private fun showReferenceIDLayout(showRRNLinear:Boolean, showMMidLinear: Boolean) {
         clearCart()
         referenceIDLinear.visibility = View.VISIBLE
         externalRRNLinear.visibility = if (showRRNLinear) View.VISIBLE else View.GONE
         itemsRecyclerView.visibility = View.GONE
+        mmIdLinearLayout.visibility = View.VISIBLE
+
     }
 
-    private fun getPayloadJSON(referenceId:String,totalAmount:Double, items: List<Item>):JSONObject{
+    private fun getPayloadJSON(referenceId:String,totalAmount:Double, items: List<Item>, tpn: String, merchantId: String):JSONObject{
         val totalAmt = formatToTwoDecimalPlaces(totalAmount)
         txnTotalAmount = totalAmount
         return JSONObject().apply {
@@ -635,6 +658,8 @@ class CartActivity : AppCompatActivity() {
             put("showBreakupScreen", if (showBreakup) "Yes" else "No")
             put("showDualPriceScreen", if (showDual) "Yes" else "No")
             put("showTipScreen", if (showTipScreen) "Yes" else "No")
+            put("TPN", tpn)
+            put("MerchantId", merchantId)
             if (enableL2L3Items) {
                 val l2l3Data = buildL2L3Data(items)
                 for (key in l2l3Data.keys()) {

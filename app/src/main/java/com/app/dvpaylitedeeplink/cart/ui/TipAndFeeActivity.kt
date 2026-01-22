@@ -3,6 +3,7 @@ package com.app.dvpaylitedeeplink.cart.ui
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
@@ -28,6 +29,8 @@ class TipAndFeeActivity : AppCompatActivity() {
     private lateinit var tvTitle: AppCompatTextView
     private lateinit var edtTipAmount: AppCompatEditText
     private lateinit var edtCustomFee: AppCompatEditText
+    private lateinit var editTextTpn: AppCompatEditText
+    private lateinit var editTextMerchantId: AppCompatEditText
     private lateinit var userConfigLayout: MaterialCardView
     private var txnAmount: Double = 0.00
 
@@ -47,6 +50,8 @@ class TipAndFeeActivity : AppCompatActivity() {
         tvTotalAmount = findViewById<AppCompatTextView>(R.id.tvTotalAmount)
         edtTipAmount = findViewById<AppCompatEditText>(R.id.edtTipAmount)
         edtCustomFee = findViewById<AppCompatEditText>(R.id.edtFee)
+        editTextTpn = findViewById<AppCompatEditText>(R.id.editTextTpn)
+        editTextMerchantId = findViewById<AppCompatEditText>(R.id.editTextMerchantId)
 
         userConfigLayout.visibility = View.GONE
         getIntentValues()
@@ -55,6 +60,8 @@ class TipAndFeeActivity : AppCompatActivity() {
             val resultIntent = Intent()
             resultIntent.putExtra("tip", edtTipAmount.text.toString().toDoubleOrNull() ?: 0.0)
             resultIntent.putExtra("fee", edtCustomFee.text.toString().toDoubleOrNull() ?: 0.0)
+            resultIntent.putExtra("TPN", editTextTpn.text.toString().trim())
+            resultIntent.putExtra("MerchantId", editTextMerchantId.text.toString().trim())
             setResult(Activity.RESULT_OK, resultIntent)
             finish()
         }
@@ -76,13 +83,21 @@ class TipAndFeeActivity : AppCompatActivity() {
 
     private fun getIntentValues() {
         if (intent.hasExtra("txnAmount")) {
+            Log.e("Dl", "has amt")
             txnAmount = intent.getDoubleExtra("txnAmount", 0.0)
             if (txnAmount > 0) {
+                Log.e("Dl", "amt > 0")
+
                 tvTotalAmount.visibility = View.VISIBLE
                 tvTotalAmount.text = String.format("$%.2f", txnAmount)
             } else {
+                Log.e("Dl", "amt < 0")
+
                 tvTotalAmount.visibility = View.GONE
             }
+        } else {
+            Log.e("Dl", "No amt")
+
         }
     }
 }

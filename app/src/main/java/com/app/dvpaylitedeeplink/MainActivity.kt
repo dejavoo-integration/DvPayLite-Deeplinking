@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.activity.result.ActivityResult
@@ -46,6 +47,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var buttonGetTPN:AppCompatButton
     private lateinit var buttonDeviceDetails:AppCompatButton
     private lateinit var buttonStatusCheck:AppCompatButton
+    private lateinit var editTextTpn: AppCompatEditText
+    private lateinit var editTextMerchantId: AppCompatEditText
+    private lateinit var mmIdLinearLayout: LinearLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,6 +69,9 @@ class MainActivity : AppCompatActivity() {
         buttonStatusCheck = findViewById(R.id.buttonStatusCheck)
         editTextTip = findViewById(R.id.editTextTip)
         editTextIsvID = findViewById(R.id.edittext_isvId)
+        editTextTpn = findViewById(R.id.editTextTpn)
+        editTextMerchantId = findViewById(R.id.editTextMerchantId)
+        mmIdLinearLayout = findViewById(R.id.mmidLinear)
         val intentApplication = IntentApplication(applicationContext)
 
         val activityResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -228,6 +235,8 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("type", TransactionType.STATUS)
         jsonRequest.put("applicationType", "DVPAYLITE")
         jsonRequest.put("refId", transactionRefId.text.toString())
+        jsonRequest.put("TPN", editTextTpn.text.toString().trim())
+        jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
         Log.e("Request", "Request: $jsonRequest")
 
         intentApplication.setTransactionListener(object :
@@ -435,6 +444,8 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("refId", transactionRefId.text.toString())
         jsonRequest.put("receiptType", receiptType)
         jsonRequest.put("IsvId", editTextIsvID.text.toString())
+        jsonRequest.put("TPN", editTextTpn.text.toString().trim())
+        jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
         if (isTxnStatusScreenRequired != "No Tag") {
             jsonRequest.put("isTxnStatusScreenRequired", isTxnStatusScreenRequired)
         }
@@ -491,7 +502,8 @@ class MainActivity : AppCompatActivity() {
         val jsonRequest = JSONObject()
         jsonRequest.put("type", txnType)
         jsonRequest.put("applicationType", "DVPAYLITE")
-
+        jsonRequest.put("TPN", editTextTpn.text.toString().trim())
+        jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
         Log.e("DVPAYLITE","jsonRequest--$jsonRequest")
 
         intentApplication.setSettlementListener(object :
@@ -539,7 +551,8 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("applicationType", "DVPAYLITE")
         jsonRequest.put("refId", transactionRefId.text.toString())
         jsonRequest.put("IsvId", editTextIsvID.text.toString())
-
+        jsonRequest.put("TPN", editTextTpn.text.toString().trim())
+        jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
         Log.e("DVPAYLITE","jsonRequest--$jsonRequest")
 
         intentApplication.setTransactionListener(object :
@@ -603,6 +616,9 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("refId", "DL"+Utils.generateRandom(12))
         jsonRequest.put("receiptType", receiptType)
         jsonRequest.put("IsvId", editTextIsvID.text.toString())
+        jsonRequest.put("TPN", editTextTpn.text.toString().trim())
+        jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
+
         when (cardAcceptanceData) {
             "Empty(For Testing)" -> {
                 jsonRequest.put("cardAcceptanceTime","")
@@ -656,9 +672,15 @@ class MainActivity : AppCompatActivity() {
                     "onTransactionSuccess: " + transactionResult.toString(),
                     Toast.LENGTH_LONG
                 ).show()
+                try {
+                    var sign = transactionResult!!.get("sign")
+                    Log.e("DVPAYLITE", "transactionResult.toString() - sign -- $sign")
 
-                var sign = transactionResult!!.get("sign")
-                Log.e("DVPAYLITE", "transactionResult.toString() - sign -- $sign")
+                    var unMaskedPan = transactionResult!!.get("un_masked_pan")
+                    Log.e("DVPAYLITE", "transactionResult.toString() - unMaskedPan -- $unMaskedPan")
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
 
             override fun onTransactionFailed(errorResult: JSONObject) {
@@ -690,6 +712,8 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("refId", "DL"+Utils.generateRandom(12))
         jsonRequest.put("receiptType", receiptType)
         jsonRequest.put("IsvId", editTextIsvID.text.toString())
+        jsonRequest.put("TPN", editTextTpn.text.toString().trim())
+        jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
         when (cardAcceptanceData) {
             "Empty(For Testing)" -> {
                 jsonRequest.put("cardAcceptanceTime","")
@@ -766,6 +790,8 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("applicationType", "DVPAYLITE")
         jsonRequest.put("refId", transactionRefId.text.toString())
         jsonRequest.put("IsvId", editTextIsvID.text.toString())
+        jsonRequest.put("TPN", editTextTpn.text.toString().trim())
+        jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
         Log.e("Request", "Request: $jsonRequest")
 
         intentApplication.setTransactionListener(object :
@@ -829,6 +855,8 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("refId", transactionRefId.text.toString())
         jsonRequest.put("receiptType", receiptType)
         jsonRequest.put("IsvId", editTextIsvID.text.toString())
+        jsonRequest.put("TPN", editTextTpn.text.toString().trim())
+        jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
         if (isTxnStatusScreenRequired != "No Tag") {
             jsonRequest.put("isTxnStatusScreenRequired", isTxnStatusScreenRequired)
         }
@@ -943,6 +971,8 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("refId", "DL" + Utils.generateRandom(12))
         jsonRequest.put("receiptType", receiptType)
         jsonRequest.put("IsvId", editTextIsvID.text.toString())
+        jsonRequest.put("TPN", editTextTpn.text.toString().trim())
+        jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
         if (isTxnStatusScreenRequired != "No Tag") {
             jsonRequest.put("isTxnStatusScreenRequired", isTxnStatusScreenRequired)
         }
