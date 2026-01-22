@@ -47,7 +47,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var buttonGetTPN:AppCompatButton
     private lateinit var buttonDeviceDetails:AppCompatButton
     private lateinit var buttonStatusCheck:AppCompatButton
-    private lateinit var editTextTpn: AppCompatEditText
     private lateinit var editTextMerchantId: AppCompatEditText
     private lateinit var mmIdLinearLayout: LinearLayout
 
@@ -69,7 +68,6 @@ class MainActivity : AppCompatActivity() {
         buttonStatusCheck = findViewById(R.id.buttonStatusCheck)
         editTextTip = findViewById(R.id.editTextTip)
         editTextIsvID = findViewById(R.id.edittext_isvId)
-        editTextTpn = findViewById(R.id.editTextTpn)
         editTextMerchantId = findViewById(R.id.editTextMerchantId)
         mmIdLinearLayout = findViewById(R.id.mmidLinear)
         val intentApplication = IntentApplication(applicationContext)
@@ -235,7 +233,7 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("type", TransactionType.STATUS)
         jsonRequest.put("applicationType", "DVPAYLITE")
         jsonRequest.put("refId", transactionRefId.text.toString())
-        jsonRequest.put("TPN", editTextTpn.text.toString().trim())
+        jsonRequest.put("TPN", terminalTPN.text.toString().trim())
         jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
         Log.e("Request", "Request: $jsonRequest")
 
@@ -444,7 +442,7 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("refId", transactionRefId.text.toString())
         jsonRequest.put("receiptType", receiptType)
         jsonRequest.put("IsvId", editTextIsvID.text.toString())
-        jsonRequest.put("TPN", editTextTpn.text.toString().trim())
+        jsonRequest.put("TPN", terminalTPN.text.toString().trim())
         jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
         if (isTxnStatusScreenRequired != "No Tag") {
             jsonRequest.put("isTxnStatusScreenRequired", isTxnStatusScreenRequired)
@@ -502,7 +500,7 @@ class MainActivity : AppCompatActivity() {
         val jsonRequest = JSONObject()
         jsonRequest.put("type", txnType)
         jsonRequest.put("applicationType", "DVPAYLITE")
-        jsonRequest.put("TPN", editTextTpn.text.toString().trim())
+        jsonRequest.put("TPN", terminalTPN.text.toString().trim())
         jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
         Log.e("DVPAYLITE","jsonRequest--$jsonRequest")
 
@@ -551,7 +549,7 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("applicationType", "DVPAYLITE")
         jsonRequest.put("refId", transactionRefId.text.toString())
         jsonRequest.put("IsvId", editTextIsvID.text.toString())
-        jsonRequest.put("TPN", editTextTpn.text.toString().trim())
+        jsonRequest.put("TPN", terminalTPN.text.toString().trim())
         jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
         Log.e("DVPAYLITE","jsonRequest--$jsonRequest")
 
@@ -616,7 +614,7 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("refId", "DL"+Utils.generateRandom(12))
         jsonRequest.put("receiptType", receiptType)
         jsonRequest.put("IsvId", editTextIsvID.text.toString())
-        jsonRequest.put("TPN", editTextTpn.text.toString().trim())
+        jsonRequest.put("TPN", terminalTPN.text.toString().trim())
         jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
 
         when (cardAcceptanceData) {
@@ -712,7 +710,7 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("refId", "DL"+Utils.generateRandom(12))
         jsonRequest.put("receiptType", receiptType)
         jsonRequest.put("IsvId", editTextIsvID.text.toString())
-        jsonRequest.put("TPN", editTextTpn.text.toString().trim())
+        jsonRequest.put("TPN", terminalTPN.text.toString().trim())
         jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
         when (cardAcceptanceData) {
             "Empty(For Testing)" -> {
@@ -790,7 +788,7 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("applicationType", "DVPAYLITE")
         jsonRequest.put("refId", transactionRefId.text.toString())
         jsonRequest.put("IsvId", editTextIsvID.text.toString())
-        jsonRequest.put("TPN", editTextTpn.text.toString().trim())
+        jsonRequest.put("TPN", terminalTPN.text.toString().trim())
         jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
         Log.e("Request", "Request: $jsonRequest")
 
@@ -855,7 +853,7 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("refId", transactionRefId.text.toString())
         jsonRequest.put("receiptType", receiptType)
         jsonRequest.put("IsvId", editTextIsvID.text.toString())
-        jsonRequest.put("TPN", editTextTpn.text.toString().trim())
+        jsonRequest.put("TPN", terminalTPN.text.toString().trim())
         jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
         if (isTxnStatusScreenRequired != "No Tag") {
             jsonRequest.put("isTxnStatusScreenRequired", isTxnStatusScreenRequired)
@@ -971,7 +969,7 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("refId", "DL" + Utils.generateRandom(12))
         jsonRequest.put("receiptType", receiptType)
         jsonRequest.put("IsvId", editTextIsvID.text.toString())
-        jsonRequest.put("TPN", editTextTpn.text.toString().trim())
+        jsonRequest.put("TPN", terminalTPN.text.toString().trim())
         jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
         if (isTxnStatusScreenRequired != "No Tag") {
             jsonRequest.put("isTxnStatusScreenRequired", isTxnStatusScreenRequired)
