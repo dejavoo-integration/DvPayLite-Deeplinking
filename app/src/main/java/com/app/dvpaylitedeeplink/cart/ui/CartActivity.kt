@@ -86,6 +86,7 @@ class CartActivity : AppCompatActivity() {
     private var enableLineItems = false
     private var enableL2L3Items = false
     private var showJsonPreview = false
+    private var spinRequest = false
     private var txnTotalAmount: Double =0.0
     private var customerTip: Double = 0.00
     private lateinit var usbManager: UsbManager
@@ -329,6 +330,7 @@ class CartActivity : AppCompatActivity() {
         enableLineItems = PrefsHelper.getLineItems(this)
         enableL2L3Items = PrefsHelper.getL2L3LineItems(this)
         showJsonPreview =PrefsHelper.getJsonPreviewStatus(this)
+        spinRequest =PrefsHelper.getSpinRequest(this)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -372,8 +374,13 @@ class CartActivity : AppCompatActivity() {
 
             externalRRN = Utils.generateRandom(12).toString()
             Log.d("CartActivity", "Generated external RRN: $externalRRN")
+            var jsonRequest: JSONObject
+            if(spinRequest){
+              jsonRequest = getPayloadSpinJSON(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems)
+            }else{
+                jsonRequest = getPayloadJSON(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems)
+            }
 
-            val jsonRequest = getPayloadJSON(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems)
             Log.d("CartActivity", "Initialized JSON payload")
 
             val cartObject = JSONObject()
@@ -439,7 +446,7 @@ class CartActivity : AppCompatActivity() {
             cartObject.put("CashPrices", cashAmountsArray)
 
             if (enableLineItems) {
-             //   jsonRequest.put("Cart", cartObject)
+                jsonRequest.put("Cart", cartObject)
                 Log.d("CartActivity", "Line items enabled; cart object added to payload")
             }
             usbRequest(jsonRequest)
@@ -662,6 +669,39 @@ class CartActivity : AppCompatActivity() {
         }
     }
 
+    private fun getPayloadSpinJSON(referenceId:String,totalAmount:Double, items: List<Item>):JSONObject{
+        val totalAmt = formatToTwoDecimalPlaces(totalAmount)
+        txnTotalAmount = totalAmount
+        return JSONObject().apply {
+            put("TransType", selectedTransactionType)
+            put("PaymentType", "Credit")
+            put("Amount", totalAmt)
+            put("TipAmount",  String.format("%.2f", customerTip))
+            put("ExternalReceipt",  "")
+            put("ReferenceId", referenceId)
+            put("PrintReceipt", "NO")
+            put("GetReceipt", "NO")
+            put("MerchantNumber", "")
+            put("InvoiceNumber", "")
+            put("CaptureSignature", false)
+            put("GetExtendedData",  true)
+            put("IsReadyForIS", "")
+            put("Tpn", referenceId)
+            put("RegisterId", "")
+            put("Authkey", "")
+            put("SPInProxyTimeout", "")
+            if (enableL2L3Items) {
+                val l2l3Data = buildL2L3Data(items)
+                for (key in l2l3Data.keys()) {
+                    if (key != "Level3LineItems") {
+                        put(key, l2l3Data.get(key))
+                    }
+                }
+                put("Level3LineItems", l2l3Data.getJSONObject("Level3LineItems"))
+            }
+        }
+    }
+
     private fun hideSoftKeyboard(){
         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(referenceIDEditText.windowToken, 0)
@@ -767,17 +807,17 @@ class CartActivity : AppCompatActivity() {
     fun usbRequest(jsonObject: JSONObject) {
 
      Log.i("usbrequest","usbRequest : ${jsonObject.toString()}")
-        val amount = jsonObject
+       /* val amount = jsonObject
             .optString("amount", "0.00")
             .toDoubleOrNull() ?: 0.0
 
         val tip = jsonObject
             .optString("tip", "0.00")
-            .toDoubleOrNull() ?: 0.0
-        Log.i("usbrequest","usbRequest : ${amount}")
-        Log.i("usbrequest","usbRequest : ${tip}")
+            .toDoubleOrNull() ?: 0.0*/
+     /*   Log.i("usbrequest","usbRequest : ${amount}")
+        Log.i("usbrequest","usbRequest : ${tip}")*/
         val refId = getNextRefId()
-       val st1= "<request><PaymentType>Credit</PaymentType><TransType>Sale</TransType><Amount>$amount</Amount><Tip>$tip</Tip><CashbackAmount>0.00</CashbackAmount><Frequency>OneTime</Frequency><CustomFee>0.00</CustomFee><RefId>$refId</RefId><RegisterId>1234</RegisterId><AuthKey>vPXjq5X8fn</AuthKey><PrintReceipt>No</PrintReceipt><SigCapture>No</SigCapture></request>"
+    //   val st1= "<request><PaymentType>Credit</PaymentType><TransType>Sale</TransType><Amount>$amount</Amount><Tip>$tip</Tip><CashbackAmount>0.00</CashbackAmount><Frequency>OneTime</Frequency><CustomFee>0.00</CustomFee><RefId>$refId</RefId><RegisterId>1234</RegisterId><AuthKey>vPXjq5X8fn</AuthKey><PrintReceipt>No</PrintReceipt><SigCapture>No</SigCapture></request>"
         val progressDialog = android.app.AlertDialog.Builder(this)
             .setTitle("Please wait")
             .setMessage("Processing transaction...")
@@ -785,7 +825,7 @@ class CartActivity : AppCompatActivity() {
             .create()
 
         progressDialog.show()
-        usbPosManager.sendAndReceive(st1) { response ->
+        usbPosManager.sendAndReceive(jsonObject.toString()) { response ->
             runOnUiThread {
                 if (progressDialog.isShowing) {
                     progressDialog.dismiss()

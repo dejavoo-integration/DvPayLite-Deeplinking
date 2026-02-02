@@ -32,6 +32,7 @@ class OptionSelectionActivity : AppCompatActivity() {
     private lateinit var linearShowBreakup: LinearLayout
     private lateinit var sendL2L3Data: SwitchCompat
     private lateinit var showJsonPreview: SwitchCompat
+    private lateinit var spinRequest: SwitchCompat
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,6 +52,7 @@ class OptionSelectionActivity : AppCompatActivity() {
         edtCustomFee = findViewById<AppCompatEditText>(R.id.edtFee)
         sendL2L3Data = findViewById(R.id.set_l2l3_data)
         showJsonPreview = findViewById(R.id.switchJsonPreview)
+        spinRequest = findViewById(R.id.usb_spin_request)
 
         linearTipFee.visibility = View.GONE
         linearShowBreakup.visibility = if (Build.MODEL.equals("P18", ignoreCase = true)) View.GONE else View.VISIBLE //As of now, this feature not handled in DVAmphi
@@ -62,6 +64,7 @@ class OptionSelectionActivity : AppCompatActivity() {
         switchLineItems.isChecked = PrefsHelper.getLineItems(this)
         sendL2L3Data.isChecked = PrefsHelper.getL2L3LineItems(this)
         showJsonPreview.isChecked = PrefsHelper.getJsonPreviewStatus(this)
+        spinRequest.isChecked = PrefsHelper.getSpinRequest(this)
 
         switchApproval.setOnCheckedChangeListener { _, isChecked ->
             PrefsHelper.saveSettings(
@@ -72,7 +75,8 @@ class OptionSelectionActivity : AppCompatActivity() {
                 switchDual.isChecked,
                 switchLineItems.isChecked,
                 sendL2L3Data.isChecked,
-                showJsonPreview.isChecked
+                showJsonPreview.isChecked,
+                spinRequest.isChecked
             )
         }
 
@@ -85,7 +89,8 @@ class OptionSelectionActivity : AppCompatActivity() {
                 switchDual.isChecked,
                 switchLineItems.isChecked,
                 sendL2L3Data.isChecked,
-                showJsonPreview.isChecked
+                showJsonPreview.isChecked,
+                spinRequest.isChecked
             )
         }
         switchTip.setOnCheckedChangeListener { _, isChecked ->
@@ -97,7 +102,8 @@ class OptionSelectionActivity : AppCompatActivity() {
                 switchDual.isChecked,
                 switchLineItems.isChecked,
                 sendL2L3Data.isChecked,
-                showJsonPreview.isChecked
+                showJsonPreview.isChecked,
+                spinRequest.isChecked
             )
         }
         switchDual.setOnCheckedChangeListener { _, isChecked ->
@@ -109,7 +115,8 @@ class OptionSelectionActivity : AppCompatActivity() {
                 isChecked,
                 switchLineItems.isChecked,
                 sendL2L3Data.isChecked,
-                showJsonPreview.isChecked
+                showJsonPreview.isChecked,
+                spinRequest.isChecked
             )
         }
         switchLineItems.setOnCheckedChangeListener { _, isChecked ->
@@ -121,7 +128,8 @@ class OptionSelectionActivity : AppCompatActivity() {
                 switchDual.isChecked,
                 isChecked,
                 sendL2L3Data.isChecked,
-                showJsonPreview.isChecked
+                showJsonPreview.isChecked,
+                spinRequest.isChecked
             )
         }
         btnConfirm.setOnClickListener {
@@ -141,7 +149,8 @@ class OptionSelectionActivity : AppCompatActivity() {
                 switchDual.isChecked,
                 switchLineItems.isChecked,
                 isChecked,
-                showJsonPreview.isChecked
+                showJsonPreview.isChecked,
+                spinRequest.isChecked
             )
         }
         showJsonPreview.setOnCheckedChangeListener { _, isChecked ->
@@ -153,6 +162,20 @@ class OptionSelectionActivity : AppCompatActivity() {
                 switchDual.isChecked,
                 switchLineItems.isChecked,
                 sendL2L3Data.isChecked,
+                isChecked,
+                spinRequest.isChecked
+            )
+        }
+        spinRequest.setOnCheckedChangeListener { _, isChecked ->
+            PrefsHelper.saveSettings(
+                this,
+                switchApproval.isChecked,
+                switchBreakup.isChecked,
+                switchTip.isChecked,
+                switchDual.isChecked,
+                switchLineItems.isChecked,
+                sendL2L3Data.isChecked,
+                showJsonPreview.isChecked,
                 isChecked
             )
         }

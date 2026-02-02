@@ -132,7 +132,7 @@ class TipAndFeeActivity : AppCompatActivity() {
             resultIntent.putExtra("fee", edtCustomFee.text.toString().toDoubleOrNull() ?: 0.0)
             setResult(Activity.RESULT_OK, resultIntent)
             finish()
-            Toast.makeText(this, "Going usb connection", Toast.LENGTH_SHORT).show()
+         //   Toast.makeText(this, "Going usb connection", Toast.LENGTH_SHORT).show()
           //  sendData()
           /*  if (!usbPosManager.isConnected()) {
                 Toast.makeText(this, "POS not connected", Toast.LENGTH_SHORT).show()

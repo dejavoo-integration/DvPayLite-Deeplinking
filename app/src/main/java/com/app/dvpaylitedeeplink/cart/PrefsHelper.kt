@@ -11,8 +11,9 @@ object PrefsHelper {
     private const val KEY_LINE_ITEM = "line_items"
     private const val KEY_L2L3_LINE_ITEM = "l2l3_line_items"
     private const val KEY_JSON_PREVIEW = "json_preview"
+    private const val SPIN_REQUEST = "spin_request"
 
-    fun saveSettings(context: Context, approval: Boolean, breakup: Boolean, tipScreen: Boolean, dual: Boolean , showLineItems:Boolean, sendL2L3: Boolean,showJsonPreview :Boolean) {
+    fun saveSettings(context: Context, approval: Boolean, breakup: Boolean, tipScreen: Boolean, dual: Boolean , showLineItems:Boolean, sendL2L3: Boolean,showJsonPreview :Boolean, spinRequest: Boolean) {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
         prefs.edit().apply {
             putBoolean(KEY_APPROVAL, approval)
@@ -22,6 +23,7 @@ object PrefsHelper {
             putBoolean(KEY_LINE_ITEM, showLineItems)
             putBoolean(KEY_L2L3_LINE_ITEM, sendL2L3)
             putBoolean(KEY_JSON_PREVIEW, showJsonPreview)
+            putBoolean(SPIN_REQUEST, spinRequest)
             apply()
         }
     }
@@ -45,5 +47,8 @@ object PrefsHelper {
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE).getBoolean(KEY_L2L3_LINE_ITEM, false)
 
     fun getJsonPreviewStatus(context: Context): Boolean =
+        context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE).getBoolean(KEY_JSON_PREVIEW, false)
+
+    fun getSpinRequest(context: Context): Boolean =
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE).getBoolean(KEY_JSON_PREVIEW, false)
 }
