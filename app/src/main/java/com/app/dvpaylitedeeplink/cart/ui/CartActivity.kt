@@ -145,6 +145,7 @@ class CartActivity : AppCompatActivity() {
             }
         }
         navigationView = findViewById(R.id.navigation_view)
+        updateMenuVisibility()
         navigationView.getHeaderView(0)
             .findViewById<TextView>(R.id.tv_version)
             .text = "Version: ${BuildConfig.VERSION_NAME}"
@@ -329,6 +330,7 @@ class CartActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         getUserConfig()
+        updateMenuVisibility()
         Log.i("CartActivity",
             "Show Approval Screen: $showApproval------ Show Breakup Screen: $showBreakup---- Show Dual Screen: $showDual----- Enable Line Items $enableLineItems----- Show Tip Screen: $showTipScreen----- Enable l2l3 Items $enableL2L3Items----show Json Preview $showJsonPreview")
     }
@@ -869,7 +871,6 @@ class CartActivity : AppCompatActivity() {
         progressDialog.show()
 
 
-      //  val request = "<request><PaymentType>Credit</PaymentType><TransType>Sale</TransType><Amount>$amount</Amount><Tip>0.00</Tip><CashbackAmount>0.00</CashbackAmount><Frequency>OneTime</Frequency><CustomFee>0.00</CustomFee><RefId>$refId</RefId><RegisterId>1234</RegisterId><AuthKey>vPXjq5X8fn</AuthKey><PrintReceipt>No</PrintReceipt><SigCapture>No</SigCapture></request>"
         usbPosManager.sendAndReceive(request, object : UsbPosCallback {
 
             override fun onResult(response: String?, totalBytes: Int) {
@@ -904,6 +905,15 @@ class CartActivity : AppCompatActivity() {
         val nextRefId = currentRefId + 1
         prefs.edit().putInt("ref_id", nextRefId).apply()
         return nextRefId
+    }
+
+    private fun updateMenuVisibility() {
+        val menu = navigationView.menu
+        val currentMode = PrefsHelper.getMode(this)
+
+        // Show configure only for DeepLink
+        menu.findItem(R.id.nav_configure).isVisible =
+            currentMode == "DEEPLINK"
     }
 
 }
