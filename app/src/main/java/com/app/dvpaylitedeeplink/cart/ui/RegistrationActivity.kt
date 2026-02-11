@@ -4,7 +4,10 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.RadioButton
+import android.widget.RadioGroup
 import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
@@ -16,7 +19,10 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.SwitchCompat
 import com.app.dvpaylitedeeplink.R
+import com.app.dvpaylitedeeplink.UsbConnectionState
+import com.app.dvpaylitedeeplink.UsbStatusListener
 import com.app.dvpaylitedeeplink.cart.PrefsHelper
+import com.app.dvpaylitedeeplink.usb.UsbPosManager
 import com.denovo.app.invokeiposgo.interfaces.TerminalAddListener
 import com.denovo.app.invokeiposgo.launcher.IntentApplication
 import org.json.JSONObject
@@ -28,22 +34,59 @@ class RegistrationActivity : AppCompatActivity() {
     private lateinit var ivBack: AppCompatImageView
     private lateinit var edtTpn: AppCompatEditText
 
+    private lateinit var rgMode: RadioGroup
+    private lateinit var rbDeepLink: RadioButton
+    private lateinit var rbCloud: RadioButton
+    private lateinit var rbUsb: RadioButton
+    private lateinit var rbLocal: RadioButton
+
+    private lateinit var layoutDeepLink: LinearLayout
+    private lateinit var layoutCloud: LinearLayout
+    private lateinit var layoutUsb: LinearLayout
+
+    private lateinit var edtDeepLinkTPN: AppCompatEditText
+    private lateinit var edtCloudRegisterId: AppCompatEditText
+    private lateinit var edtCloudAuthKey: AppCompatEditText
+    private lateinit var edtLocalIpAddress: AppCompatEditText
+    private lateinit var edtLocalRegisterId: AppCompatEditText
+    private lateinit var edtUsbRegisterId: AppCompatEditText
+
+    private lateinit var tvUsbStatus: AppCompatTextView
+    private lateinit var btnUsbConnect: AppCompatButton
+
+    private var usbPosManager: UsbPosManager? = null
+
+    private lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
+    private lateinit var intentApplication: IntentApplication
+
+
+    private var selectedMode: Mode = Mode.DEEPLINK
+
+    enum class Mode {
+        DEEPLINK,
+        CLOUD,
+        LOCAL,
+        USB
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_registration)
 
+        initViews()
+        initUI()
+        intentApplication = IntentApplication(applicationContext)
 
+        activityResultLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                intentApplication.handleResultCallBack(result)
+            }
+        setupListeners()
         btnConfirm = findViewById(R.id.btnConfirm)
         ivBack = findViewById<AppCompatImageView>(R.id.iv_back)
-        edtTpn = findViewById<AppCompatEditText>(R.id.edtTPN)
-        val intentApplication = IntentApplication(applicationContext)
+       // edtTpn = findViewById<AppCompatEditText>(R.id.edtDeepLinkTPN)
 
-        val activityResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-                result: ActivityResult ->
-            intentApplication.handleResultCallBack(result)
-        }
-
-        btnConfirm.setOnClickListener {
+       /* btnConfirm.setOnClickListener {
             try {
                 registerApp(intentApplication, activityResultLauncher)
             } catch (e: Exception) {
@@ -53,12 +96,67 @@ class RegistrationActivity : AppCompatActivity() {
                     "Unable to Register ",
                     Toast.LENGTH_LONG
                 ).show()
-            }        }
+            }        }*/
 
         ivBack.setOnClickListener {
             onBackPressed()
         }
 
+    }
+
+    private fun initViews() {
+
+        rgMode = findViewById(R.id.rgMode)
+        rbDeepLink = findViewById(R.id.rbDeepLink)
+        rbCloud = findViewById(R.id.rbCloud)
+        rbUsb = findViewById(R.id.rbUsb)
+
+        layoutDeepLink = findViewById(R.id.layoutDeepLink)
+        layoutCloud = findViewById(R.id.layoutCloud)
+        layoutUsb = findViewById(R.id.layoutUsb)
+
+        edtDeepLinkTPN = findViewById(R.id.edtDeepLinkTPN)
+        edtCloudRegisterId = findViewById(R.id.edtCloudRegisterid)
+        edtCloudAuthKey = findViewById(R.id.edtCloudAuthKey)
+        edtLocalIpAddress = findViewById(R.id.edtLocalIpAddress)
+        edtLocalRegisterId = findViewById(R.id.edtLocalRegisterId)
+        edtUsbRegisterId = findViewById(R.id.edtUsbRegister)
+        tvUsbStatus = findViewById(R.id.tvUsbStatus)
+        btnUsbConnect = findViewById(R.id.btnUsbConnect)
+
+        btnConfirm = findViewById(R.id.btnConfirm)
+        ivBack = findViewById(R.id.iv_back)
+    }
+
+    private fun initUI() {
+            val savedMode = PrefsHelper.getMode(this)
+
+            when (savedMode) {
+
+                Mode.DEEPLINK.name -> {
+                    rbDeepLink.isChecked = true
+                    showDeepLink()
+                }
+
+                Mode.CLOUD.name -> {
+                    rbCloud.isChecked = true
+                    showCloud()
+                }
+
+                Mode.USB.name -> {
+                    rbUsb.isChecked = true
+                    showUsb()
+                }
+
+                Mode.LOCAL.name -> {
+                    rbLocal.isChecked = true
+                    showLocal()
+            }
+        }
+
+        ivBack.setOnClickListener {
+            finish()
+        }
     }
 
     private fun registerApp(
@@ -67,12 +165,12 @@ class RegistrationActivity : AppCompatActivity() {
     ) {
         //   val jsonRequest:JSONObject = {“tpn”:”123456789012”, “applicationType”:”DVPAYLITE”}
 
-        if(edtTpn.text.toString().trim().isEmpty()){
+        if(edtDeepLinkTPN.text.toString().trim().isEmpty()){
             throw Exception()
         }
 
         val jsonRequest = JSONObject()
-        jsonRequest.put("tpn", edtTpn.text.toString().trim())
+        jsonRequest.put("tpn", edtDeepLinkTPN.text.toString().trim())
         jsonRequest.put("applicationType", "DVPAYLITE")
 
         intentApplication.setTerminalAddListener(object :
@@ -101,4 +199,222 @@ class RegistrationActivity : AppCompatActivity() {
             activityResultLauncher
         )
     }
+
+    private fun setupListeners() {
+
+        rgMode.setOnCheckedChangeListener { _, checkedId ->
+
+            hideAllLayouts()
+
+            when (checkedId) {
+
+                R.id.rbDeepLink -> {
+                    selectedMode = Mode.DEEPLINK
+                    showDeepLink()
+                }
+
+                R.id.rbCloud -> {
+                    selectedMode = Mode.CLOUD
+                    showCloud()
+                }
+
+                R.id.rbLocal -> {
+                    selectedMode = Mode.LOCAL
+                    showLocal()
+                }
+
+                R.id.rbUsb -> {
+                    selectedMode = Mode.USB
+                    showUsb()
+                    setupUsb()
+                }
+            }
+        }
+
+        btnConfirm.setOnClickListener {
+            if (validateInputs()) {
+                handleConfirm()
+            }
+        }
+    }
+
+    private fun hideAllLayouts() {
+        layoutDeepLink.visibility = View.GONE
+        layoutCloud.visibility = View.GONE
+        layoutUsb.visibility = View.GONE
+    }
+
+    private fun showDeepLink() {
+        layoutDeepLink.visibility = View.VISIBLE
+    }
+
+    private fun showCloud() {
+        layoutCloud.visibility = View.VISIBLE
+    }
+
+    private fun showLocal() {
+        layoutCloud.visibility = View.VISIBLE
+    }
+
+    private fun showUsb() {
+        layoutUsb.visibility = View.VISIBLE
+    }
+
+    // ===============================
+    // Validation
+    // ===============================
+
+    private fun validateInputs(): Boolean {
+
+        when (selectedMode) {
+
+            Mode.DEEPLINK -> {
+                val value = edtDeepLinkTPN.text.toString().trim()
+                if (value.isEmpty()) {
+                    edtDeepLinkTPN.error = "Enter DeepLink TPN"
+                    return false
+                }
+            }
+
+            Mode.CLOUD -> {
+                val registerId = edtCloudRegisterId.text.toString().trim()
+                val authKey = edtCloudAuthKey.text.toString().trim()
+
+                if (registerId.isEmpty()) {
+                    edtCloudRegisterId.error = "Enter Cloud Register Id"
+                    return false
+                }
+
+                if (authKey.isEmpty()) {
+                    edtCloudAuthKey.error = "Enter Cloud Auth Key"
+                    return false
+                }
+            }
+
+            Mode.LOCAL -> {
+                val registerId = edtLocalRegisterId.text.toString().trim()
+                val ipAddress = edtLocalIpAddress.text.toString().trim()
+
+                if (registerId.isEmpty()) {
+                    edtLocalRegisterId.error = "Enter Local Register Id"
+                    return false
+                }
+
+                if (ipAddress.isEmpty()) {
+                    edtLocalIpAddress.error = "Enter network  Ip Address"
+                    return false
+                }
+            }
+
+            Mode.USB -> {
+                val usbRegisterId = edtUsbRegisterId.text.toString().trim()
+                if (usbRegisterId.isEmpty()) {
+                    edtUsbRegisterId.error = "Enter Register ID"
+                    return false
+                }
+            }
+        }
+
+        return true
+    }
+
+    // ===============================
+    // Confirm Handling
+    // ===============================
+
+    private fun handleConfirm() {
+
+        when (selectedMode) {
+
+            Mode.DEEPLINK -> {
+                val tpn = edtDeepLinkTPN.text.toString().trim()
+                try {
+                    registerApp(intentApplication, activityResultLauncher)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    Toast.makeText(
+                        this@RegistrationActivity,
+                        "Unable to Register ",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+                PrefsHelper.saveDeepLink(this, tpn)
+                PrefsHelper.saveMode(this, Mode.DEEPLINK.name)
+                Toast.makeText(this, "DeepLink Selected\nTPN: $tpn", Toast.LENGTH_SHORT).show()
+
+            }
+
+            Mode.CLOUD -> {
+                val registerId = edtCloudRegisterId.text.toString().trim()
+                val authKey = edtCloudAuthKey.text.toString().trim()
+                PrefsHelper.saveCloud(this, registerId, authKey)
+                PrefsHelper.saveMode(this, Mode.CLOUD.name)
+                Toast.makeText(this, "Cloud Selected\nregisterId: $registerId\nauthKey: $authKey", Toast.LENGTH_SHORT).show()
+                finish()
+            }
+
+            Mode.LOCAL -> {
+                val ipAddress = edtLocalIpAddress.text.toString().trim()
+                val registerId = edtLocalRegisterId.text.toString().trim()
+                PrefsHelper.saveLocal(this, registerId, ipAddress)
+                PrefsHelper.saveMode(this, Mode.LOCAL.name)
+                Toast.makeText(this, "Local Selected\nRegister Id: $registerId\nIp Address: $ipAddress", Toast.LENGTH_SHORT).show()
+                finish()
+            }
+
+            Mode.USB -> {
+                val usbRegisterId = edtUsbRegisterId.text.toString().trim()
+
+                if (usbPosManager?.isConnected() != true) {
+                    Toast.makeText(this, "usb Not Connected ", Toast.LENGTH_SHORT).show()
+                }
+                PrefsHelper.saveUsb(this, usbRegisterId)
+                PrefsHelper.saveMode(this, Mode.USB.name)
+                Toast.makeText(this, "USB Selected\nusbRegisterId: $usbRegisterId", Toast.LENGTH_SHORT).show()
+                finish()
+            }
+        }
+    }
+
+    private fun setupUsb() {
+
+        usbPosManager = UsbPosManager(this)
+
+        usbPosManager?.setStatusListener(object : UsbStatusListener {
+
+            override fun onStatusChanged(
+                state: UsbConnectionState,
+                message: String?
+            ) {
+                runOnUiThread {
+                    tvUsbStatus.text = "USB Status : $message"
+                }
+            }
+        })
+
+        usbPosManager?.init()
+
+        btnUsbConnect.setOnClickListener {
+
+            tvUsbStatus.text = "USB Status : Connecting..."
+
+            usbPosManager?.release()
+            usbPosManager = UsbPosManager(this)
+
+            usbPosManager?.setStatusListener(object : UsbStatusListener {
+                override fun onStatusChanged(
+                    state: UsbConnectionState,
+                    message: String?
+                ) {
+                    runOnUiThread {
+                        tvUsbStatus.text = "USB Status : $message"
+                    }
+                }
+            })
+
+            usbPosManager?.init()
+        }
+    }
+
 }
+

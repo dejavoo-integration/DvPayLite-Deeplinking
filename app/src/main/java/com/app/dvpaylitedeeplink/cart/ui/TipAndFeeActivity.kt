@@ -25,8 +25,8 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.SwitchCompat
 import com.app.dvpaylitedeeplink.MyApp
 import com.app.dvpaylitedeeplink.R
-import com.app.dvpaylitedeeplink.UsbActivity
 import com.app.dvpaylitedeeplink.UsbConnectionState
+import com.app.dvpaylitedeeplink.UsbPosCallback
 import com.app.dvpaylitedeeplink.UsbStatusListener
 import com.app.dvpaylitedeeplink.cart.PrefsHelper
 import com.app.dvpaylitedeeplink.usb.UsbPosManager
@@ -80,8 +80,6 @@ class TipAndFeeActivity : AppCompatActivity() {
         edtTipAmount = findViewById<AppCompatEditText>(R.id.edtTipAmount)
         edtCustomFee = findViewById<AppCompatEditText>(R.id.edtFee)
 
-     //   usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
-
         usbPosManager = (application as MyApp).usbPosManager
 
         usbPosManager.setStatusListener(object : UsbStatusListener {
@@ -112,17 +110,6 @@ class TipAndFeeActivity : AppCompatActivity() {
             }
         })
 
-      //  usbPosManager.init()
-
-      /*  if (!isUsbHostSupported()) {
-            Toast.makeText(this, "USB Host not supported", Toast.LENGTH_LONG).show()
-            return
-        }
-
-        registerUsbReceiver()
-
-        autoConnectUsb()*/
-
         userConfigLayout.visibility = View.GONE
         getIntentValues()
 
@@ -132,40 +119,7 @@ class TipAndFeeActivity : AppCompatActivity() {
             resultIntent.putExtra("fee", edtCustomFee.text.toString().toDoubleOrNull() ?: 0.0)
             setResult(Activity.RESULT_OK, resultIntent)
             finish()
-         //   Toast.makeText(this, "Going usb connection", Toast.LENGTH_SHORT).show()
-          //  sendData()
-          /*  if (!usbPosManager.isConnected()) {
-                Toast.makeText(this, "POS not connected", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }*/
-           /* //rrrrrrrrrrrr
-            val progressDialog = android.app.AlertDialog.Builder(this)
-                .setTitle("Please wait")
-                .setMessage("Processing transaction...")
-                .setCancelable(false) // cannot dismiss by tapping outside
-                .create()
-            progressDialog.show()
 
-            val refId = getNextRefId()
-            val amount = intent.getDoubleExtra("txnAmount", 0.0)
-
-
-            val request = "<request><PaymentType>Credit</PaymentType><TransType>Sale</TransType><Amount>$amount</Amount><Tip>0.00</Tip><CashbackAmount>0.00</CashbackAmount><Frequency>OneTime</Frequency><CustomFee>0.00</CustomFee><RefId>$refId</RefId><RegisterId>1234</RegisterId><AuthKey>vPXjq5X8fn</AuthKey><PrintReceipt>No</PrintReceipt><SigCapture>No</SigCapture></request>"
-            usbPosManager.sendAndReceive(request) { response ->
-                runOnUiThread {
-                    if (progressDialog.isShowing) {
-                        progressDialog.dismiss()
-                    }
-                    // Automatically trigger ivBack click
-                    ivBack.performClick()
-                    if (response != null) {
-
-                        Toast.makeText(this, response, Toast.LENGTH_LONG).show()
-                    } else {
-                        Toast.makeText(this, "No POS response", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }*/
         }
 
         ivBack.setOnClickListener {
@@ -195,17 +149,17 @@ class TipAndFeeActivity : AppCompatActivity() {
     }
 
 
-  /*  override fun onDestroy() {
+    override fun onDestroy() {
         usbPosManager.release()
         super.onDestroy()
-    }*/
+    }
 
-  /*  private fun getNextRefId(): Int {
+    private fun getNextRefId(): Int {
         val prefs = getSharedPreferences("pos_prefs", MODE_PRIVATE)
         val currentRefId = prefs.getInt("ref_id", 900) // starting RefId, e.g., 100
         val nextRefId = currentRefId + 1
         prefs.edit().putInt("ref_id", nextRefId).apply()
         return nextRefId
-    }*/
+    }
 
 }

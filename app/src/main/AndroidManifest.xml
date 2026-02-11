@@ -20,9 +20,6 @@
         android:theme="@style/Theme.DvPayLiteDeepLink"
         tools:targetApi="31">
         <activity
-            android:name=".UsbActivity"
-            android:exported="false" />
-        <activity
             android:name=".cart.ui.PeripheralActivity"
             android:exported="false" />
         <activity

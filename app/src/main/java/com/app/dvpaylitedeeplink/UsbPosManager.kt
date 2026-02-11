@@ -5,21 +5,17 @@ import android.content.*
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
+import android.widget.Toast
 import com.app.dvpaylitedeeplink.UsbConnectionState
+import com.app.dvpaylitedeeplink.UsbPosCallback
 import com.app.dvpaylitedeeplink.UsbStatusListener
 import com.hoho.android.usbserial.driver.*
 import kotlin.concurrent.thread
 
 class UsbPosManager(private val context: Context) {
-    private val appContext = context.applicationContext
-
-    @Volatile
-    private var lastState: UsbConnectionState? = null
-
-    @Volatile
-    private var lastMessage: String? = null
-
 
     companion object {
         const val ACTION_USB_PERMISSION = "com.app.dvpaylitedeeplink.USB_PERMISSION"
@@ -27,10 +23,12 @@ class UsbPosManager(private val context: Context) {
     }
 
     private val usbManager =
-        appContext.getSystemService(Context.USB_SERVICE) as UsbManager
+        context.getSystemService(Context.USB_SERVICE) as UsbManager
 
     private var serialPort: UsbSerialPort? = null
     private var statusListener: UsbStatusListener? = null
+
+    // shared buffer (cleared per request)
     private val readBuffer = StringBuilder()
 
     /* ================= INIT ================= */
@@ -41,17 +39,12 @@ class UsbPosManager(private val context: Context) {
     }
 
     fun release() {
-        try { appContext.unregisterReceiver(usbReceiver) } catch (_: Exception) {}
+        try { context.unregisterReceiver(usbReceiver) } catch (_: Exception) {}
         closeDevice()
     }
 
     fun setStatusListener(listener: UsbStatusListener) {
         statusListener = listener
-
-        //  Immediately notify current state
-        lastState?.let {
-            listener.onStatusChanged(it, lastMessage)
-        }
     }
 
     fun isConnected(): Boolean = serialPort?.isOpen == true
@@ -80,13 +73,12 @@ class UsbPosManager(private val context: Context) {
     private fun requestPermission(device: UsbDevice) {
         val intent = Intent(ACTION_USB_PERMISSION)
         val pendingIntent = PendingIntent.getBroadcast(
-            appContext,
+            context,
             0,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
         )
         usbManager.requestPermission(device, pendingIntent)
-        Log.d(TAG, "Requesting USB permission")
     }
 
     /* ================= OPEN PORT ================= */
@@ -99,11 +91,7 @@ class UsbPosManager(private val context: Context) {
         val port = driver.ports.first()
 
         try {
-            val connection = usbManager.openDevice(device)
-            if (connection == null) {
-                Log.e(TAG, "openDevice returned null")
-                return
-            }
+            val connection = usbManager.openDevice(device) ?: return
 
             port.open(connection)
             port.setParameters(
@@ -114,152 +102,107 @@ class UsbPosManager(private val context: Context) {
             )
 
             serialPort = port
-            Log.d(TAG, "USB PORT OPENED SUCCESSFULLY")
+            Log.i(TAG, "USB PORT OPENED")
+
             showToast("POS Connected")
-            lastState = UsbConnectionState.CONNECTED
-            lastMessage = "POS Connected"
-            statusListener?.onStatusChanged(lastState!!, lastMessage)
+            statusListener?.onStatusChanged(
+                UsbConnectionState.CONNECTED,
+                "POS Connected"
+            )
 
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to open port", e)
+            Log.e(TAG, "Failed to open USB port", e)
         }
     }
 
-    /* ================= SEND / RECEIVE ================= */
+    /* ================= SEND & RECEIVE ================= */
 
-  /*  fun sendAndReceive(request: String, onResult: (String?) -> Unit) {
+    fun sendAndReceive(request: String, callback: UsbPosCallback) {
         val port = serialPort
-        Log.d(TAG, "sendAndReceive called, portOpen=${port?.isOpen}")
 
         if (port == null || !port.isOpen) {
-            Log.e(TAG, "Port not open")
-            onResult(null)
+            callback.onResult(null, 0)
             return
         }
 
         thread {
             try {
-                port.write((request + "\r\n").toByteArray(), 2000)
-                Log.d(TAG, "Sent: $request")
+                // IMPORTANT: clear buffer before new request
+                readBuffer.setLength(0)
 
-                val response = readResponse(port)
-                Log.d(TAG, "Received: $response")
+                // -------- SEND --------
+                val sendBytes = (request + "\r\n").toByteArray(Charsets.UTF_8)
+                port.write(sendBytes, 3000)
 
-                onResult(response)
+                Log.i(TAG, "USB SENT bytes=${sendBytes.size}")
 
-            } catch (e: Exception) {
-                Log.e(TAG, "Send/Receive failed", e)
-                onResult(null)
-            }
-        }
-    }*/
-
-    fun sendAndReceive(request: String, onResult: (String?) -> Unit) {
-        /*val request1 = "{\n" +
-                "  \"Amount\": 25,\n" +
-                "  \"TipAmount\": 2.5,\n" +
-                "  \"ExternalReceipt\": \"\",\n" +
-                "  \"PaymentType\": \"Credit\",\n" +
-                "  \"ReferenceId\": \"111\",\n" +
-                "  \"PrintReceipt\": \"No\",\n" +
-                "  \"GetReceipt\": \"No\",\n" +
-                "  \"MerchantNumber\": null,\n" +
-                "  \"InvoiceNumber\": \"\",\n" +
-                "  \"CaptureSignature\": false,\n" +
-                "  \"GetExtendedData\": true,\n" +
-                "  \"IsReadyForIS\": false,\n" +
-                "  \"Tpn\": \"170725957498\",\n" +
-                "  \"RegisterId\": \"1234\",\n" +
-                "  \"Authkey\": \"zbhRAW9N6x\",\n" +
-                "  \"CustomFields\": {},\n" +
-                "  \"TransType\": \"Sale\"\n" +
-                "}"*/
-        val port = serialPort
-        Log.d(TAG, "sendAndReceive called, portOpen=${port?.isOpen}")
-        Log.d(TAG, "sendAndReceive called, portOpen=${request}")
-
-        if (port == null || !port.isOpen) {
-            Log.e(TAG, "Port not open")
-            onResult(null)
-            return
-        }
-
-        thread {
-            try {
-                // Convert request to bytes
-              //  val bytes = (request + "\n").toByteArray(Charsets.UTF_8)
-                var offset = 0
-                val chunkSize = 32 // POS usually supports 32 bytes max per write
-                val sendBytes = (request + "\r\n").toByteArray()
-                port.write(sendBytes, 1000)
-               /* while (offset < bytes.size) {
-                    val length = minOf(chunkSize, bytes.size - offset)
-                    val chunk = bytes.copyOfRange(offset, offset + length)
-
-                    // Timeout > 0
-                    port.write(chunk, 3000)
-                    offset += length
-
-                    // Small delay so POS can process
-                    Thread.sleep(20)
-                }*/
-
-             //   Log.d(TAG, "Chunked write completed (${bytes.size} bytes)")
-                Log.d("USB-SEND", "Sent: $request")
-
-                // Now read response
-                val response = readResponse(port)
-                Log.d(TAG, "Received: $response")
-
-                onResult(response)
+                // -------- RECEIVE --------
+                val result = readResponseWithBytes(port)
+                callback.onResult(result.first, result.second)
 
             } catch (e: Exception) {
-                Log.e(TAG, "Send/Receive failed", e)
-                onResult(null)
+                Log.e(TAG, "USB send/receive error", e)
+                callback.onResult(null, 0)
             }
         }
     }
 
+    /* ================= READ COMPLETE RESPONSE ================= */
 
-    private fun readResponse(port: UsbSerialPort): String? {
+    private fun readResponseWithBytes(
+        port: UsbSerialPort
+    ): Pair<String?, Int> {
+
         val buffer = ByteArray(2048)
-        val start = System.currentTimeMillis()
+        val startTime = System.currentTimeMillis()
+        var totalBytes = 0
+
         readBuffer.setLength(0)
 
-        while (System.currentTimeMillis() - start < 120_000) {
+        while (System.currentTimeMillis() - startTime < 120_000) {
+
             val len = port.read(buffer, 1000)
+
             if (len > 0) {
-                val chunk = String(buffer, 0, len)
+                totalBytes += len
+
+                val chunk = String(buffer, 0, len, Charsets.UTF_8)
                 readBuffer.append(chunk)
 
-                val text = readBuffer.toString().trim()
-                if (
-                    (text.startsWith("{") && text.endsWith("}")) ||
-                    (text.startsWith("<") && text.endsWith(">"))
-                ) {
-                    return text
+                Log.i(TAG, "USB chunk received: $len bytes")
+
+                val fullText = readBuffer.toString()
+
+                // POS XML termination condition
+                if (fullText.contains("</xmp>")) {
+                    Log.i(TAG, "USB COMPLETE bytes=$totalBytes")
+                    return Pair(fullText, totalBytes)
                 }
             }
         }
-        return null
+
+        Log.e(TAG, "USB TIMEOUT bytes=$totalBytes")
+        return Pair(null, totalBytes)
     }
 
     /* ================= USB RECEIVER ================= */
 
     private val usbReceiver = object : BroadcastReceiver() {
-        override fun onReceive(appContext: Context, intent: Intent) {
+        override fun onReceive(context: Context, intent: Intent) {
+
             when (intent.action) {
 
                 ACTION_USB_PERMISSION -> {
                     val device =
-                        intent.getParcelableExtra<UsbDevice>(UsbManager.EXTRA_DEVICE)
+                        intent.getParcelableExtra<UsbDevice>(
+                            UsbManager.EXTRA_DEVICE
+                        )
+
                     val granted =
                         intent.getBooleanExtra(
                             UsbManager.EXTRA_PERMISSION_GRANTED,
                             false
                         )
-
-                    Log.d(TAG, "Permission result: $granted")
 
                     if (granted && device != null) {
                         tryOpenDevice(device)
@@ -267,16 +210,10 @@ class UsbPosManager(private val context: Context) {
                 }
 
                 UsbManager.ACTION_USB_DEVICE_ATTACHED -> {
-                    val device =
-                        intent.getParcelableExtra<UsbDevice>(UsbManager.EXTRA_DEVICE)
-                    if (device != null) {
-                        autoConnectUsb()
-                    }
+                    autoConnectUsb()
                 }
 
                 UsbManager.ACTION_USB_DEVICE_DETACHED -> {
-                    Log.d(TAG, "USB detached")
-                    showToast("USB detached")
                     closeDevice()
                 }
             }
@@ -291,13 +228,13 @@ class UsbPosManager(private val context: Context) {
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            appContext.registerReceiver(
+            context.registerReceiver(
                 usbReceiver,
                 filter,
                 Context.RECEIVER_NOT_EXPORTED
             )
         } else {
-            appContext.registerReceiver(usbReceiver, filter)
+            context.registerReceiver(usbReceiver, filter)
         }
     }
 
@@ -306,45 +243,20 @@ class UsbPosManager(private val context: Context) {
     fun closeDevice() {
         try { serialPort?.close() } catch (_: Exception) {}
         serialPort = null
-        Log.d(TAG, "USB port closed")
-      //  showToast("POS Disconnected")
-        lastState = UsbConnectionState.DISCONNECTED
-        lastMessage = "POS Disconnected"
-        statusListener?.onStatusChanged(lastState!!, lastMessage)
+
+        statusListener?.onStatusChanged(
+            UsbConnectionState.DISCONNECTED,
+            "POS Disconnected"
+        )
     }
 
-    private fun showToast(message: String) {
-        android.os.Handler(android.os.Looper.getMainLooper()).post {
-            android.widget.Toast.makeText(
-                appContext.applicationContext,
-                message,
-                android.widget.Toast.LENGTH_SHORT
+    private fun showToast(msg: String) {
+        Handler(Looper.getMainLooper()).post {
+            Toast.makeText(
+                context.applicationContext,
+                msg,
+                Toast.LENGTH_SHORT
             ).show()
         }
-    }
-
-
-    /* ================= CHUNKED WRITE ================= */
-    private fun writeInChunks(port: UsbSerialPort, data: String) {
-        val bytes = data.toByteArray(Charsets.UTF_8)
-        var offset = 0
-        val chunkSize = 32 // POS usually supports 32 bytes max per write
-
-        while (offset < bytes.size) {
-            val length = minOf(chunkSize, bytes.size - offset)
-            val chunk = bytes.copyOfRange(offset, offset + length)
-
-            // Timeout > 0 is required
-            port.write(chunk, 3000)
-            offset += length
-
-            // Small delay so POS can process
-            Thread.sleep(20)
-        }
-
-        // POS may expect newline at the end
-        port.write("\n".toByteArray(), 2000)
-
-        Log.d(TAG, "Chunked write completed (${bytes.size} bytes)")
     }
 }

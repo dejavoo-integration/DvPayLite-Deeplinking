@@ -35,6 +35,7 @@ import com.app.dvpaylitedeeplink.JsonPreviewActivity
 import com.app.dvpaylitedeeplink.MainActivity
 import com.app.dvpaylitedeeplink.MyApp
 import com.app.dvpaylitedeeplink.R
+import com.app.dvpaylitedeeplink.UsbPosCallback
 import com.app.dvpaylitedeeplink.Utils
 import com.app.dvpaylitedeeplink.cart.PrefsHelper
 import com.app.dvpaylitedeeplink.cart.adapters.CartAdapter
@@ -92,6 +93,10 @@ class CartActivity : AppCompatActivity() {
     private lateinit var usbManager: UsbManager
     private var serialPort: UsbSerialPort? = null
     private lateinit var usbPosManager: UsbPosManager
+    private lateinit var transactionMode: String
+    private lateinit var registerId: String
+    private lateinit var authKey: String
+    private lateinit var ipAddress: String
 
 
     private lateinit var intentApplication: IntentApplication
@@ -271,7 +276,13 @@ class CartActivity : AppCompatActivity() {
                         val selectedItems = adapter.getSelectedItems()
                         val externalRRN = EXTERNAL_RRN_PREFIX+refIdFromEditText
                         val jsonRequest = getPayloadJSON(externalRRN,DEFAULT_VALUE,selectedItems)
-                        processSaleTxn(intentApplication, activityResultLauncher, jsonRequest)
+                        var spinXml = ""
+                        if(spinRequest){
+                             spinXml = getPayloadSpinXML(externalRRN,DEFAULT_VALUE,selectedItems)
+                            usbRequest(spinXml)
+                        }else{
+                            processSaleTxn(intentApplication, activityResultLauncher, jsonRequest)
+                        }
                     }else{
                         Toast.makeText(this, "Please enter External RRN", Toast.LENGTH_SHORT).show()
                     }
@@ -330,7 +341,10 @@ class CartActivity : AppCompatActivity() {
         enableLineItems = PrefsHelper.getLineItems(this)
         enableL2L3Items = PrefsHelper.getL2L3LineItems(this)
         showJsonPreview =PrefsHelper.getJsonPreviewStatus(this)
-        spinRequest =PrefsHelper.getSpinRequest(this)
+        transactionMode = PrefsHelper.getMode(this).toString()
+        registerId = PrefsHelper.getRegisterId(this).toString()
+        authKey = PrefsHelper.getAuthId(this).toString()
+        ipAddress = PrefsHelper.getIpAddress(this).toString()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -374,112 +388,110 @@ class CartActivity : AppCompatActivity() {
 
             externalRRN = Utils.generateRandom(12).toString()
             Log.d("CartActivity", "Generated external RRN: $externalRRN")
-            var jsonRequest: JSONObject
-            if(spinRequest){
-              jsonRequest = getPayloadSpinJSON(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems)
+            var jsonRequest: JSONObject = JSONObject()
+            var usbRequest:String = ""
+            Log.d("CartActivity", "registration transactionMode  : $transactionMode")
+            if(transactionMode.equals("CLOUD") || transactionMode.equals("LOCAL") || transactionMode.equals("USB")){
+                usbRequest = getPayloadSpinXML(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems)
+                usbRequest(usbRequest)
             }else{
                 jsonRequest = getPayloadJSON(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems)
-            }
+                Log.d("CartActivity", "Initialized JSON payload")
 
-            Log.d("CartActivity", "Initialized JSON payload")
+                val cartObject = JSONObject()
 
-            val cartObject = JSONObject()
+                val itemsArray = JSONArray(selectedItems.map { item ->
+                    JSONObject().apply {
+                        put("Name", item.name)
+                        put("Price", formatToTwoDecimalPlaces(item.price))
+                        put("CardPrice", formatToTwoDecimalPlaces(item.price * 1.04))
+                        put("Quantity", item.quantity)
+                        put("AdditionalInfo", item.additionalInfo)
 
-            val itemsArray = JSONArray(selectedItems.map { item ->
-                JSONObject().apply {
-                    put("Name", item.name)
-                    put("Price", formatToTwoDecimalPlaces(item.price))
-                    put("CardPrice", formatToTwoDecimalPlaces(item.price * 1.04))
-                    put("Quantity", item.quantity)
-                    put("AdditionalInfo", item.additionalInfo)
-
-                    if (!item.modifiers.isNullOrEmpty()) {
-                        val modifiersArray = JSONArray(item.modifiers!!.map { modifier ->
-                            JSONObject().apply {
-                                put("Name", modifier.name)
-                                put("Options", JSONArray(modifier.options?.map { option ->
-                                    JSONObject().apply {
-                                        put("Name", option.name)
-                                        put("Price", formatToTwoDecimalPlaces(option.price))
-                                        put("Quantity", option.quantity)
-                                    }
-                                }))
-                            }
-                        })
-                        put("Modifiers", modifiersArray)
+                        if (!item.modifiers.isNullOrEmpty()) {
+                            val modifiersArray = JSONArray(item.modifiers!!.map { modifier ->
+                                JSONObject().apply {
+                                    put("Name", modifier.name)
+                                    put("Options", JSONArray(modifier.options?.map { option ->
+                                        JSONObject().apply {
+                                            put("Name", option.name)
+                                            put("Price", formatToTwoDecimalPlaces(option.price))
+                                            put("Quantity", option.quantity)
+                                        }
+                                    }))
+                                }
+                            })
+                            put("Modifiers", modifiersArray)
+                        }
                     }
-                }
-            })
-            Log.d("CartActivity", "Items array created with ${selectedItems.size} items")
+                })
+                Log.d("CartActivity", "Items array created with ${selectedItems.size} items")
 
-            val cardAmountsArray = JSONArray(cart.amounts.map { amount ->
-                val cardPrice = if (amount.name.equals("Tip", ignoreCase = true)) {
-                    amount.value
-                } else if (amount.name.equals("Total", ignoreCase = true)) {
-                    val fee = (4.0 / 100) * amount.value
-                    amount.value + fee + customerTip
-                } else {
-                    val fee = (4.0 / 100) * amount.value
-                    amount.value + fee
-                }
+                val cardAmountsArray = JSONArray(cart.amounts.map { amount ->
+                    val cardPrice = if (amount.name.equals("Tip", ignoreCase = true)) {
+                        amount.value
+                    } else if (amount.name.equals("Total", ignoreCase = true)) {
+                        val fee = (4.0 / 100) * amount.value
+                        amount.value + fee + customerTip
+                    } else {
+                        val fee = (4.0 / 100) * amount.value
+                        amount.value + fee
+                    }
 
-                JSONObject().apply {
-                    put("Name", amount.name)
-                    put("Value", formatToTwoDecimalPlaces(cardPrice))
+                    JSONObject().apply {
+                        put("Name", amount.name)
+                        put("Value", formatToTwoDecimalPlaces(cardPrice))
+                    }
+                })
+                val cashAmountsArray = JSONArray(cart.amounts.map { amount ->
+                    val cashPrice = if (amount.name.equals("Total", ignoreCase = true)) {
+                        amount.value+customerTip
+                    }else{
+                        amount.value
+                    }
+                    JSONObject().apply {
+                        put("Name", amount.name)
+                        put("Value", formatToTwoDecimalPlaces(cashPrice))
+                    }
+                })
+                Log.d("CartActivity", "CashPrices array created with ${cart.amounts.size} entries")
+
+                cartObject.put("Items", itemsArray)
+                cartObject.put("Amounts", cardAmountsArray)
+                cartObject.put("CashPrices", cashAmountsArray)
+
+                if (enableLineItems) {
+                    jsonRequest.put("Cart", cartObject)
+                    Log.d("CartActivity", "Line items enabled; cart object added to payload")
                 }
-            })
-            val cashAmountsArray = JSONArray(cart.amounts.map { amount ->
-                val cashPrice = if (amount.name.equals("Total", ignoreCase = true)) {
-                    amount.value+customerTip
+                Log.d("CartActivity", "Final JSON Object: $usbRequest")
+                Log.d("CartActivity", "Processing sale transaction...")
+                val editedJsonString = data?.getStringExtra("editedJson")
+                if (!editedJsonString.isNullOrEmpty()) {
+                    val finalJson = JSONObject(editedJsonString)
+                    Log.d("CartActivity", "Confirmed JSON: $finalJson")
+                    processSaleTxn(intentApplication, activityResultLauncher, finalJson)
+                }
+                if(showJsonPreview){
+                    val intent = Intent(this, JsonPreviewActivity::class.java)
+                    intent.putExtra("jsonPayload", jsonRequest.toString(2))
+                    startActivityForResult(intent, 456)
                 }else{
-                    amount.value
+                    processSaleTxn(intentApplication, activityResultLauncher, jsonRequest)
                 }
-                JSONObject().apply {
-                    put("Name", amount.name)
-                    put("Value", formatToTwoDecimalPlaces(cashPrice))
+                customerTip = 0.00
+            }
+            if (requestCode == 456 && resultCode == Activity.RESULT_OK) {
+                val editedJsonString = data?.getStringExtra("editedJson")
+                if (!editedJsonString.isNullOrEmpty()) {
+                    val finalJson = JSONObject(editedJsonString)
+                    Log.d("CartActivity", "Confirmed JSON: $finalJson")
+                    processSaleTxn(intentApplication, activityResultLauncher, finalJson)
                 }
-            })
-            Log.d("CartActivity", "CashPrices array created with ${cart.amounts.size} entries")
-
-            cartObject.put("Items", itemsArray)
-            cartObject.put("Amounts", cardAmountsArray)
-            cartObject.put("CashPrices", cashAmountsArray)
-
-            if (enableLineItems) {
-                jsonRequest.put("Cart", cartObject)
-                Log.d("CartActivity", "Line items enabled; cart object added to payload")
+            } else {
+                Log.d("CartActivity", "Request code or result code did not match expected values")
             }
-            usbRequest(jsonRequest)
-            Log.d("CartActivity", "Final JSON Object: $jsonRequest")
-            Log.d("CartActivity", "Processing sale transaction...")
-            val editedJsonString = data?.getStringExtra("editedJson")
-            if (!editedJsonString.isNullOrEmpty()) {
-                val finalJson = JSONObject(editedJsonString)
-                Log.d("CartActivity", "Confirmed JSON: $finalJson")
-               // usbrequest(finalJson)
-                // processSaleTxn(intentApplication, activityResultLauncher, finalJson)
             }
-            if(showJsonPreview){
-                val intent = Intent(this, JsonPreviewActivity::class.java)
-                intent.putExtra("jsonPayload", jsonRequest.toString(2))
-                startActivityForResult(intent, 456)
-            }else{
-              //  usbrequest(jsonRequest)
-               // processSaleTxn(intentApplication, activityResultLauncher, jsonRequest)
-            }
-            customerTip = 0.00
-        }
-        if (requestCode == 456 && resultCode == Activity.RESULT_OK) {
-            val editedJsonString = data?.getStringExtra("editedJson")
-            if (!editedJsonString.isNullOrEmpty()) {
-                val finalJson = JSONObject(editedJsonString)
-                Log.d("CartActivity", "Confirmed JSON: $finalJson")
-               // usbrequest(finalJson)
-               // processSaleTxn(intentApplication, activityResultLauncher, finalJson)
-            }
-        } else {
-            Log.d("CartActivity", "Request code or result code did not match expected values")
-        }
     }
 
 
@@ -669,38 +681,83 @@ class CartActivity : AppCompatActivity() {
         }
     }
 
-    private fun getPayloadSpinJSON(referenceId:String,totalAmount:Double, items: List<Item>):JSONObject{
+    private fun getPayloadSpinXML(
+        referenceId: String,
+        totalAmount: Double,
+        items: List<Item>
+    ): String {
+
         val totalAmt = formatToTwoDecimalPlaces(totalAmount)
-        txnTotalAmount = totalAmount
-        return JSONObject().apply {
-            put("TransType", selectedTransactionType)
-            put("PaymentType", "Credit")
-            put("Amount", totalAmt)
-            put("TipAmount",  String.format("%.2f", customerTip))
-            put("ExternalReceipt",  "")
-            put("ReferenceId", referenceId)
-            put("PrintReceipt", "NO")
-            put("GetReceipt", "NO")
-            put("MerchantNumber", "")
-            put("InvoiceNumber", "")
-            put("CaptureSignature", false)
-            put("GetExtendedData",  true)
-            put("IsReadyForIS", "")
-            put("Tpn", referenceId)
-            put("RegisterId", "")
-            put("Authkey", "")
-            put("SPInProxyTimeout", "")
-            if (enableL2L3Items) {
-                val l2l3Data = buildL2L3Data(items)
-                for (key in l2l3Data.keys()) {
-                    if (key != "Level3LineItems") {
-                        put(key, l2l3Data.get(key))
-                    }
-                }
-                put("Level3LineItems", l2l3Data.getJSONObject("Level3LineItems"))
-            }
+
+        val xmlBuilder = StringBuilder()
+
+        if(transactionMode.equals("CLOUD")){
+            xmlBuilder.append(" HTTPS://test.spinpos.net:443/spin/cgi.html?TerminalTransaction=")
+        }else if(transactionMode.equals("Local")){
+            xmlBuilder.append("HTTP://${ipAddress}:9000/spin/cgi.html?TerminalTransaction=")
         }
+       // xmlBuilder.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
+        xmlBuilder.append("<request>")
+        // Transaction Details
+        xmlBuilder.append("<PaymentType>Credit</PaymentType>")
+        xmlBuilder.append("<TransType>$selectedTransactionType</TransType>")
+        xmlBuilder.append("<Amount>$totalAmt</Amount>")
+        xmlBuilder.append("<Tip>${String.format("%.2f", customerTip)}</Tip>")
+        xmlBuilder.append("<CashbackAmount>0.00</CashbackAmount>")
+        xmlBuilder.append("<Frequency>OneTime</Frequency>")
+        xmlBuilder.append("<CustomFee>0.00</CustomFee>")
+        xmlBuilder.append("<RegisterId>${registerId}</RegisterId>")
+        xmlBuilder.append("<AuthKey>${authKey}</AuthKey>")
+        xmlBuilder.append("<PrintReceipt>No</PrintReceipt>")
+        xmlBuilder.append("<SigCapture>No</SigCapture>")
+
+      /*  // Cart Section
+        xmlBuilder.append("<Cart>")
+        xmlBuilder.append("<Items>")*/
+
+       /* for (item in items) {
+            xmlBuilder.append("<Item>")
+            xmlBuilder.append("<Name>${item.name}</Name>")
+            xmlBuilder.append("<Price>${item.price}</Price>")
+            xmlBuilder.append("<UnitPrice></UnitPrice>")
+            xmlBuilder.append("<Quantity>${item.quantity}</Quantity>")
+
+ *//*           // Modifiers
+            if (item.modifiers!!.isNotEmpty()) {
+                xmlBuilder.append("<Modifiers>")
+
+                for (modifier in item.modifiers) {
+                    xmlBuilder.append("<Modifier>")
+                    xmlBuilder.append("<Name>${modifier.name}</Name>")
+                    xmlBuilder.append("<Options>")
+
+                    for (option in modifier!!.options!!) {
+                        xmlBuilder.append("<Option>")
+                        xmlBuilder.append("<Name>${option.name}</Name>")
+                        xmlBuilder.append("<Price>${option.price}</Price>")
+                        xmlBuilder.append("<Quantity>${option.quantity}</Quantity>")
+                        xmlBuilder.append("</Option>")
+                    }
+
+                    xmlBuilder.append("</Options>")
+                    xmlBuilder.append("</Modifier>")
+                }
+
+                xmlBuilder.append("</Modifiers>")
+            }*//*
+
+            xmlBuilder.append("</Item>")
+        }*/
+
+     /*   xmlBuilder.append("</Items>")
+        xmlBuilder.append("</Cart>")*/
+
+        xmlBuilder.append("<RefId>${getNextRefId()}</RefId>")
+        xmlBuilder.append("</request>")
+
+        return xmlBuilder.toString()
     }
+
 
     private fun hideSoftKeyboard(){
         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
@@ -799,45 +856,46 @@ class CartActivity : AppCompatActivity() {
         }
     }
 
-    /*override fun onDestroy() {
-        serialPort?.close()
-        super.onDestroy()
-    }*/
 
-    fun usbRequest(jsonObject: JSONObject) {
 
-     Log.i("usbrequest","usbRequest : ${jsonObject.toString()}")
-       /* val amount = jsonObject
-            .optString("amount", "0.00")
-            .toDoubleOrNull() ?: 0.0
+    fun usbRequest(request: String) {
 
-        val tip = jsonObject
-            .optString("tip", "0.00")
-            .toDoubleOrNull() ?: 0.0*/
-     /*   Log.i("usbrequest","usbRequest : ${amount}")
-        Log.i("usbrequest","usbRequest : ${tip}")*/
-        val refId = getNextRefId()
-    //   val st1= "<request><PaymentType>Credit</PaymentType><TransType>Sale</TransType><Amount>$amount</Amount><Tip>$tip</Tip><CashbackAmount>0.00</CashbackAmount><Frequency>OneTime</Frequency><CustomFee>0.00</CustomFee><RefId>$refId</RefId><RegisterId>1234</RegisterId><AuthKey>vPXjq5X8fn</AuthKey><PrintReceipt>No</PrintReceipt><SigCapture>No</SigCapture></request>"
+     Log.i("usbrequest","usbRequest Main request : ${request.toString()}")
         val progressDialog = android.app.AlertDialog.Builder(this)
             .setTitle("Please wait")
             .setMessage("Processing transaction...")
             .setCancelable(false) // cannot dismiss by tapping outside
             .create()
-
         progressDialog.show()
-        usbPosManager.sendAndReceive(jsonObject.toString()) { response ->
-            runOnUiThread {
-                if (progressDialog.isShowing) {
-                    progressDialog.dismiss()
-                }
-                if (response != null) {
-                    Log.d("USB_RESPONSE", "Received from POS: $response")
-                    Toast.makeText(this, response, Toast.LENGTH_LONG).show()
-                } else {
-                    Toast.makeText(this, "No POS response", Toast.LENGTH_SHORT).show()
+
+
+      //  val request = "<request><PaymentType>Credit</PaymentType><TransType>Sale</TransType><Amount>$amount</Amount><Tip>0.00</Tip><CashbackAmount>0.00</CashbackAmount><Frequency>OneTime</Frequency><CustomFee>0.00</CustomFee><RefId>$refId</RefId><RegisterId>1234</RegisterId><AuthKey>vPXjq5X8fn</AuthKey><PrintReceipt>No</PrintReceipt><SigCapture>No</SigCapture></request>"
+        usbPosManager.sendAndReceive(request, object : UsbPosCallback {
+
+            override fun onResult(response: String?, totalBytes: Int) {
+                runOnUiThread {
+
+                    if (progressDialog.isShowing) {
+                        progressDialog.dismiss()
+                    }
+
+                    if (response != null) {
+                        Log.i("USB", "Total bytes received = $totalBytes")
+                        Log.i("USB", response)
+                        Toast.makeText(
+                            this@CartActivity,
+                            response,
+                            Toast.LENGTH_LONG
+                        ).show()
+                    } else {
+                        Toast.makeText(this@CartActivity,
+                            "No POS response",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
             }
-        }
+        })
     }
 
     private fun getNextRefId(): Int {
