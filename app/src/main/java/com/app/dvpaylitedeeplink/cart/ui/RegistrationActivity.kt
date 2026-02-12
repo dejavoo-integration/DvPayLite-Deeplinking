@@ -2,6 +2,7 @@ package com.app.dvpaylitedeeplink.cart.ui
 
 import android.app.Activity
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.widget.EditText
@@ -18,6 +19,7 @@ import androidx.appcompat.widget.AppCompatEditText
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.SwitchCompat
+import com.app.dvpaylitedeeplink.MyApp
 import com.app.dvpaylitedeeplink.R
 import com.app.dvpaylitedeeplink.UsbConnectionState
 import com.app.dvpaylitedeeplink.UsbStatusListener
@@ -54,7 +56,7 @@ class RegistrationActivity : AppCompatActivity() {
     private lateinit var tvUsbStatus: AppCompatTextView
     private lateinit var btnUsbConnect: AppCompatButton
 
-    private var usbPosManager: UsbPosManager? = null
+    private lateinit var usbPosManager: UsbPosManager
 
     private lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
     private lateinit var intentApplication: IntentApplication
@@ -72,9 +74,13 @@ class RegistrationActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_registration)
-
+        usbPosManager = UsbPosManager(this)
         initViews()
         initUI()
+        usbPosManager = (application as MyApp).usbPosManager
+        usbPosManager.init()
+
+
         intentApplication = IntentApplication(applicationContext)
 
         activityResultLauncher =
@@ -84,24 +90,18 @@ class RegistrationActivity : AppCompatActivity() {
         setupListeners()
         btnConfirm = findViewById(R.id.btnConfirm)
         ivBack = findViewById<AppCompatImageView>(R.id.iv_back)
-       // edtTpn = findViewById<AppCompatEditText>(R.id.edtDeepLinkTPN)
-
-       /* btnConfirm.setOnClickListener {
-            try {
-                registerApp(intentApplication, activityResultLauncher)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                Toast.makeText(
-                    this@RegistrationActivity,
-                    "Unable to Register ",
-                    Toast.LENGTH_LONG
-                ).show()
-            }        }*/
 
         ivBack.setOnClickListener {
             onBackPressed()
         }
 
+        if (usbPosManager.isConnected()) {
+            tvUsbStatus.text = "POS Connected"
+            tvUsbStatus.setTextColor(Color.GREEN)
+        } else {
+            tvUsbStatus.text = "POS Disconnected"
+            tvUsbStatus.setTextColor(Color.RED)
+        }
     }
 
     private fun initViews() {
@@ -135,21 +135,26 @@ class RegistrationActivity : AppCompatActivity() {
 
                 Mode.DEEPLINK.name -> {
                     rbDeepLink.isChecked = true
+                    selectedMode = Mode.DEEPLINK
                     showDeepLink()
                 }
 
                 Mode.CLOUD.name -> {
                     rbCloud.isChecked = true
+                    selectedMode = Mode.CLOUD
                     showCloud()
                 }
 
                 Mode.USB.name -> {
                     rbUsb.isChecked = true
+                    selectedMode = Mode.USB
                     showUsb()
+
                 }
 
                 Mode.LOCAL.name -> {
                     rbLocal.isChecked = true
+                    selectedMode = Mode.LOCAL
                     showLocal()
             }
         }
@@ -364,10 +369,6 @@ class RegistrationActivity : AppCompatActivity() {
 
             Mode.USB -> {
                 val usbRegisterId = edtUsbRegisterId.text.toString().trim()
-
-                if (usbPosManager?.isConnected() != true) {
-                    Toast.makeText(this, "usb Not Connected ", Toast.LENGTH_SHORT).show()
-                }
                 PrefsHelper.saveUsb(this, usbRegisterId)
                 PrefsHelper.saveMode(this, Mode.USB.name)
                 Toast.makeText(this, "USB Selected\nusbRegisterId: $usbRegisterId", Toast.LENGTH_SHORT).show()
@@ -377,43 +378,48 @@ class RegistrationActivity : AppCompatActivity() {
     }
 
     private fun setupUsb() {
-
-        usbPosManager = UsbPosManager(this)
-
-        usbPosManager?.setStatusListener(object : UsbStatusListener {
-
-            override fun onStatusChanged(
-                state: UsbConnectionState,
-                message: String?
-            ) {
+        usbPosManager.setStatusListener(object : UsbStatusListener {
+            override fun onStatusChanged(state: UsbConnectionState, message: String?) {
                 runOnUiThread {
-                    tvUsbStatus.text = "USB Status : $message"
+                    when (state) {
+                        UsbConnectionState.CONNECTING -> {
+                            tvUsbStatus.text = "Connecting..."
+                        }
+                        UsbConnectionState.CONNECTED -> {
+                            tvUsbStatus.text = "POS Connected"
+                            tvUsbStatus.setTextColor(Color.GREEN)
+                        }
+                        UsbConnectionState.PERMISSION_DENIED -> {
+                            tvUsbStatus.text = "Permission Denied"
+                            tvUsbStatus.setTextColor(Color.RED)
+                        }
+                        UsbConnectionState.DISCONNECTED -> {
+                            tvUsbStatus.text = "POS Disconnected"
+                            tvUsbStatus.setTextColor(Color.RED)
+                        }
+                        UsbConnectionState.ERROR -> {
+                            tvUsbStatus.text = message ?: "USB Error"
+                            tvUsbStatus.setTextColor(Color.RED)
+                        }
+                    }
                 }
             }
         })
 
-        usbPosManager?.init()
+     /*   btnUsbConnect.setOnClickListener {
 
-        btnUsbConnect.setOnClickListener {
+            if (!usbPosManager.isConnected()) {
+                tvUsbStatus.text = "USB Status : Connecting..."
+                usbPosManager.init()
+            } else {
+                Toast.makeText(this, "Already Connected", Toast.LENGTH_SHORT).show()
+            }
+        }*/
+    }
 
-            tvUsbStatus.text = "USB Status : Connecting..."
-
-            usbPosManager?.release()
-            usbPosManager = UsbPosManager(this)
-
-            usbPosManager?.setStatusListener(object : UsbStatusListener {
-                override fun onStatusChanged(
-                    state: UsbConnectionState,
-                    message: String?
-                ) {
-                    runOnUiThread {
-                        tvUsbStatus.text = "USB Status : $message"
-                    }
-                }
-            })
-
-            usbPosManager?.init()
-        }
+    override fun onResume() {
+        super.onResume()
+        setupUsb()
     }
 
 }

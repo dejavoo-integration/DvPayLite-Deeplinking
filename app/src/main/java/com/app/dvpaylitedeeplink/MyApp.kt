@@ -11,6 +11,5 @@ class MyApp : Application() {
     override fun onCreate() {
         super.onCreate()
         usbPosManager = UsbPosManager(this)
-        usbPosManager.init()
     }
 }

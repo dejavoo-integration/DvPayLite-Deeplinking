@@ -81,6 +81,7 @@ class TipAndFeeActivity : AppCompatActivity() {
         edtCustomFee = findViewById<AppCompatEditText>(R.id.edtFee)
 
         usbPosManager = (application as MyApp).usbPosManager
+        usbPosManager.init()
 
         usbPosManager.setStatusListener(object : UsbStatusListener {
             override fun onStatusChanged(state: UsbConnectionState, message: String?) {
@@ -149,10 +150,10 @@ class TipAndFeeActivity : AppCompatActivity() {
     }
 
 
-    override fun onDestroy() {
+   /* override fun onDestroy() {
         usbPosManager.release()
         super.onDestroy()
-    }
+    }*/
 
     private fun getNextRefId(): Int {
         val prefs = getSharedPreferences("pos_prefs", MODE_PRIVATE)

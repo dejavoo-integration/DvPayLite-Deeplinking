@@ -92,7 +92,6 @@ class UsbPosManager(private val context: Context) {
 
         try {
             val connection = usbManager.openDevice(device) ?: return
-
             port.open(connection)
             port.setParameters(
                 115200,

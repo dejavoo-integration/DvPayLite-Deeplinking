@@ -168,29 +168,52 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="30dp"
-                        android:gravity="center"
-                        android:orientation="horizontal">
+                        android:orientation="vertical">
 
-                        <androidx.appcompat.widget.AppCompatTextView
+                        <!-- First Row (Horizontal) -->
+                        <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="DL"
-                            android:textColor="@color/black"
-                            android:textSize="30sp"
-                            android:textStyle="bold" />
+                            android:gravity="center"
+                            android:orientation="horizontal">
 
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="DL"
+                                android:textColor="@color/black"
+                                android:textSize="30sp"
+                                android:textStyle="bold" />
+
+                            <androidx.appcompat.widget.AppCompatEditText
+                                android:id="@+id/ac_referenceIDEditText"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:digits="0123456789"
+                                android:maxLength="12"
+                                android:hint="External RRN"
+                                android:inputType="number"
+                                android:minWidth="200dp"
+                                android:textColor="@color/black"
+                                android:textSize="30sp"
+                                android:textStyle="bold" />
+
+                        </LinearLayout>
+
+                        <!-- Second Row (Below) -->
                         <androidx.appcompat.widget.AppCompatEditText
-                            android:id="@+id/ac_referenceIDEditText"
-                            android:layout_width="wrap_content"
+                            android:id="@+id/ac_amountEditText"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:digits="0123456789"
+                            android:layout_marginTop="16dp"
                             android:maxLength="12"
-                            android:hint="External RRN"
-                            android:inputType="numberDecimal|textNoSuggestions"
-                            android:minWidth="200dp"
+                            android:hint="Amount"
+                            android:inputType="number"
                             android:textColor="@color/black"
                             android:textSize="30sp"
-                            android:textStyle="bold" />
+                            android:textStyle="bold"
+                            android:visibility="gone" />
+
                     </LinearLayout>
 
                     <androidx.appcompat.widget.AppCompatButton

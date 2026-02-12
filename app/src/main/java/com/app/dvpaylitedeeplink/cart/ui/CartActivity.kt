@@ -1,5 +1,6 @@
 package com.app.dvpaylitedeeplink.cart.ui
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -71,9 +72,11 @@ class CartActivity : AppCompatActivity() {
     private lateinit var cardViewAmountSection: CardView
     private lateinit var referenceIDLinear: LinearLayout
     private lateinit var referenceIDEditText: AppCompatEditText
+    private lateinit var amountEditText: AppCompatEditText
     private lateinit var proceedButton: AppCompatButton
     private lateinit var externalRRNLinear: LinearLayout
     private var externalRRN: String? = null
+    private var ticketAmt: Double = 0.00
     private var selectedTransactionType: String = LoadItems.SALE
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var ivHamburger: ImageView
@@ -92,7 +95,7 @@ class CartActivity : AppCompatActivity() {
     private var customerTip: Double = 0.00
     private lateinit var usbManager: UsbManager
     private var serialPort: UsbSerialPort? = null
-    private lateinit var usbPosManager: UsbPosManager
+    private  var usbPosManager: UsbPosManager ? = null
     private lateinit var transactionMode: String
     private lateinit var registerId: String
     private lateinit var authKey: String
@@ -102,6 +105,7 @@ class CartActivity : AppCompatActivity() {
     private lateinit var intentApplication: IntentApplication
     private lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
 
+    @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_cart)
@@ -109,6 +113,7 @@ class CartActivity : AppCompatActivity() {
         context = this as Context
 
         usbPosManager = (application as MyApp).usbPosManager
+        usbPosManager?.init()
 
         transactionTypesRecyclerView = findViewById(R.id.transactionTypesRecyclerView)
         lineItemCheckBox = findViewById(R.id.ac_lineItemCheckBox)
@@ -120,6 +125,7 @@ class CartActivity : AppCompatActivity() {
         cardViewAmountSection = findViewById(R.id.cardViewAmountSection)
         referenceIDLinear = findViewById(R.id.ac_referenceIDLinear)
         referenceIDEditText = findViewById(R.id.ac_referenceIDEditText)
+        amountEditText = findViewById(R.id.ac_amountEditText)
         proceedButton = findViewById(R.id.ac_proceedButton)
         externalRRNLinear = findViewById(R.id.ac_externalRRNLinear)
 
@@ -187,6 +193,7 @@ class CartActivity : AppCompatActivity() {
                     selectedTransactionType =LoadItems.TICKET
                         if (externalRRN != null) {
                         referenceIDEditText.setText(externalRRN)
+                            amountEditText.setText(ticketAmt?.toDouble().toString())
                     }
                     showReferenceIDLayout(true)
                 }
@@ -225,6 +232,7 @@ class CartActivity : AppCompatActivity() {
                         LoadItems.TICKET -> {
                             if (externalRRN!=null){
                                 referenceIDEditText.setText(externalRRN)
+                                amountEditText.setText(ticketAmt?.toDouble().toString())
                             }
                             showReferenceIDLayout(true)
                         }
@@ -268,18 +276,22 @@ class CartActivity : AppCompatActivity() {
         updateAmounts()
 
         proceedButton.setOnClickListener{
+            var spinXml = ""
             when (selectedTransactionType) {
                 LoadItems.VOID,
                 LoadItems.TICKET -> {
+                    var ticketAmount = 0.0
                     val refIdFromEditText = referenceIDEditText.text.toString()
                     if (refIdFromEditText.isNotEmpty()) {
                         val adapter = itemsRecyclerView.adapter as CartAdapter
                         val selectedItems = adapter.getSelectedItems()
                         val externalRRN = EXTERNAL_RRN_PREFIX+refIdFromEditText
-                        val jsonRequest = getPayloadJSON(externalRRN,DEFAULT_VALUE,selectedItems)
-                        var spinXml = ""
-                        if(spinRequest){
-                             spinXml = getPayloadSpinXML(externalRRN,DEFAULT_VALUE,selectedItems)
+                        if(selectedTransactionType.equals(LoadItems.TICKET)){
+                             ticketAmount = amountEditText.text.toString().toDouble()
+                        }
+                        val jsonRequest = getPayloadJSON(externalRRN,DEFAULT_VALUE,selectedItems,ticketAmount)
+                        if(transactionMode.equals("CLOUD") || transactionMode.equals("LOCAL") || transactionMode.equals("USB")){
+                             spinXml = getPayloadSpinXML(externalRRN,DEFAULT_VALUE,selectedItems,ticketAmount)
                             usbRequest(spinXml)
                         }else{
                             processSaleTxn(intentApplication, activityResultLauncher, jsonRequest)
@@ -289,7 +301,13 @@ class CartActivity : AppCompatActivity() {
                     }
                 }
                 LoadItems.SETTLEMENT ->{
-                    processSettlement(intentApplication, activityResultLauncher)
+                    val ticketAmount = 0.00
+                    if(transactionMode.equals("CLOUD") || transactionMode.equals("LOCAL") || transactionMode.equals("USB")){
+                        spinXml = getPayloadSpinXML("",DEFAULT_VALUE,emptyList(),ticketAmount)
+                        usbRequest(spinXml)
+                    }else{
+                        processSettlement(intentApplication, activityResultLauncher)
+                    }
                 }
             }
         }
@@ -362,12 +380,6 @@ class CartActivity : AppCompatActivity() {
             Log.d("CartActivity", "context--$context")
 
 
-          /*  val activityResultLauncher =
-                registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                    Log.d("CartActivity", "Nested activity result received")
-                    intentApplication.handleResultCallBack(result)
-                }*/
-
             if (data != null) {
                 customerTip = data.getDoubleExtra("tip",0.00)!!
                 Log.d("CartActivity", "Customer tip received: $customerTip")
@@ -389,15 +401,16 @@ class CartActivity : AppCompatActivity() {
             Log.d("CartActivity", "Calculated total amount: $totalAmount")
 
             externalRRN = Utils.generateRandom(12).toString()
+            ticketAmt = totalAmount
             Log.d("CartActivity", "Generated external RRN: $externalRRN")
             var jsonRequest: JSONObject = JSONObject()
             var usbRequest:String = ""
             Log.d("CartActivity", "registration transactionMode  : $transactionMode")
             if(transactionMode.equals("CLOUD") || transactionMode.equals("LOCAL") || transactionMode.equals("USB")){
-                usbRequest = getPayloadSpinXML(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems)
+                usbRequest = getPayloadSpinXML(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems,ticketAmt)
                 usbRequest(usbRequest)
             }else{
-                jsonRequest = getPayloadJSON(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems)
+                jsonRequest = getPayloadJSON(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems,ticketAmt)
                 Log.d("CartActivity", "Initialized JSON payload")
 
                 val cartObject = JSONObject()
@@ -653,16 +666,21 @@ class CartActivity : AppCompatActivity() {
         clearCart()
         referenceIDLinear.visibility = View.VISIBLE
         externalRRNLinear.visibility = if (showRRNLinear) View.VISIBLE else View.GONE
+        amountEditText.visibility = if(selectedTransactionType == LoadItems.TICKET)  View.VISIBLE else View.GONE
         itemsRecyclerView.visibility = View.GONE
     }
 
-    private fun getPayloadJSON(referenceId:String,totalAmount:Double, items: List<Item>):JSONObject{
+    private fun getPayloadJSON(referenceId:String,totalAmount:Double, items: List<Item>,ticketAmount:Double):JSONObject{
         val totalAmt = formatToTwoDecimalPlaces(totalAmount)
         txnTotalAmount = totalAmount
         return JSONObject().apply {
             put("type", selectedTransactionType)
             put("paymentType", "Credit")
-            put("amount", totalAmt)
+            if(selectedTransactionType.equals(LoadItems.TICKET)){
+                put("amount", ticketAmount)
+            }else{
+                put("amount", totalAmt)
+            }
             put("tip",  String.format("%.2f", customerTip))
             put("applicationType", "DVPAYLITE")
             put("refId", referenceId)
@@ -686,45 +704,56 @@ class CartActivity : AppCompatActivity() {
     private fun getPayloadSpinXML(
         referenceId: String,
         totalAmount: Double,
-        items: List<Item>
+        items: List<Item>,
+        ticketAmount:Double
     ): String {
-
+        items.forEach { item ->
+            Log.i("my_tag", " cart Item: $item")
+        }
         val totalAmt = formatToTwoDecimalPlaces(totalAmount)
-
         val xmlBuilder = StringBuilder()
-
-        if(transactionMode.equals("CLOUD")){
+        if (transactionMode.equals("CLOUD")) {
             xmlBuilder.append(" HTTPS://test.spinpos.net:443/spin/cgi.html?TerminalTransaction=")
-        }else if(transactionMode.equals("Local")){
+        } else if (transactionMode.equals("Local")) {
             xmlBuilder.append("HTTP://${ipAddress}:9000/spin/cgi.html?TerminalTransaction=")
         }
-       // xmlBuilder.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
         xmlBuilder.append("<request>")
-        // Transaction Details
-        xmlBuilder.append("<PaymentType>Credit</PaymentType>")
-        xmlBuilder.append("<TransType>$selectedTransactionType</TransType>")
-        xmlBuilder.append("<Amount>$totalAmt</Amount>")
-        xmlBuilder.append("<Tip>${String.format("%.2f", customerTip)}</Tip>")
-        xmlBuilder.append("<CashbackAmount>0.00</CashbackAmount>")
-        xmlBuilder.append("<Frequency>OneTime</Frequency>")
-        xmlBuilder.append("<CustomFee>0.00</CustomFee>")
+        xmlBuilder.append("<TransType>${getTransactionType(selectedTransactionType)}</TransType>")
+        if (selectedTransactionType.equals(LoadItems.SETTLEMENT)) {
+            xmlBuilder.append("<Param>Close</Param>")
+        } else {
+            xmlBuilder.append("<PaymentType>Credit</PaymentType>")
+            if(selectedTransactionType.equals(LoadItems.TICKET)){
+                xmlBuilder.append("<Amount>$ticketAmount</Amount>")
+            }else{
+                xmlBuilder.append("<Amount>$totalAmt</Amount>")
+            }
+            xmlBuilder.append("<Tip>${String.format("%.2f", customerTip)}</Tip>")
+            xmlBuilder.append("<CashbackAmount>0.00</CashbackAmount>")
+            xmlBuilder.append("<Frequency>OneTime</Frequency>")
+            xmlBuilder.append("<CustomFee>0.00</CustomFee>")
+        }
         xmlBuilder.append("<RegisterId>${registerId}</RegisterId>")
-        xmlBuilder.append("<AuthKey>${authKey}</AuthKey>")
+        if(transactionMode.equals("USB")){
+            xmlBuilder.append("<AuthKey>vPXjq5X8fn</AuthKey>")
+        }else{
+            xmlBuilder.append("<AuthKey>${authKey}</AuthKey>")
+        }
         xmlBuilder.append("<PrintReceipt>No</PrintReceipt>")
         xmlBuilder.append("<SigCapture>No</SigCapture>")
 
-      /*  // Cart Section
-        xmlBuilder.append("<Cart>")
-        xmlBuilder.append("<Items>")*/
+        /*  // Cart Section
+          xmlBuilder.append("<Cart>")
+          xmlBuilder.append("<Items>")*/
 
-       /* for (item in items) {
-            xmlBuilder.append("<Item>")
-            xmlBuilder.append("<Name>${item.name}</Name>")
-            xmlBuilder.append("<Price>${item.price}</Price>")
-            xmlBuilder.append("<UnitPrice></UnitPrice>")
-            xmlBuilder.append("<Quantity>${item.quantity}</Quantity>")
+        /* for (item in items) {
+             xmlBuilder.append("<Item>")
+             xmlBuilder.append("<Name>${item.name}</Name>")
+             xmlBuilder.append("<Price>${item.price}</Price>")
+             xmlBuilder.append("<UnitPrice></UnitPrice>")
+             xmlBuilder.append("<Quantity>${item.quantity}</Quantity>")
 
- *//*           // Modifiers
+  *//*           // Modifiers
             if (item.modifiers!!.isNotEmpty()) {
                 xmlBuilder.append("<Modifiers>")
 
@@ -751,10 +780,11 @@ class CartActivity : AppCompatActivity() {
             xmlBuilder.append("</Item>")
         }*/
 
-     /*   xmlBuilder.append("</Items>")
-        xmlBuilder.append("</Cart>")*/
+        /*   xmlBuilder.append("</Items>")
+           xmlBuilder.append("</Cart>")*/
+              xmlBuilder.append("<RefId>${referenceId}</RefId>")
 
-        xmlBuilder.append("<RefId>${getNextRefId()}</RefId>")
+
         xmlBuilder.append("</request>")
 
         return xmlBuilder.toString()
@@ -863,6 +893,7 @@ class CartActivity : AppCompatActivity() {
     fun usbRequest(request: String) {
 
      Log.i("usbrequest","usbRequest Main request : ${request.toString()}")
+     Log.i("usbrequest","usbRequest Main request : ${usbPosManager?.isConnected()}")
         val progressDialog = android.app.AlertDialog.Builder(this)
             .setTitle("Please wait")
             .setMessage("Processing transaction...")
@@ -871,7 +902,7 @@ class CartActivity : AppCompatActivity() {
         progressDialog.show()
 
 
-        usbPosManager.sendAndReceive(request, object : UsbPosCallback {
+        usbPosManager?.sendAndReceive(request, object : UsbPosCallback {
 
             override fun onResult(response: String?, totalBytes: Int) {
                 runOnUiThread {
@@ -899,14 +930,6 @@ class CartActivity : AppCompatActivity() {
         })
     }
 
-    private fun getNextRefId(): Int {
-        val prefs = getSharedPreferences("pos_prefs", MODE_PRIVATE)
-        val currentRefId = prefs.getInt("ref_id", 400) // starting RefId, e.g., 100
-        val nextRefId = currentRefId + 1
-        prefs.edit().putInt("ref_id", nextRefId).apply()
-        return nextRefId
-    }
-
     private fun updateMenuVisibility() {
         val menu = navigationView.menu
         val currentMode = PrefsHelper.getMode(this)
@@ -914,6 +937,34 @@ class CartActivity : AppCompatActivity() {
         // Show configure only for DeepLink
         menu.findItem(R.id.nav_configure).isVisible =
             currentMode == "DEEPLINK"
+    }
+
+
+    private fun getTransactionType(txnType:String): String {
+        when (txnType) {
+            "SALE" -> {
+                return "Sale"
+            }
+            "REFUND" -> {
+                return "Return"
+            }
+            "VOID" -> {
+                return "Void"
+            }
+            "TICKET" -> {
+                return "Ticket"
+            }
+            "TIPADJUST" -> {
+                return "TipAdjust"
+            }
+            "SETTLEMENT" -> {
+                return  "Settle"
+            }
+            "PRE_AUTH" -> {
+                return "Auth"
+            }
+            else -> return "Sale"
+        }
     }
 
 }
