@@ -57,7 +57,6 @@ class TipAndFeeActivity : AppCompatActivity() {
     private lateinit var edtCustomFee: AppCompatEditText
     private lateinit var userConfigLayout: MaterialCardView
     private var txnAmount: Double = 0.00
-    private lateinit var usbImage: TextView
     private lateinit var usbPosManager: UsbPosManager
 
 
@@ -65,7 +64,6 @@ class TipAndFeeActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_option_selection)
-        usbImage = findViewById(R.id.usbImage)
         userConfigLayout = findViewById<MaterialCardView>(R.id.userConfigLayout)
         tvTitle = findViewById(R.id.tv_appName)
         tvTitle.text = "Confirmation"
@@ -83,33 +81,6 @@ class TipAndFeeActivity : AppCompatActivity() {
         usbPosManager = (application as MyApp).usbPosManager
         usbPosManager.init()
 
-        usbPosManager.setStatusListener(object : UsbStatusListener {
-            override fun onStatusChanged(state: UsbConnectionState, message: String?) {
-                runOnUiThread {
-                    when (state) {
-                        UsbConnectionState.CONNECTING -> {
-                            usbImage.text = "Connecting..."
-                        }
-                        UsbConnectionState.CONNECTED -> {
-                            usbImage.text = "POS Connected"
-                            usbImage.setTextColor(Color.GREEN)
-                        }
-                        UsbConnectionState.PERMISSION_DENIED -> {
-                            usbImage.text = "Permission Denied"
-                            usbImage.setTextColor(Color.RED)
-                        }
-                        UsbConnectionState.DISCONNECTED -> {
-                            usbImage.text = "POS Disconnected"
-                            usbImage.setTextColor(Color.RED)
-                        }
-                        UsbConnectionState.ERROR -> {
-                            usbImage.text = message ?: "USB Error"
-                            usbImage.setTextColor(Color.RED)
-                        }
-                    }
-                }
-            }
-        })
 
         userConfigLayout.visibility = View.GONE
         getIntentValues()
@@ -147,20 +118,6 @@ class TipAndFeeActivity : AppCompatActivity() {
                 tvTotalAmount.visibility = View.GONE
             }
         }
-    }
-
-
-   /* override fun onDestroy() {
-        usbPosManager.release()
-        super.onDestroy()
-    }*/
-
-    private fun getNextRefId(): Int {
-        val prefs = getSharedPreferences("pos_prefs", MODE_PRIVATE)
-        val currentRefId = prefs.getInt("ref_id", 900) // starting RefId, e.g., 100
-        val nextRefId = currentRefId + 1
-        prefs.edit().putInt("ref_id", nextRefId).apply()
-        return nextRefId
     }
 
 }

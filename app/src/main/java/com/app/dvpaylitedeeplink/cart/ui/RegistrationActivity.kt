@@ -34,7 +34,6 @@ class RegistrationActivity : AppCompatActivity() {
 
     private lateinit var btnConfirm: AppCompatButton
     private lateinit var ivBack: AppCompatImageView
-    private lateinit var edtTpn: AppCompatEditText
 
     private lateinit var rgMode: RadioGroup
     private lateinit var rbDeepLink: RadioButton
@@ -45,6 +44,7 @@ class RegistrationActivity : AppCompatActivity() {
     private lateinit var layoutDeepLink: LinearLayout
     private lateinit var layoutCloud: LinearLayout
     private lateinit var layoutUsb: LinearLayout
+    private lateinit var layoutLocal: LinearLayout
 
     private lateinit var edtDeepLinkTPN: AppCompatEditText
     private lateinit var edtCloudRegisterId: AppCompatEditText
@@ -110,10 +110,13 @@ class RegistrationActivity : AppCompatActivity() {
         rbDeepLink = findViewById(R.id.rbDeepLink)
         rbCloud = findViewById(R.id.rbCloud)
         rbUsb = findViewById(R.id.rbUsb)
+        rbLocal = findViewById(R.id.rbLocal)
+
 
         layoutDeepLink = findViewById(R.id.layoutDeepLink)
         layoutCloud = findViewById(R.id.layoutCloud)
         layoutUsb = findViewById(R.id.layoutUsb)
+        layoutLocal = findViewById(R.id.layoutLocal)
 
         edtDeepLinkTPN = findViewById(R.id.edtDeepLinkTPN)
         edtCloudRegisterId = findViewById(R.id.edtCloudRegisterid)
@@ -136,18 +139,24 @@ class RegistrationActivity : AppCompatActivity() {
                 Mode.DEEPLINK.name -> {
                     rbDeepLink.isChecked = true
                     selectedMode = Mode.DEEPLINK
+                    edtDeepLinkTPN.setText(PrefsHelper.getTpn(this))
                     showDeepLink()
+
                 }
 
                 Mode.CLOUD.name -> {
                     rbCloud.isChecked = true
                     selectedMode = Mode.CLOUD
+                    edtCloudRegisterId.setText(PrefsHelper.getRegisterId(this))
+                    edtCloudAuthKey.setText(PrefsHelper.getAuthId(this))
                     showCloud()
+
                 }
 
                 Mode.USB.name -> {
                     rbUsb.isChecked = true
                     selectedMode = Mode.USB
+                    edtUsbRegisterId.setText(PrefsHelper.getRegisterId(this))
                     showUsb()
 
                 }
@@ -155,7 +164,10 @@ class RegistrationActivity : AppCompatActivity() {
                 Mode.LOCAL.name -> {
                     rbLocal.isChecked = true
                     selectedMode = Mode.LOCAL
+                    edtLocalRegisterId.setText(PrefsHelper.getRegisterId(this))
+                    edtLocalIpAddress.setText(PrefsHelper.getIpAddress(this))
                     showLocal()
+
             }
         }
 
@@ -215,23 +227,33 @@ class RegistrationActivity : AppCompatActivity() {
 
                 R.id.rbDeepLink -> {
                     selectedMode = Mode.DEEPLINK
+                    edtDeepLinkTPN.setText("")
                     showDeepLink()
+
                 }
 
                 R.id.rbCloud -> {
                     selectedMode = Mode.CLOUD
+                    edtCloudRegisterId.setText("")
+                    edtCloudAuthKey.setText("")
                     showCloud()
+
                 }
 
                 R.id.rbLocal -> {
                     selectedMode = Mode.LOCAL
+                    edtLocalRegisterId.setText("")
+                    edtLocalIpAddress.setText("")
                     showLocal()
+
                 }
 
                 R.id.rbUsb -> {
                     selectedMode = Mode.USB
+                    edtUsbRegisterId.setText("")
                     showUsb()
                     setupUsb()
+
                 }
             }
         }
@@ -247,6 +269,7 @@ class RegistrationActivity : AppCompatActivity() {
         layoutDeepLink.visibility = View.GONE
         layoutCloud.visibility = View.GONE
         layoutUsb.visibility = View.GONE
+        layoutLocal.visibility = View.GONE
     }
 
     private fun showDeepLink() {
@@ -258,7 +281,7 @@ class RegistrationActivity : AppCompatActivity() {
     }
 
     private fun showLocal() {
-        layoutCloud.visibility = View.VISIBLE
+        layoutLocal.visibility = View.VISIBLE
     }
 
     private fun showUsb() {
@@ -275,10 +298,10 @@ class RegistrationActivity : AppCompatActivity() {
 
             Mode.DEEPLINK -> {
                 val value = edtDeepLinkTPN.text.toString().trim()
-                if (value.isEmpty()) {
+               /* if (value.isEmpty()) {
                     edtDeepLinkTPN.error = "Enter DeepLink TPN"
                     return false
-                }
+                }*/
             }
 
             Mode.CLOUD -> {
@@ -306,7 +329,7 @@ class RegistrationActivity : AppCompatActivity() {
                 }
 
                 if (ipAddress.isEmpty()) {
-                    edtLocalIpAddress.error = "Enter network  Ip Address"
+                    edtLocalIpAddress.error = "Enter pos device network  Ip Address"
                     return false
                 }
             }

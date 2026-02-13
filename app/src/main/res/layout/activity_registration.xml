@@ -159,9 +159,9 @@
                 android:layout_height="48dp"
                 android:layout_marginTop="16dp"
                 android:background="@drawable/bg_txt_curved"
-                android:hint="Enter Ip Address"
+                android:hint="Enter pos device Ip Address"
                 android:gravity="center"
-                android:inputType="numberDecimal"
+                android:inputType="text"
                 android:textColor="@color/black"
                 android:textSize="16sp" />
 

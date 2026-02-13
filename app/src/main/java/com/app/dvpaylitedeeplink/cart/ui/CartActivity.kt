@@ -7,6 +7,8 @@ import android.content.Intent
 import android.hardware.usb.UsbManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.text.InputType
 import android.util.Log
 import android.view.View
@@ -50,8 +52,15 @@ import com.denovo.app.invokeiposgo.interfaces.TransactionListener
 import com.denovo.app.invokeiposgo.launcher.IntentApplication
 import com.google.android.material.navigation.NavigationView
 import com.hoho.android.usbserial.driver.UsbSerialPort
+import okhttp3.HttpUrl
+import okhttp3.OkHttpClient
+import okhttp3.Protocol
+import okhttp3.Request
 import org.json.JSONArray
 import org.json.JSONObject
+import java.net.URLEncoder
+import java.util.concurrent.TimeUnit
+
 
 class CartActivity : AppCompatActivity() {
 
@@ -290,9 +299,15 @@ class CartActivity : AppCompatActivity() {
                              ticketAmount = amountEditText.text.toString().toDouble()
                         }
                         val jsonRequest = getPayloadJSON(externalRRN,DEFAULT_VALUE,selectedItems,ticketAmount)
-                        if(transactionMode.equals("CLOUD") || transactionMode.equals("LOCAL") || transactionMode.equals("USB")){
+                        if(transactionMode.equals("USB")){
                              spinXml = getPayloadSpinXML(externalRRN,DEFAULT_VALUE,selectedItems,ticketAmount)
                             usbRequest(spinXml)
+                        }else if(transactionMode.equals("CLOUD")){
+                            spinXml = getPayloadSpinXML(externalRRN,DEFAULT_VALUE,selectedItems,ticketAmount)
+                            cloudRequest(spinXml)
+                        }else if(transactionMode.equals("LOCAL")){
+                            spinXml = getPayloadSpinXML(externalRRN,DEFAULT_VALUE,selectedItems,ticketAmount)
+                            localRequest(spinXml)
                         }else{
                             processSaleTxn(intentApplication, activityResultLauncher, jsonRequest)
                         }
@@ -302,9 +317,15 @@ class CartActivity : AppCompatActivity() {
                 }
                 LoadItems.SETTLEMENT ->{
                     val ticketAmount = 0.00
-                    if(transactionMode.equals("CLOUD") || transactionMode.equals("LOCAL") || transactionMode.equals("USB")){
+                    if(transactionMode.equals("USB")){
                         spinXml = getPayloadSpinXML("",DEFAULT_VALUE,emptyList(),ticketAmount)
                         usbRequest(spinXml)
+                    }else if(transactionMode.equals("CLOUD")){
+                        spinXml = getPayloadSpinXML("",DEFAULT_VALUE,emptyList(),ticketAmount)
+                        cloudRequest(spinXml)
+                    }else if(transactionMode.equals("LOCAL")){
+                        spinXml = getPayloadSpinXML("",DEFAULT_VALUE,emptyList(),ticketAmount)
+                        localRequest(spinXml)
                     }else{
                         processSettlement(intentApplication, activityResultLauncher)
                     }
@@ -404,11 +425,17 @@ class CartActivity : AppCompatActivity() {
             ticketAmt = totalAmount
             Log.d("CartActivity", "Generated external RRN: $externalRRN")
             var jsonRequest: JSONObject = JSONObject()
-            var usbRequest:String = ""
+            var spinRequest:String = ""
             Log.d("CartActivity", "registration transactionMode  : $transactionMode")
-            if(transactionMode.equals("CLOUD") || transactionMode.equals("LOCAL") || transactionMode.equals("USB")){
-                usbRequest = getPayloadSpinXML(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems,ticketAmt)
-                usbRequest(usbRequest)
+            if(transactionMode.equals("USB")){
+               spinRequest = getPayloadSpinXML(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems,ticketAmt)
+                usbRequest(spinRequest)
+            }else if(transactionMode.equals("CLOUD")){
+                spinRequest = getPayloadSpinXML(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems,ticketAmt)
+                cloudRequest(spinRequest)
+            }else if(transactionMode.equals("LOCAL")){
+                spinRequest = getPayloadSpinXML(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems,ticketAmt)
+                localRequest(spinRequest)
             }else{
                 jsonRequest = getPayloadJSON(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems,ticketAmt)
                 Log.d("CartActivity", "Initialized JSON payload")
@@ -479,7 +506,7 @@ class CartActivity : AppCompatActivity() {
                     jsonRequest.put("Cart", cartObject)
                     Log.d("CartActivity", "Line items enabled; cart object added to payload")
                 }
-                Log.d("CartActivity", "Final JSON Object: $usbRequest")
+                Log.d("CartActivity", "Final JSON Object: ${spinRequest}")
                 Log.d("CartActivity", "Processing sale transaction...")
                 val editedJsonString = data?.getStringExtra("editedJson")
                 if (!editedJsonString.isNullOrEmpty()) {
@@ -712,17 +739,12 @@ class CartActivity : AppCompatActivity() {
         }
         val totalAmt = formatToTwoDecimalPlaces(totalAmount)
         val xmlBuilder = StringBuilder()
-        if (transactionMode.equals("CLOUD")) {
-            xmlBuilder.append(" HTTPS://test.spinpos.net:443/spin/cgi.html?TerminalTransaction=")
-        } else if (transactionMode.equals("Local")) {
-            xmlBuilder.append("HTTP://${ipAddress}:9000/spin/cgi.html?TerminalTransaction=")
-        }
         xmlBuilder.append("<request>")
-        xmlBuilder.append("<TransType>${getTransactionType(selectedTransactionType)}</TransType>")
-        if (selectedTransactionType.equals(LoadItems.SETTLEMENT)) {
-            xmlBuilder.append("<Param>Close</Param>")
-        } else {
+        if(!selectedTransactionType.equals(LoadItems.SETTLEMENT)){
             xmlBuilder.append("<PaymentType>Credit</PaymentType>")
+        }
+        xmlBuilder.append("<TransType>${getTransactionType(selectedTransactionType)}</TransType>")
+        if(!selectedTransactionType.equals(LoadItems.SETTLEMENT)){
             if(selectedTransactionType.equals(LoadItems.TICKET)){
                 xmlBuilder.append("<Amount>$ticketAmount</Amount>")
             }else{
@@ -732,6 +754,11 @@ class CartActivity : AppCompatActivity() {
             xmlBuilder.append("<CashbackAmount>0.00</CashbackAmount>")
             xmlBuilder.append("<Frequency>OneTime</Frequency>")
             xmlBuilder.append("<CustomFee>0.00</CustomFee>")
+        }
+        xmlBuilder.append("<RefId>${referenceId}</RefId>")
+
+        if (selectedTransactionType.equals(LoadItems.SETTLEMENT)) {
+            xmlBuilder.append("<Param>Close</Param>")
         }
         xmlBuilder.append("<RegisterId>${registerId}</RegisterId>")
         if(transactionMode.equals("USB")){
@@ -782,7 +809,7 @@ class CartActivity : AppCompatActivity() {
 
         /*   xmlBuilder.append("</Items>")
            xmlBuilder.append("</Cart>")*/
-              xmlBuilder.append("<RefId>${referenceId}</RefId>")
+
 
 
         xmlBuilder.append("</request>")
@@ -966,5 +993,125 @@ class CartActivity : AppCompatActivity() {
             else -> return "Sale"
         }
     }
+
+    fun cloudRequest(xmlRequest: String) {
+
+        val url = HttpUrl.Builder()
+            .scheme("https")
+            .host("test.spinpos.net")
+            .addPathSegments("spin/cgi.html")
+            .addQueryParameter("TerminalTransaction", xmlRequest)
+            .build()
+        Log.d("SPIN_REQUEST", url.toString())
+
+        val client = OkHttpClient.Builder()
+            .protocols(listOf(Protocol.HTTP_1_1))
+            .connectTimeout(120, TimeUnit.SECONDS)
+            .readTimeout(120, TimeUnit.SECONDS)
+            .writeTimeout(120, TimeUnit.SECONDS)
+            .build()
+
+        val request = Request.Builder()
+            .url(url)
+            .get()
+            .addHeader("User-Agent", "Mozilla/5.0")
+            .addHeader("Connection", "close")
+            .build()
+
+        Thread {
+            try {
+                val response = client.newCall(request).execute()
+                val result = response.body?.string() ?: "No Response"
+
+                Log.d("SPIN_RESPONSE", result)
+
+                //  Switch to Main Thread to show Toast
+                Handler(Looper.getMainLooper()).post {
+                    Toast.makeText(
+                        this@CartActivity,   // change if needed
+                        result,
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+
+            } catch (e: Exception) {
+
+                Handler(Looper.getMainLooper()).post {
+                    Toast.makeText(
+                        this@CartActivity,
+                        "Error: ${e.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+
+                Log.e("SPIN_ERROR", "Request failed", e)
+            }
+
+        }.start()
+    }
+
+    fun localRequest(xmlRequest: String) {
+
+        try {
+
+            val url = HttpUrl.Builder()
+                .scheme("http")
+                .host(ipAddress)          // make sure ipAddress is correct
+                .port(9000)
+                .addPathSegments("spin/cgi.html")
+                .addQueryParameter("TerminalTransaction", xmlRequest)
+                .build()
+
+            Log.i("LOCAL_URL", url.toString())
+
+            val client = OkHttpClient.Builder()
+                .protocols(listOf(Protocol.HTTP_1_1))
+                .connectTimeout(20, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS)
+                .writeTimeout(60, TimeUnit.SECONDS)
+                .build()
+
+            val request = Request.Builder()
+                .url(url)
+                .get()
+                .addHeader("Connection", "close")
+                .build()
+
+            Thread {
+                try {
+
+                    val response = client.newCall(request).execute()
+                    val result = response.body?.string() ?: "No Response"
+
+                    Log.d("LOCAL_RESPONSE", result)
+
+                    //  Show Toast on Main Thread
+                    Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(
+                            this@CartActivity,   // change if in different activity
+                            result,
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+
+                } catch (e: Exception) {
+
+                    Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(
+                            this@CartActivity,
+                            "Error: ${e.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+
+                    Log.e("LOCAL_ERROR", "Request failed", e)
+                }
+            }.start()
+
+        } catch (e: Exception) {
+            Log.e("LOCAL_ERROR", "URL build failed", e)
+        }
+    }
+
 
 }
