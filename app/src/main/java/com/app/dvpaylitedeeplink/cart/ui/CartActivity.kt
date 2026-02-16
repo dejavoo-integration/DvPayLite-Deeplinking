@@ -285,6 +285,8 @@ class CartActivity : AppCompatActivity() {
         updateAmounts()
 
         proceedButton.setOnClickListener{
+            hideSoftKeyboard()
+            showProductsListLayout()
             var spinXml = ""
             when (selectedTransactionType) {
                 LoadItems.VOID,

@@ -86,6 +86,12 @@ class TipAndFeeActivity : AppCompatActivity() {
         getIntentValues()
 
         btnConfirm.setOnClickListener {
+            if(PrefsHelper.getMode(context = this).equals("USB")){
+                if(!usbPosManager.isConnected()){
+                    Toast.makeText(this, "Pos Device Not Connected", Toast.LENGTH_SHORT).show()
+                }
+            }
+
      val resultIntent = Intent()
             resultIntent.putExtra("tip", edtTipAmount.text.toString().toDoubleOrNull() ?: 0.0)
             resultIntent.putExtra("fee", edtCustomFee.text.toString().toDoubleOrNull() ?: 0.0)

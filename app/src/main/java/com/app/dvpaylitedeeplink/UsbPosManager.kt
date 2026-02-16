@@ -103,7 +103,7 @@ class UsbPosManager(private val context: Context) {
             serialPort = port
             Log.i(TAG, "USB PORT OPENED")
 
-            showToast("POS Connected")
+         //   showToast("POS Connected")
             statusListener?.onStatusChanged(
                 UsbConnectionState.CONNECTED,
                 "POS Connected"
