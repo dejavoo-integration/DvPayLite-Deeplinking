@@ -46,6 +46,7 @@ import com.app.dvpaylitedeeplink.cart.interfaces.TypeSelectionInterface
 import com.app.dvpaylitedeeplink.cart.models.Item
 import com.app.dvpaylitedeeplink.cart.models.LoadItems
 import com.app.dvpaylitedeeplink.dialogs.TxnCompletePopUp
+import com.app.dvpaylitedeeplink.logger.LoggerManager
 import com.app.dvpaylitedeeplink.usb.UsbPosManager
 import com.denovo.app.invokeiposgo.interfaces.SettlementListener
 import com.denovo.app.invokeiposgo.interfaces.TransactionListener
@@ -119,6 +120,7 @@ class CartActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_cart)
+        LoggerManager.log(this, " Open CartActivity")
         activity = this
         context = this as Context
 
@@ -168,31 +170,37 @@ class CartActivity : AppCompatActivity() {
         navigationView.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.nav_registration -> {
+                    LoggerManager.log(this, "Select Registration")
                     val intent = Intent(this, RegistrationActivity::class.java)
                     startActivity(intent)
                     drawerLayout.closeDrawers()
                 }
                 R.id.nav_configure -> {
+                    LoggerManager.log(this, "Select Configure")
                     val intent = Intent(this, OptionSelectionActivity::class.java)
                     startActivity(intent)
                     drawerLayout.closeDrawers()
                 }
                 R.id.nav_sale -> {
+                    LoggerManager.log(this, "Select Sale")
                     selectedTransactionType =LoadItems.SALE
                     hideSoftKeyboard()
                     showProductsListLayout()
                 }
                 R.id.nav_refund -> {
+                    LoggerManager.log(this, "Select Refund")
                     selectedTransactionType =LoadItems.REFUND
                     hideSoftKeyboard()
                     showProductsListLayout()
                 }
                 R.id.nav_preAuth -> {
+                    LoggerManager.log(this, "Select Preauth")
                     selectedTransactionType =LoadItems.PRE_AUTH
                     hideSoftKeyboard()
                     showProductsListLayout()
                 }
                 R.id.nav_void -> {
+                    LoggerManager.log(this, "Select Void")
                     selectedTransactionType =LoadItems.VOID
                     if (externalRRN != null) {
                         referenceIDEditText.setText(externalRRN)
@@ -200,6 +208,7 @@ class CartActivity : AppCompatActivity() {
                     showReferenceIDLayout(true)
                 }
                 R.id.nav_ticket -> {
+                    LoggerManager.log(this, "Select Ticket")
                     selectedTransactionType =LoadItems.TICKET
                         if (externalRRN != null) {
                         referenceIDEditText.setText(externalRRN)
@@ -208,11 +217,13 @@ class CartActivity : AppCompatActivity() {
                     showReferenceIDLayout(true)
                 }
                 R.id.nav_settlement -> {
+                    LoggerManager.log(this, "Select Settlement")
                     selectedTransactionType = LoadItems.SETTLEMENT
                     showReferenceIDLayout(false)
                 }
 
                 R.id.nav_statusCheck -> {
+                    LoggerManager.log(this, "Select Status Check")
                     selectedTransactionType = "STATUS"
                     if (externalRRN != null) {
                         referenceIDEditText.setText(externalRRN)
@@ -220,6 +231,7 @@ class CartActivity : AppCompatActivity() {
                     showReferenceIDLayout(true)
                 }
                 R.id.nav_peripheral -> {
+                    LoggerManager.log(this, "Select Peripheral")
                     val intent = Intent(this, PeripheralActivity::class.java)
                     startActivity(intent)
                     drawerLayout.closeDrawers()
@@ -284,6 +296,7 @@ class CartActivity : AppCompatActivity() {
                     "CartActivity",
                     "Item at position $position clicked: Amount = $amount, Count = $count"
                 )
+                LoggerManager.log(this@CartActivity, "Item at position $position clicked: Amount = $amount, Count = $count")
             },
             { totalAmount ->
                 // Update cart total dynamically
@@ -310,6 +323,7 @@ class CartActivity : AppCompatActivity() {
                              ticketAmount = amountEditText.text.toString().toDouble()
                         }
                         val jsonRequest = getPayloadJSON(externalRRN,DEFAULT_VALUE,selectedItems,ticketAmount)
+                        LoggerManager.log(this, "Clicked Proceed Button ${selectedTransactionType}")
                         if(transactionMode == "USB"){
                              spinXml = getPayloadSpinXML(externalRRN,DEFAULT_VALUE,selectedItems,ticketAmount)
                             usbRequest(spinXml)
@@ -323,6 +337,7 @@ class CartActivity : AppCompatActivity() {
                             processSaleTxn(intentApplication, activityResultLauncher, jsonRequest)
                         }
                     }else{
+                        LoggerManager.log(this, "Enter External RRN")
                         Toast.makeText(this, "Please enter External RRN", Toast.LENGTH_SHORT).show()
                     }
                 }
@@ -360,7 +375,7 @@ class CartActivity : AppCompatActivity() {
 
 
         checkoutButton.setOnClickListener {
-
+            LoggerManager.log(this, "Clicked Checkout Button")
             val adapter = itemsRecyclerView.adapter as? CartAdapter
             val selectedItems = adapter?.getSelectedItems().orEmpty()
 
@@ -377,16 +392,19 @@ class CartActivity : AppCompatActivity() {
             Log.e("CartActivity", "txnTotalAmount before open user selection:::$txnTotalAmount")
 
             val intent = Intent(this, TipAndFeeActivity::class.java).apply {
+                LoggerManager.log(this@CartActivity, "Move to TipAndFee Activity Screen")
                 putExtra("txnAmount", txnTotalAmount)
             }
             startActivityForResult(intent, 123)
         }
         cancelButton.setOnClickListener {
+            LoggerManager.log(this@CartActivity, "Clear Cart")
             clearCart()
         }
 
 
         imageViewMore.setOnClickListener {
+            LoggerManager.log(this@CartActivity, "Move to Old MainActivity")
                 val intent = Intent(this, MainActivity::class.java)
                 startActivity(intent)
         }
@@ -568,6 +586,7 @@ class CartActivity : AppCompatActivity() {
         activityResultLauncher: ActivityResultLauncher<Intent>,
         jsonRequest: JSONObject
     ) {
+        LoggerManager
         intentApplication.setTransactionListener(object :
             TransactionListener {
             override fun onApplicationLaunched(result: JSONObject?) {
@@ -946,26 +965,28 @@ class CartActivity : AppCompatActivity() {
             .setCancelable(false) // cannot dismiss by tapping outside
             .create()
         progressDialog.show()
-
-
+        LoggerManager.log(this@CartActivity, "Processing Dialog open")
+        LoggerManager.log(this, "Processing USB Request : ${request}")
         usbPosManager?.sendAndReceive(request, object : UsbPosCallback {
 
             override fun onResult(response: String?, totalBytes: Int) {
                 runOnUiThread {
 
                     if (progressDialog.isShowing) {
+                        LoggerManager.log(this@CartActivity, "Processing Dialog Close")
                         progressDialog.dismiss()
                     }
 
                     if (response != null) {
-                        Log.i("USB", "Total bytes received = $totalBytes")
                         Log.i("USB", response)
+                        LoggerManager.log(this@CartActivity, "USB Result  : ${response}")
                         Toast.makeText(
                             this@CartActivity,
                             response,
                             Toast.LENGTH_LONG
                         ).show()
                     } else {
+                        LoggerManager.log(this@CartActivity, "USB Result  : No POS response")
                         Toast.makeText(this@CartActivity,
                             "No POS response",
                             Toast.LENGTH_SHORT
@@ -991,7 +1012,6 @@ class CartActivity : AppCompatActivity() {
         }
 
     }
-
 
     private fun getTransactionType(txnType:String): String {
         when (txnType) {
@@ -1025,6 +1045,13 @@ class CartActivity : AppCompatActivity() {
 
     fun cloudRequest(xmlRequest: String) {
 
+        val progressDialog = android.app.AlertDialog.Builder(this)
+            .setTitle("Please wait")
+            .setMessage("Processing transaction...")
+            .setCancelable(false) // cannot dismiss by tapping outside
+            .create()
+        progressDialog.show()
+        LoggerManager.log(this@CartActivity, "Processing Dialog open")
         val url = HttpUrl.Builder()
             .scheme("https")
             .host("test.spinpos.net")
@@ -1032,7 +1059,6 @@ class CartActivity : AppCompatActivity() {
             .addQueryParameter("TerminalTransaction", xmlRequest)
             .build()
         Log.d("SPIN_REQUEST", url.toString())
-
         val client = OkHttpClient.Builder()
             .protocols(listOf(Protocol.HTTP_1_1))
             .connectTimeout(120, TimeUnit.SECONDS)
@@ -1046,18 +1072,23 @@ class CartActivity : AppCompatActivity() {
             .addHeader("User-Agent", "Mozilla/5.0")
             .addHeader("Connection", "close")
             .build()
-
+        LoggerManager.log(this@CartActivity, "Processing CLOUD Request  : ${request}")
         Thread {
             try {
                 val response = client.newCall(request).execute()
                 val result = response.body?.string() ?: "No Response"
 
                 Log.d("SPIN_RESPONSE", result)
+                LoggerManager.log(this@CartActivity, " CLOUD Response  : ${result}")
 
                 //  Switch to Main Thread to show Toast
                 Handler(Looper.getMainLooper()).post {
+                    if (progressDialog.isShowing) {
+                        LoggerManager.log(this@CartActivity, "Processing Dialog Close")
+                        progressDialog.dismiss()
+                    }
                     Toast.makeText(
-                        this@CartActivity,   // change if needed
+                        this@CartActivity,
                         result,
                         Toast.LENGTH_LONG
                     ).show()
@@ -1066,13 +1097,17 @@ class CartActivity : AppCompatActivity() {
             } catch (e: Exception) {
 
                 Handler(Looper.getMainLooper()).post {
+                    if (progressDialog.isShowing) {
+                        LoggerManager.log(this@CartActivity, "Processing Dialog Close")
+                        progressDialog.dismiss()
+                    }
                     Toast.makeText(
                         this@CartActivity,
                         "Error: ${e.message}",
                         Toast.LENGTH_LONG
                     ).show()
                 }
-
+                LoggerManager.log(this@CartActivity, "Request failed : ")
                 Log.e("SPIN_ERROR", "Request failed", e)
             }
 
@@ -1080,9 +1115,14 @@ class CartActivity : AppCompatActivity() {
     }
 
     fun localRequest(xmlRequest: String) {
-
+        val progressDialog = android.app.AlertDialog.Builder(this)
+            .setTitle("Please wait")
+            .setMessage("Processing transaction...")
+            .setCancelable(false) // cannot dismiss by tapping outside
+            .create()
+        progressDialog.show()
         try {
-
+            LoggerManager.log(this@CartActivity, "Processing Dialog open")
             val url = HttpUrl.Builder()
                 .scheme("http")
                 .host(ipAddress)          // make sure ipAddress is correct
@@ -1105,6 +1145,7 @@ class CartActivity : AppCompatActivity() {
                 .get()
                 .addHeader("Connection", "close")
                 .build()
+            LoggerManager.log(this@CartActivity, " Processing Local Request  : ${request}")
 
             Thread {
                 try {
@@ -1113,9 +1154,13 @@ class CartActivity : AppCompatActivity() {
                     val result = response.body?.string() ?: "No Response"
 
                     Log.d("LOCAL_RESPONSE", result)
-
+                    LoggerManager.log(this@CartActivity, "  Local Response  : ${result}")
                     //  Show Toast on Main Thread
                     Handler(Looper.getMainLooper()).post {
+                        if (progressDialog.isShowing) {
+                            LoggerManager.log(this@CartActivity, "Processing Dialog Close")
+                            progressDialog.dismiss()
+                        }
                         Toast.makeText(
                             this@CartActivity,   // change if in different activity
                             result,
@@ -1124,6 +1169,10 @@ class CartActivity : AppCompatActivity() {
                     }
 
                 } catch (e: Exception) {
+                    if (progressDialog.isShowing) {
+                        LoggerManager.log(this@CartActivity, "Processing Dialog Close")
+                        progressDialog.dismiss()
+                    }
 
                     Handler(Looper.getMainLooper()).post {
                         Toast.makeText(
@@ -1132,15 +1181,19 @@ class CartActivity : AppCompatActivity() {
                             Toast.LENGTH_LONG
                         ).show()
                     }
-
+                    LoggerManager.log(this@CartActivity, "Request failed")
                     Log.e("LOCAL_ERROR", "Request failed", e)
                 }
             }.start()
 
         } catch (e: Exception) {
+            if (progressDialog.isShowing) {
+                LoggerManager.log(this@CartActivity, "Processing Dialog Close")
+                progressDialog.dismiss()
+            }
             Log.e("LOCAL_ERROR", "URL build failed", e)
+            LoggerManager.log(this@CartActivity, "URL build failed")
         }
     }
-
 
 }

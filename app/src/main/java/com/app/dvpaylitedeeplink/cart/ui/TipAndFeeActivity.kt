@@ -29,6 +29,7 @@ import com.app.dvpaylitedeeplink.UsbConnectionState
 import com.app.dvpaylitedeeplink.UsbPosCallback
 import com.app.dvpaylitedeeplink.UsbStatusListener
 import com.app.dvpaylitedeeplink.cart.PrefsHelper
+import com.app.dvpaylitedeeplink.logger.LoggerManager
 import com.app.dvpaylitedeeplink.usb.UsbPosManager
 import com.google.android.material.card.MaterialCardView
 import com.hoho.android.usbserial.driver.UsbSerialDriver
@@ -64,6 +65,7 @@ class TipAndFeeActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_option_selection)
+        LoggerManager.log(this, "Open TipAndFeeActivity")
         userConfigLayout = findViewById<MaterialCardView>(R.id.userConfigLayout)
         tvTitle = findViewById(R.id.tv_appName)
         tvTitle.text = "Confirmation"
@@ -88,19 +90,24 @@ class TipAndFeeActivity : AppCompatActivity() {
         btnConfirm.setOnClickListener {
             if(PrefsHelper.getMode(context = this).equals("USB")){
                 if(!usbPosManager.isConnected()){
-                    Toast.makeText(this, "Pos Device Not Connected", Toast.LENGTH_SHORT).show()
+                    LoggerManager.log(this, "POS USB Device Not Connected")
+                    Toast.makeText(this, "POS USB Device Not Connected", Toast.LENGTH_SHORT).show()
                 }
             }
 
      val resultIntent = Intent()
+            LoggerManager.log(this, "Tip AMount ${edtTipAmount.text.toString().toDoubleOrNull()}")
+            LoggerManager.log(this, "Tip AMount ${edtCustomFee.text.toString().toDoubleOrNull()}")
             resultIntent.putExtra("tip", edtTipAmount.text.toString().toDoubleOrNull() ?: 0.0)
             resultIntent.putExtra("fee", edtCustomFee.text.toString().toDoubleOrNull() ?: 0.0)
             setResult(Activity.RESULT_OK, resultIntent)
+            LoggerManager.log(this, "GoBack to Cart Activity")
             finish()
 
         }
 
         ivBack.setOnClickListener {
+            LoggerManager.log(this, "Back button Pressed")
             onBackPressed()
         }
     }

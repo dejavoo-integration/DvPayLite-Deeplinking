@@ -14,6 +14,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.SwitchCompat
 import com.app.dvpaylitedeeplink.R
 import com.app.dvpaylitedeeplink.cart.PrefsHelper
+import com.app.dvpaylitedeeplink.logger.LoggerManager
 
 
 class OptionSelectionActivity : AppCompatActivity() {
@@ -36,7 +37,7 @@ class OptionSelectionActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_option_selection)
-
+        LoggerManager.log(this, "OpenOptionSelectorActivity")
         linearTipFee = findViewById(R.id.linearTipFee)
         linearShowBreakup = findViewById(R.id.linearShowBreakup)
         switchApproval = findViewById(R.id.switchApproval)
@@ -64,6 +65,7 @@ class OptionSelectionActivity : AppCompatActivity() {
         showJsonPreview.isChecked = PrefsHelper.getJsonPreviewStatus(this)
 
         switchApproval.setOnCheckedChangeListener { _, isChecked ->
+            LoggerManager.log(this, "switchApproval Clicked")
             PrefsHelper.saveSettings(
                 this,
                 isChecked,
@@ -78,6 +80,7 @@ class OptionSelectionActivity : AppCompatActivity() {
         }
 
         switchBreakup.setOnCheckedChangeListener { _, isChecked ->
+            LoggerManager.log(this, "switchBreakup Clicked")
             PrefsHelper.saveSettings(
                 this,
                 switchApproval.isChecked,
@@ -90,6 +93,7 @@ class OptionSelectionActivity : AppCompatActivity() {
             )
         }
         switchTip.setOnCheckedChangeListener { _, isChecked ->
+            LoggerManager.log(this, "switchTip Clicked")
             PrefsHelper.saveSettings(
                 this,
                 switchApproval.isChecked,
@@ -102,6 +106,7 @@ class OptionSelectionActivity : AppCompatActivity() {
             )
         }
         switchDual.setOnCheckedChangeListener { _, isChecked ->
+            LoggerManager.log(this, "switchDual Clicked")
             PrefsHelper.saveSettings(
                 this,
                 switchApproval.isChecked,
@@ -114,6 +119,7 @@ class OptionSelectionActivity : AppCompatActivity() {
             )
         }
         switchLineItems.setOnCheckedChangeListener { _, isChecked ->
+            LoggerManager.log(this, "switchLineItems Clicked")
             PrefsHelper.saveSettings(
                 this,
                 switchApproval.isChecked,
@@ -126,14 +132,17 @@ class OptionSelectionActivity : AppCompatActivity() {
             )
         }
         btnConfirm.setOnClickListener {
+            LoggerManager.log(this, "Button confirm Clicked")
             onBackPressed()
         }
 
         ivBack.setOnClickListener {
+            LoggerManager.log(this, "back button Clicked")
             onBackPressed()
         }
 
         sendL2L3Data.setOnCheckedChangeListener { _, isChecked ->
+            LoggerManager.log(this, "sendL2L3Data Clicked")
             PrefsHelper.saveSettings(
                 this,
                 switchApproval.isChecked,
@@ -146,6 +155,7 @@ class OptionSelectionActivity : AppCompatActivity() {
             )
         }
         showJsonPreview.setOnCheckedChangeListener { _, isChecked ->
+            LoggerManager.log(this, "showJsonPreview Clicked")
             PrefsHelper.saveSettings(
                 this,
                 switchApproval.isChecked,

@@ -24,6 +24,7 @@ import com.app.dvpaylitedeeplink.R
 import com.app.dvpaylitedeeplink.UsbConnectionState
 import com.app.dvpaylitedeeplink.UsbStatusListener
 import com.app.dvpaylitedeeplink.cart.PrefsHelper
+import com.app.dvpaylitedeeplink.logger.LoggerManager
 import com.app.dvpaylitedeeplink.usb.UsbPosManager
 import com.denovo.app.invokeiposgo.interfaces.TerminalAddListener
 import com.denovo.app.invokeiposgo.launcher.IntentApplication
@@ -225,6 +226,7 @@ class RegistrationActivity : AppCompatActivity() {
             when (checkedId) {
 
                 R.id.rbDeepLink -> {
+                    LoggerManager.log(this, "Select DeepLink Mode")
                     selectedMode = Mode.DEEPLINK
                     edtDeepLinkTPN.setText("")
                     showDeepLink()
@@ -232,6 +234,7 @@ class RegistrationActivity : AppCompatActivity() {
                 }
 
                 R.id.rbCloud -> {
+                    LoggerManager.log(this, "Select Cloud Mode")
                     selectedMode = Mode.CLOUD
                     edtCloudRegisterId.setText("")
                     edtCloudAuthKey.setText("")
@@ -240,6 +243,7 @@ class RegistrationActivity : AppCompatActivity() {
                 }
 
                 R.id.rbLocal -> {
+                    LoggerManager.log(this, "Select Local Mode")
                     selectedMode = Mode.LOCAL
                     edtLocalRegisterId.setText("")
                     edtLocalIpAddress.setText("")
@@ -248,6 +252,7 @@ class RegistrationActivity : AppCompatActivity() {
                 }
 
                 R.id.rbUsb -> {
+                    LoggerManager.log(this, "Select USB Mode")
                     selectedMode = Mode.USB
                     edtUsbRegisterId.setText("")
                     showUsb()
@@ -308,11 +313,13 @@ class RegistrationActivity : AppCompatActivity() {
                 val authKey = edtCloudAuthKey.text.toString().trim()
 
                 if (registerId.isEmpty()) {
+                    LoggerManager.log(this, "Enter Cloud register Id")
                     edtCloudRegisterId.error = "Enter Cloud Register Id"
                     return false
                 }
 
                 if (authKey.isEmpty()) {
+                    LoggerManager.log(this, "Enter Cloud Auth key")
                     edtCloudAuthKey.error = "Enter Cloud Auth Key"
                     return false
                 }
@@ -323,11 +330,13 @@ class RegistrationActivity : AppCompatActivity() {
                 val ipAddress = edtLocalIpAddress.text.toString().trim()
 
                 if (registerId.isEmpty()) {
+                    LoggerManager.log(this, "Enter Local register Id")
                     edtLocalRegisterId.error = "Enter Local Register Id"
                     return false
                 }
 
                 if (ipAddress.isEmpty()) {
+                    LoggerManager.log(this, "Enter Local ip Address")
                     edtLocalIpAddress.error = "Enter pos device network  Ip Address"
                     return false
                 }
@@ -336,6 +345,7 @@ class RegistrationActivity : AppCompatActivity() {
             Mode.USB -> {
                 val usbRegisterId = edtUsbRegisterId.text.toString().trim()
                 if (usbRegisterId.isEmpty()) {
+                    LoggerManager.log(this, "Enter USB Register Id")
                     edtUsbRegisterId.error = "Enter Register ID"
                     return false
                 }
@@ -368,6 +378,7 @@ class RegistrationActivity : AppCompatActivity() {
                 PrefsHelper.saveDeepLink(this, tpn)
                 PrefsHelper.saveMode(this, Mode.DEEPLINK.name)
                 Toast.makeText(this, "DeepLink Selected\nTPN: $tpn", Toast.LENGTH_SHORT).show()
+                LoggerManager.log(this, "DeepLink mode Register")
                 finish()
 
             }
@@ -378,6 +389,7 @@ class RegistrationActivity : AppCompatActivity() {
                 PrefsHelper.saveCloud(this, registerId, authKey)
                 PrefsHelper.saveMode(this, Mode.CLOUD.name)
                 Toast.makeText(this, "Cloud Selected\nregisterId: $registerId\nauthKey: $authKey", Toast.LENGTH_SHORT).show()
+                LoggerManager.log(this, "Confirm Cloud mode Register RegisterId: $registerId AuthKey: $authKey")
                 finish()
             }
 
@@ -387,6 +399,7 @@ class RegistrationActivity : AppCompatActivity() {
                 PrefsHelper.saveLocal(this, registerId, ipAddress)
                 PrefsHelper.saveMode(this, Mode.LOCAL.name)
                 Toast.makeText(this, "Local Selected\nRegister Id: $registerId\nIp Address: $ipAddress", Toast.LENGTH_SHORT).show()
+                LoggerManager.log(this, "confirm Local mode Register RegisterId: $registerId IpAddress: $ipAddress")
                 finish()
             }
 
@@ -396,8 +409,10 @@ class RegistrationActivity : AppCompatActivity() {
                     PrefsHelper.saveUsb(this, usbRegisterId)
                     PrefsHelper.saveMode(this, Mode.USB.name)
                     Toast.makeText(this, "USB Selected\nusbRegisterId: $usbRegisterId", Toast.LENGTH_SHORT).show()
+                    LoggerManager.log(this, "Confirm USB mode Register RegisterId: $usbRegisterId")
                     finish()
                 }else{
+                    LoggerManager.log(this, "Please Connect POS USB first")
                     Toast.makeText(this, "Please Connect POS USB first", Toast.LENGTH_SHORT).show()
                 }
             }
@@ -411,37 +426,32 @@ class RegistrationActivity : AppCompatActivity() {
                     when (state) {
                         UsbConnectionState.CONNECTING -> {
                             tvUsbStatus.text = "Connecting..."
+                            LoggerManager.log(this@RegistrationActivity, "USB Connecting ..")
                         }
                         UsbConnectionState.CONNECTED -> {
                             tvUsbStatus.text = "POS Connected"
+                            LoggerManager.log(this@RegistrationActivity, "USB Connected")
                             tvUsbStatus.setTextColor(Color.GREEN)
                         }
                         UsbConnectionState.PERMISSION_DENIED -> {
                             tvUsbStatus.text = "Permission Denied"
+                            LoggerManager.log(this@RegistrationActivity, "USB Permission Denied")
                             tvUsbStatus.setTextColor(Color.RED)
                         }
                         UsbConnectionState.DISCONNECTED -> {
                             tvUsbStatus.text = "POS Disconnected"
+                            LoggerManager.log(this@RegistrationActivity, "USB Disconnected")
                             tvUsbStatus.setTextColor(Color.RED)
                         }
                         UsbConnectionState.ERROR -> {
                             tvUsbStatus.text = message ?: "USB Error"
+                            LoggerManager.log(this@RegistrationActivity, "USB Error")
                             tvUsbStatus.setTextColor(Color.RED)
                         }
                     }
                 }
             }
         })
-
-     /*   btnUsbConnect.setOnClickListener {
-
-            if (!usbPosManager.isConnected()) {
-                tvUsbStatus.text = "USB Status : Connecting..."
-                usbPosManager.init()
-            } else {
-                Toast.makeText(this, "Already Connected", Toast.LENGTH_SHORT).show()
-            }
-        }*/
     }
 
     override fun onResume() {

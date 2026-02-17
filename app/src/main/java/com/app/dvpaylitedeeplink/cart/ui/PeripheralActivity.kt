@@ -9,6 +9,7 @@ import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import com.app.dvpaylitedeeplink.R
+import com.app.dvpaylitedeeplink.logger.LoggerManager
 import com.app.dvpaylitedeeplink.printer.launcher.IntentPrintApplication
 import com.app.dvpaylitedeeplink.printer.models.PrintErrorResult
 import com.app.dvpaylitedeeplink.printer.models.PrintResult
@@ -45,6 +46,7 @@ class PeripheralActivity : AppCompatActivity() {
             scannerActivity = ScannerActivity(iscanResult, SCAN_TIMEOUT)
             setContentView(R.layout.activity_peripheral_p8)
         }
+        LoggerManager.log(this, "Open peripheralActivity")
 
         ivBack = findViewById<AppCompatImageView>(R.id.iv_back)
         scannerStartBtn = findViewById(R.id.btn_start)
@@ -57,10 +59,12 @@ class PeripheralActivity : AppCompatActivity() {
 
 
         ivBack.setOnClickListener {
+            LoggerManager.log(this, "Clicked back button")
             onBackPressed()
         }
 
         swipeReaderBtn.setOnClickListener{
+            LoggerManager.log(this, "Clicked Swipe Reader Button")
             Toast.makeText(this@PeripheralActivity, "Please swipe card", Toast.LENGTH_SHORT).show()
             clearAllData()
             swipeData.text = "Please swipe your card ...."
@@ -71,6 +75,7 @@ class PeripheralActivity : AppCompatActivity() {
                     runOnUiThread {
                         Toast.makeText(this@PeripheralActivity, "Swipe success", Toast.LENGTH_SHORT).show()
                         swipeData.text = data
+                        LoggerManager.log(this@PeripheralActivity, "Swipe Reader Data : ${data}")
                     }
                 }
 
@@ -79,12 +84,14 @@ class PeripheralActivity : AppCompatActivity() {
                     runOnUiThread {
                         Toast.makeText(this@PeripheralActivity, "Swipe failed: $error", Toast.LENGTH_SHORT).show()
                         swipeData.text = error
+                        LoggerManager.log(this@PeripheralActivity, "Swipe Reader Data Failed : ${error}")
                     }
                 }
 
                 override fun onTimeOut(response: String?) {
                     runOnUiThread {
                         swipeData.text = "Swipe time out"
+                        LoggerManager.log(this@PeripheralActivity, "Swipe Reader TimeOut")
                         Toast.makeText(this@PeripheralActivity, "Swipe time out", Toast.LENGTH_SHORT).show()
                     }
                 }
@@ -93,6 +100,7 @@ class PeripheralActivity : AppCompatActivity() {
 
 
         printerBtn.setOnClickListener {
+            LoggerManager.log(this@PeripheralActivity, "Clicked printer Button")
             Toast.makeText(this@PeripheralActivity, "Print Button Clicked", Toast.LENGTH_SHORT).show()
             clearAllData()
             printStatus.text = "Waiting for printing...."
@@ -204,6 +212,7 @@ class PeripheralActivity : AppCompatActivity() {
                     runOnUiThread {
                         Toast.makeText(this@PeripheralActivity, "Print success", Toast.LENGTH_SHORT).show()
                         printStatus.text = "SUCCESS"
+                        LoggerManager.log(this@PeripheralActivity, "Printer Success")
                     }
                 }
 
@@ -212,6 +221,7 @@ class PeripheralActivity : AppCompatActivity() {
                         runOnUiThread {
                             Toast.makeText(this@PeripheralActivity, "Print Failed", Toast.LENGTH_SHORT).show()
                             printStatus.text = "Failed"
+                            LoggerManager.log(this@PeripheralActivity, "Printer Failed")
                         }
                         Log.e("printer", "onPrintFailed----${it.errorMessage}")
                         Log.e("printer", "onPrintFailed----${it.errorCode}")
@@ -224,12 +234,14 @@ class PeripheralActivity : AppCompatActivity() {
         }
 
         scannerStartBtn.setOnClickListener{
+            LoggerManager.log(this@PeripheralActivity, "Clicked Scanner start Button")
             Toast.makeText(this@PeripheralActivity, "Scanner Start Button Clicked", Toast.LENGTH_SHORT).show()
             clearAllData()
             scannerData.text = "Please Scan barcode...."
             scannerActivity.startScan()
         }
         scannerStopBtn.setOnClickListener{
+            LoggerManager.log(this@PeripheralActivity, "Clicked Scanner Stop Button")
             clearAllData()
             Toast.makeText(this@PeripheralActivity, "Scanner Stop Button Clicked", Toast.LENGTH_SHORT).show()
             scannerActivity.stopScan()
@@ -242,6 +254,7 @@ class PeripheralActivity : AppCompatActivity() {
             Log.e("Scan", "result----$result")
             runOnUiThread {
                 scannerData.text = result
+                LoggerManager.log(this@PeripheralActivity, "Scanner Result : $result")
             }
             scannerActivity.stopScan()
         }
@@ -250,6 +263,7 @@ class PeripheralActivity : AppCompatActivity() {
             Log.e("Scan", "errorMessage----$errorMessage")
             runOnUiThread {
                 scannerData.text = errorMessage
+                LoggerManager.log(this@PeripheralActivity, "Scanner Result Failure : $errorMessage")
             }
             scannerActivity.stopScan()
         }
