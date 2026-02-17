@@ -109,6 +109,7 @@ class CartActivity : AppCompatActivity() {
     private lateinit var registerId: String
     private lateinit var authKey: String
     private lateinit var ipAddress: String
+    var ticketAmount = 0.00
 
 
     private lateinit var intentApplication: IntentApplication
@@ -210,9 +211,17 @@ class CartActivity : AppCompatActivity() {
                     selectedTransactionType = LoadItems.SETTLEMENT
                     showReferenceIDLayout(false)
                 }
+
+                R.id.nav_statusCheck -> {
+                    selectedTransactionType = "STATUS"
+                    if (externalRRN != null) {
+                        referenceIDEditText.setText(externalRRN)
+                    }
+                    showReferenceIDLayout(true)
+                }
                 R.id.nav_peripheral -> {
-//                    val intent = Intent(this, PeripheralActivity::class.java)
-//                    startActivity(intent)
+                    val intent = Intent(this, PeripheralActivity::class.java)
+                    startActivity(intent)
                     drawerLayout.closeDrawers()
                 }
             }
@@ -301,13 +310,13 @@ class CartActivity : AppCompatActivity() {
                              ticketAmount = amountEditText.text.toString().toDouble()
                         }
                         val jsonRequest = getPayloadJSON(externalRRN,DEFAULT_VALUE,selectedItems,ticketAmount)
-                        if(transactionMode.equals("USB")){
+                        if(transactionMode == "USB"){
                              spinXml = getPayloadSpinXML(externalRRN,DEFAULT_VALUE,selectedItems,ticketAmount)
                             usbRequest(spinXml)
-                        }else if(transactionMode.equals("CLOUD")){
+                        }else if(transactionMode == "CLOUD"){
                             spinXml = getPayloadSpinXML(externalRRN,DEFAULT_VALUE,selectedItems,ticketAmount)
                             cloudRequest(spinXml)
-                        }else if(transactionMode.equals("LOCAL")){
+                        }else if(transactionMode == "LOCAL"){
                             spinXml = getPayloadSpinXML(externalRRN,DEFAULT_VALUE,selectedItems,ticketAmount)
                             localRequest(spinXml)
                         }else{
@@ -318,19 +327,33 @@ class CartActivity : AppCompatActivity() {
                     }
                 }
                 LoadItems.SETTLEMENT ->{
-                    val ticketAmount = 0.00
-                    if(transactionMode.equals("USB")){
+
+                    if(transactionMode == "USB"){
                         spinXml = getPayloadSpinXML("",DEFAULT_VALUE,emptyList(),ticketAmount)
                         usbRequest(spinXml)
-                    }else if(transactionMode.equals("CLOUD")){
+                    }else if(transactionMode == "CLOUD"){
                         spinXml = getPayloadSpinXML("",DEFAULT_VALUE,emptyList(),ticketAmount)
                         cloudRequest(spinXml)
-                    }else if(transactionMode.equals("LOCAL")){
+                    }else if(transactionMode == "LOCAL"){
                         spinXml = getPayloadSpinXML("",DEFAULT_VALUE,emptyList(),ticketAmount)
                         localRequest(spinXml)
                     }else{
                         processSettlement(intentApplication, activityResultLauncher)
                     }
+                }
+               "STATUS" ->{
+                   val refIdFromEditText = referenceIDEditText.text.toString()
+                   val externalRRN = EXTERNAL_RRN_PREFIX+refIdFromEditText
+                   if(transactionMode == "USB"){
+                       spinXml = getPayloadSpinXML(externalRRN,DEFAULT_VALUE,emptyList(),ticketAmount)
+                       usbRequest(spinXml)
+                   }else if(transactionMode == "CLOUD"){
+                       spinXml = getPayloadSpinXML(externalRRN,DEFAULT_VALUE,emptyList(),ticketAmount)
+                       cloudRequest(spinXml)
+                   }else if(transactionMode == "LOCAL"){
+                       spinXml = getPayloadSpinXML(externalRRN,DEFAULT_VALUE,emptyList(),ticketAmount)
+                       localRequest(spinXml)
+                   }
                 }
             }
         }
@@ -362,9 +385,10 @@ class CartActivity : AppCompatActivity() {
             clearCart()
         }
 
+
         imageViewMore.setOnClickListener {
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
+                val intent = Intent(this, MainActivity::class.java)
+                startActivity(intent)
         }
     }
 
@@ -429,13 +453,13 @@ class CartActivity : AppCompatActivity() {
             var jsonRequest: JSONObject = JSONObject()
             var spinRequest:String = ""
             Log.d("CartActivity", "registration transactionMode  : $transactionMode")
-            if(transactionMode.equals("USB")){
+            if(transactionMode == "USB"){
                spinRequest = getPayloadSpinXML(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems,ticketAmt)
                 usbRequest(spinRequest)
-            }else if(transactionMode.equals("CLOUD")){
+            }else if(transactionMode == "CLOUD"){
                 spinRequest = getPayloadSpinXML(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems,ticketAmt)
                 cloudRequest(spinRequest)
-            }else if(transactionMode.equals("LOCAL")){
+            }else if(transactionMode == "LOCAL"){
                 spinRequest = getPayloadSpinXML(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems,ticketAmt)
                 localRequest(spinRequest)
             }else{
@@ -734,23 +758,25 @@ class CartActivity : AppCompatActivity() {
         referenceId: String,
         totalAmount: Double,
         items: List<Item>,
-        ticketAmount:Double
+        ticketAmount: Double
     ): String {
         items.forEach { item ->
             Log.i("my_tag", " cart Item: $item")
         }
         val totalAmt = formatToTwoDecimalPlaces(totalAmount)
+        val discounts = 0.00
+        val taxes = 0.00
         val xmlBuilder = StringBuilder()
         xmlBuilder.append("<request>")
-        if(!selectedTransactionType.equals(LoadItems.SETTLEMENT)){
+        if (selectedTransactionType != LoadItems.SETTLEMENT) {
             xmlBuilder.append("<PaymentType>Credit</PaymentType>")
         }
         xmlBuilder.append("<TransType>${getTransactionType(selectedTransactionType)}</TransType>")
-        if(!selectedTransactionType.equals(LoadItems.SETTLEMENT)){
-            if(selectedTransactionType.equals(LoadItems.TICKET)){
+        if (selectedTransactionType != LoadItems.SETTLEMENT && selectedTransactionType != "STATUS") {
+            if (selectedTransactionType == LoadItems.TICKET) {
                 xmlBuilder.append("<Amount>$ticketAmount</Amount>")
-            }else{
-                xmlBuilder.append("<Amount>$totalAmt</Amount>")
+            } else {
+                    xmlBuilder.append("<Amount>$totalAmt</Amount>")
             }
             xmlBuilder.append("<Tip>${String.format("%.2f", customerTip)}</Tip>")
             xmlBuilder.append("<CashbackAmount>0.00</CashbackAmount>")
@@ -759,61 +785,52 @@ class CartActivity : AppCompatActivity() {
         }
         xmlBuilder.append("<RefId>${referenceId}</RefId>")
 
-        if (selectedTransactionType.equals(LoadItems.SETTLEMENT)) {
+        if (selectedTransactionType == LoadItems.SETTLEMENT) {
             xmlBuilder.append("<Param>Close</Param>")
         }
         xmlBuilder.append("<RegisterId>${registerId}</RegisterId>")
-        if(transactionMode.equals("USB")){
+        if (transactionMode == "USB") {
             xmlBuilder.append("<AuthKey>vPXjq5X8fn</AuthKey>")
-        }else{
+        } else {
             xmlBuilder.append("<AuthKey>${authKey}</AuthKey>")
         }
         xmlBuilder.append("<PrintReceipt>No</PrintReceipt>")
         xmlBuilder.append("<SigCapture>No</SigCapture>")
 
-        /*  // Cart Section
-          xmlBuilder.append("<Cart>")
-          xmlBuilder.append("<Items>")*/
+        Log.i("my_tag", " settlement enabled  $selectedTransactionType")
+        Log.i("my_tag", " settlement enabled  ${selectedTransactionType != LoadItems.SETTLEMENT}")
+        Log.i("my_tag", " settlement enabled  ${ selectedTransactionType != "STATUS"}")
+        if (selectedTransactionType != LoadItems.SETTLEMENT && selectedTransactionType != "STATUS") {
+            // Cart Section
+            xmlBuilder.append("<Cart>")
+            xmlBuilder.append("<Amounts>")
+            xmlBuilder.append("<Amount><Name>Discounts</Name><Value>${(discounts).toInt()}</Value></Amount>")
+            xmlBuilder.append("<Amount><Name>Subtotal</Name><Value>${(totalAmount).toInt()}</Value></Amount>")
+            xmlBuilder.append("<Amount><Name>Taxes</Name><Value>${(taxes).toInt()}</Value></Amount>")
+            xmlBuilder.append("<Amount><Name>Total</Name><Value>${(totalAmount).toInt()}</Value><Total/></Amount>")
+            xmlBuilder.append("</Amounts>")
+            xmlBuilder.append("<Items>")
 
-        /* for (item in items) {
-             xmlBuilder.append("<Item>")
-             xmlBuilder.append("<Name>${item.name}</Name>")
-             xmlBuilder.append("<Price>${item.price}</Price>")
-             xmlBuilder.append("<UnitPrice></UnitPrice>")
-             xmlBuilder.append("<Quantity>${item.quantity}</Quantity>")
+            for (item in items) {
+                val itemTotalValue = item.price * item.quantity
+                xmlBuilder.append("<Item>")
+                xmlBuilder.append("<Name>${item.name}</Name>")
+                xmlBuilder.append("<Price>${item.price}</Price>")
+                xmlBuilder.append("<UnitPrice></UnitPrice>")
+                xmlBuilder.append("<Quantity>${item.quantity}</Quantity>")
 
-  *//*           // Modifiers
-            if (item.modifiers!!.isNotEmpty()) {
-                xmlBuilder.append("<Modifiers>")
-
-                for (modifier in item.modifiers) {
-                    xmlBuilder.append("<Modifier>")
-                    xmlBuilder.append("<Name>${modifier.name}</Name>")
-                    xmlBuilder.append("<Options>")
-
-                    for (option in modifier!!.options!!) {
-                        xmlBuilder.append("<Option>")
-                        xmlBuilder.append("<Name>${option.name}</Name>")
-                        xmlBuilder.append("<Price>${option.price}</Price>")
-                        xmlBuilder.append("<Quantity>${option.quantity}</Quantity>")
-                        xmlBuilder.append("</Option>")
-                    }
-
-                    xmlBuilder.append("</Options>")
-                    xmlBuilder.append("</Modifier>")
-                }
-
-                xmlBuilder.append("</Modifiers>")
-            }*//*
-
-            xmlBuilder.append("</Item>")
-        }*/
-
-        /*   xmlBuilder.append("</Items>")
-           xmlBuilder.append("</Cart>")*/
-
-
-
+                // NEW: CustomInfos Block per Item
+                xmlBuilder.append("<CustomInfos>")
+                xmlBuilder.append("<CustomInfo><Name>Total</Name><Value>${itemTotalValue}</Value></CustomInfo>")
+                xmlBuilder.append("<CustomInfo><Name>Total</Name><Value>${itemTotalValue}</Value></CustomInfo>")
+                xmlBuilder.append("</CustomInfos>")
+                xmlBuilder.append("<AdditionalInfo>")
+                xmlBuilder.append("</AdditionalInfo>")
+                xmlBuilder.append("</Item>")
+            }
+            xmlBuilder.append("</Items>")
+            xmlBuilder.append("</Cart>")
+        }
         xmlBuilder.append("</request>")
 
         return xmlBuilder.toString()
@@ -964,8 +981,15 @@ class CartActivity : AppCompatActivity() {
         val currentMode = PrefsHelper.getMode(this)
 
         // Show configure only for DeepLink
-        menu.findItem(R.id.nav_configure).isVisible =
-            currentMode == "DEEPLINK"
+        menu.findItem(R.id.nav_configure).isVisible = currentMode == "DEEPLINK"
+        menu.findItem(R.id.nav_statusCheck).isVisible = currentMode != "DEEPLINK"
+
+        if(PrefsHelper.getMode(context) == "DEEPLINK"){
+            imageViewMore.visibility = View.VISIBLE
+        }else{
+            imageViewMore.visibility = View.GONE
+        }
+
     }
 
 
@@ -992,6 +1016,9 @@ class CartActivity : AppCompatActivity() {
             "PRE_AUTH" -> {
                 return "Auth"
             }
+            "STATUS"  -> {
+                return "Status"
+            }
             else -> return "Sale"
         }
     }
@@ -1009,8 +1036,8 @@ class CartActivity : AppCompatActivity() {
         val client = OkHttpClient.Builder()
             .protocols(listOf(Protocol.HTTP_1_1))
             .connectTimeout(120, TimeUnit.SECONDS)
-            .readTimeout(120, TimeUnit.SECONDS)
-            .writeTimeout(120, TimeUnit.SECONDS)
+            .readTimeout(90, TimeUnit.SECONDS)
+            .writeTimeout(90, TimeUnit.SECONDS)
             .build()
 
         val request = Request.Builder()
@@ -1068,9 +1095,9 @@ class CartActivity : AppCompatActivity() {
 
             val client = OkHttpClient.Builder()
                 .protocols(listOf(Protocol.HTTP_1_1))
-                .connectTimeout(20, TimeUnit.SECONDS)
-                .readTimeout(60, TimeUnit.SECONDS)
-                .writeTimeout(60, TimeUnit.SECONDS)
+                .connectTimeout(120, TimeUnit.SECONDS)
+                .readTimeout(90, TimeUnit.SECONDS)
+                .writeTimeout(90, TimeUnit.SECONDS)
                 .build()
 
             val request = Request.Builder()

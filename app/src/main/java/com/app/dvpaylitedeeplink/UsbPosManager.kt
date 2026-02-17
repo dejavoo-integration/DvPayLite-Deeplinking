@@ -35,7 +35,7 @@ class UsbPosManager(private val context: Context) {
 
     fun init() {
         registerReceiver()
-        autoConnectUsb()
+        //autoConnectUsb()
     }
 
     fun release() {
@@ -84,6 +84,8 @@ class UsbPosManager(private val context: Context) {
     /* ================= OPEN PORT ================= */
 
     private fun tryOpenDevice(device: UsbDevice) {
+        if (serialPort?.isOpen == true) return
+
         val driver = UsbSerialProber.getDefaultProber()
             .findAllDrivers(usbManager)
             .find { it.device == device } ?: return
@@ -93,22 +95,16 @@ class UsbPosManager(private val context: Context) {
         try {
             val connection = usbManager.openDevice(device) ?: return
             port.open(connection)
-            port.setParameters(
-                115200,
-                8,
-                UsbSerialPort.STOPBITS_1,
-                UsbSerialPort.PARITY_NONE
-            )
+            port.setParameters(115200, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE)
+
+            // Key: Set DTR/RTS to true to tell the POS we are ready to receive
+            port.dtr = true
+            port.rts = true
 
             serialPort = port
-            Log.i(TAG, "USB PORT OPENED")
+            Log.i(TAG, "USB PORT RE-CONNECTED")
 
-         //   showToast("POS Connected")
-            statusListener?.onStatusChanged(
-                UsbConnectionState.CONNECTED,
-                "POS Connected"
-            )
-
+            statusListener?.onStatusChanged(UsbConnectionState.CONNECTED, "POS Connected")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to open USB port", e)
         }
@@ -117,30 +113,64 @@ class UsbPosManager(private val context: Context) {
     /* ================= SEND & RECEIVE ================= */
 
     fun sendAndReceive(request: String, callback: UsbPosCallback) {
-        val port = serialPort
-
-        if (port == null || !port.isOpen) {
-            callback.onResult(null, 0)
-            return
-        }
-
         thread {
             try {
-                // IMPORTANT: clear buffer before new request
-                readBuffer.setLength(0)
+                // 1. Clear buffer before starting
+                synchronized(readBuffer) { readBuffer.setLength(0) }
 
-                // -------- SEND --------
+                // 2. Initial Send (Wait up to 3 seconds for port to be ready)
+                val startTime = System.currentTimeMillis()
+                while (serialPort == null || !serialPort!!.isOpen) {
+                    if (System.currentTimeMillis() - startTime > 5000) {
+                        callback.onResult(null, 0)
+                        return@thread
+                    }
+                    Thread.sleep(200)
+                }
+
                 val sendBytes = (request + "\r\n").toByteArray(Charsets.UTF_8)
-                port.write(sendBytes, 3000)
+                serialPort?.write(sendBytes, 3000)
+                Log.i(TAG, "USB SENT: $request")
 
-                Log.i(TAG, "USB SENT bytes=${sendBytes.size}")
+                // 3. Resilient Read Loop (120 second timeout)
+                val readTimeout = 120_000L
+                val loopStart = System.currentTimeMillis()
+                val buffer = ByteArray(2048)
 
-                // -------- RECEIVE --------
-                val result = readResponseWithBytes(port)
-                callback.onResult(result.first, result.second)
+                while (System.currentTimeMillis() - loopStart < readTimeout) {
+                    val currentPort = serialPort // Capture current instance
+
+                    if (currentPort != null && currentPort.isOpen) {
+                        try {
+                            val len = currentPort.read(buffer, 1000)
+                            if (len > 0) {
+                                val chunk = String(buffer, 0, len, Charsets.UTF_8)
+                                synchronized(readBuffer) {
+                                    readBuffer.append(chunk)
+                                    val fullText = readBuffer.toString()
+
+                                    if (fullText.contains("</xmp>")) {
+                                        Log.i(TAG, "USB COMPLETE")
+                                        callback.onResult(fullText, fullText.length)
+                                        return@thread
+                                    }
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Read error (likely disconnect), waiting for reconnect...")
+                            Thread.sleep(1000) // Wait for BroadcastReceiver to fix the port
+                        }
+                    } else {
+                        // Port is null or closed, just wait for the autoConnect logic to kick in
+                        Thread.sleep(500)
+                    }
+                }
+
+                Log.e(TAG, "USB READ TIMEOUT")
+                callback.onResult(null, 0)
 
             } catch (e: Exception) {
-                Log.e(TAG, "USB send/receive error", e)
+                Log.e(TAG, "Global sendAndReceive Error", e)
                 callback.onResult(null, 0)
             }
         }

@@ -74,7 +74,6 @@ class RegistrationActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_registration)
-        usbPosManager = UsbPosManager(this)
         initViews()
         initUI()
         usbPosManager = (application as MyApp).usbPosManager
@@ -369,6 +368,7 @@ class RegistrationActivity : AppCompatActivity() {
                 PrefsHelper.saveDeepLink(this, tpn)
                 PrefsHelper.saveMode(this, Mode.DEEPLINK.name)
                 Toast.makeText(this, "DeepLink Selected\nTPN: $tpn", Toast.LENGTH_SHORT).show()
+                finish()
 
             }
 
@@ -391,11 +391,15 @@ class RegistrationActivity : AppCompatActivity() {
             }
 
             Mode.USB -> {
-                val usbRegisterId = edtUsbRegisterId.text.toString().trim()
-                PrefsHelper.saveUsb(this, usbRegisterId)
-                PrefsHelper.saveMode(this, Mode.USB.name)
-                Toast.makeText(this, "USB Selected\nusbRegisterId: $usbRegisterId", Toast.LENGTH_SHORT).show()
-                finish()
+                if(usbPosManager.isConnected()){
+                    val usbRegisterId = edtUsbRegisterId.text.toString().trim()
+                    PrefsHelper.saveUsb(this, usbRegisterId)
+                    PrefsHelper.saveMode(this, Mode.USB.name)
+                    Toast.makeText(this, "USB Selected\nusbRegisterId: $usbRegisterId", Toast.LENGTH_SHORT).show()
+                    finish()
+                }else{
+                    Toast.makeText(this, "Please Connect POS USB first", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
