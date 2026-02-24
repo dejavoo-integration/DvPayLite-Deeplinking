@@ -1061,9 +1061,9 @@ class CartActivity : AppCompatActivity() {
         Log.d("SPIN_REQUEST", url.toString())
         val client = OkHttpClient.Builder()
             .protocols(listOf(Protocol.HTTP_1_1))
-            .connectTimeout(120, TimeUnit.SECONDS)
-            .readTimeout(90, TimeUnit.SECONDS)
-            .writeTimeout(90, TimeUnit.SECONDS)
+            .connectTimeout(90, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
             .build()
 
         val request = Request.Builder()

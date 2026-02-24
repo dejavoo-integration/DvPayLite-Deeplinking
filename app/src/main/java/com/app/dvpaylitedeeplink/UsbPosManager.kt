@@ -103,7 +103,7 @@ class UsbPosManager(private val context: Context) {
 
             serialPort = port
             Log.i(TAG, "USB PORT RE-CONNECTED")
-
+            showToast("POS Connected")
             statusListener?.onStatusChanged(UsbConnectionState.CONNECTED, "POS Connected")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to open USB port", e)
@@ -272,7 +272,7 @@ class UsbPosManager(private val context: Context) {
     fun closeDevice() {
         try { serialPort?.close() } catch (_: Exception) {}
         serialPort = null
-
+           showToast("POS Disconnected")
         statusListener?.onStatusChanged(
             UsbConnectionState.DISCONNECTED,
             "POS Disconnected"

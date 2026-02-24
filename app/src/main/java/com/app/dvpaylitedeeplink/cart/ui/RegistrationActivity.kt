@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -22,6 +23,7 @@ import androidx.appcompat.widget.SwitchCompat
 import com.app.dvpaylitedeeplink.MyApp
 import com.app.dvpaylitedeeplink.R
 import com.app.dvpaylitedeeplink.UsbConnectionState
+import com.app.dvpaylitedeeplink.UsbPosCallback
 import com.app.dvpaylitedeeplink.UsbStatusListener
 import com.app.dvpaylitedeeplink.cart.PrefsHelper
 import com.app.dvpaylitedeeplink.logger.LoggerManager
@@ -55,6 +57,7 @@ class RegistrationActivity : AppCompatActivity() {
     private lateinit var edtUsbRegisterId: AppCompatEditText
 
     private lateinit var tvUsbStatus: AppCompatTextView
+    private lateinit var tvDeviceStatus: AppCompatTextView
     private lateinit var btnUsbConnect: AppCompatButton
 
     private lateinit var usbPosManager: UsbPosManager
@@ -126,6 +129,7 @@ class RegistrationActivity : AppCompatActivity() {
         edtUsbRegisterId = findViewById(R.id.edtUsbRegister)
         tvUsbStatus = findViewById(R.id.tvUsbStatus)
         btnUsbConnect = findViewById(R.id.btnUsbConnect)
+        tvDeviceStatus = findViewById(R.id.tvDeviceStatus)
 
         btnConfirm = findViewById(R.id.btnConfirm)
         ivBack = findViewById(R.id.iv_back)
@@ -410,8 +414,10 @@ class RegistrationActivity : AppCompatActivity() {
                     PrefsHelper.saveMode(this, Mode.USB.name)
                     Toast.makeText(this, "USB Selected\nusbRegisterId: $usbRegisterId", Toast.LENGTH_SHORT).show()
                     LoggerManager.log(this, "Confirm USB mode Register RegisterId: $usbRegisterId")
+                  //  validation()
                     finish()
                 }else{
+                    tvDeviceStatus.text = "POS Device Not connected"
                     LoggerManager.log(this, "Please Connect POS USB first")
                     Toast.makeText(this, "Please Connect POS USB first", Toast.LENGTH_SHORT).show()
                 }
@@ -457,6 +463,50 @@ class RegistrationActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         setupUsb()
+    }
+
+
+    fun validation(){
+        val progressDialog = android.app.AlertDialog.Builder(this)
+            .setTitle("Please wait")
+            .setMessage("Checking Device connection..")
+            .setCancelable(false) // cannot dismiss by tapping outside
+            .create()
+        progressDialog.show()
+        LoggerManager.log(this@RegistrationActivity, "Processing Dialog open")
+        LoggerManager.log(this, "Processing USB Validation")
+        val request = "<request><PaymentType>Credit</PaymentType><TransType>VALIDATE</TransType><Amount>1.00</Amount><Tip>0.00</Tip><CashbackAmount>0.00</CashbackAmount><Frequency>OneTime</Frequency><CustomFee>0.00</CustomFee><RefId></RefId><RegisterId>${edtUsbRegisterId.text.toString()}</RegisterId><AuthKey>vPXjq5X8fn</AuthKey><PrintReceipt>No</PrintReceipt><SigCapture>No</SigCapture></request>"
+        Log.i("my_tag","check usb Validation request ${request}")
+        usbPosManager?.sendAndReceive(request, object : UsbPosCallback {
+            override fun onResult(response: String?, totalBytes: Int) {
+                runOnUiThread {
+
+                    if (!isFinishing && progressDialog.isShowing) {
+                        LoggerManager.log(this@RegistrationActivity, "Processing Dialog Close")
+                        progressDialog.dismiss()
+                    }
+
+                    if (response != null) {
+                        Log.i("USB", response)
+                        tvDeviceStatus.setText("Device Info : $response")
+                        LoggerManager.log(this@RegistrationActivity, "Device Info : ${response}")
+                        Toast.makeText(
+                            this@RegistrationActivity,
+                            response,
+                            Toast.LENGTH_LONG
+                        ).show()
+                    } else {
+                        LoggerManager.log(this@RegistrationActivity, "Device Info  : No Pos Device Connected")
+                        tvDeviceStatus.setText("Device Info : No Pos Device Connected")
+                        Toast.makeText(this@RegistrationActivity,
+                            "No Pos Device Connected",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                    finish()
+                }
+            }
+        })
     }
 
 }

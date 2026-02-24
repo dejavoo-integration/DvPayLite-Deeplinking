@@ -71,7 +71,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="20dp"
-                android:text="Cloud" />
+                android:text="Spin Cloud" />
 
             <RadioButton
                 android:id="@+id/rbLocal"
@@ -215,6 +215,16 @@
                 android:inputType="text"
                 android:textColor="@color/black"
                 android:textSize="16sp" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvDeviceStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Device Info : "
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                android:gravity="center"/>
 
         </LinearLayout>
 
