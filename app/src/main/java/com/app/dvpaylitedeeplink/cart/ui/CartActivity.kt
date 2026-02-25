@@ -51,6 +51,15 @@ import com.app.dvpaylitedeeplink.usb.UsbPosManager
 import com.denovo.app.invokeiposgo.interfaces.SettlementListener
 import com.denovo.app.invokeiposgo.interfaces.TransactionListener
 import com.denovo.app.invokeiposgo.launcher.IntentApplication
+import com.dvmms.dejapay.IRequestCallback
+import com.dvmms.dejapay.exception.DejavooThrowable
+import com.dvmms.dejapay.models.DejavooPaymentType
+import com.dvmms.dejapay.models.DejavooTransactionRequest
+import com.dvmms.dejapay.models.DejavooTransactionResponse
+import com.dvmms.dejapay.models.DejavooTransactionType
+import com.dvmms.dejapay.models.TerminalType
+import com.dvmms.dejapay.terminals.DvPayTerminalInfo
+import com.dvmms.dejapay.terminals.InternalTerminal
 import com.google.android.material.navigation.NavigationView
 import com.hoho.android.usbserial.driver.UsbSerialPort
 import okhttp3.HttpUrl
@@ -111,6 +120,8 @@ class CartActivity : AppCompatActivity() {
     private lateinit var authKey: String
     private lateinit var ipAddress: String
     var ticketAmount = 0.00
+    private var isDefaultDvPay = false
+    private var TPN : String = ""
 
 
     private lateinit var intentApplication: IntentApplication
@@ -316,25 +327,72 @@ class CartActivity : AppCompatActivity() {
                     var ticketAmount = 0.0
                     val refIdFromEditText = referenceIDEditText.text.toString()
                     if (refIdFromEditText.isNotEmpty()) {
-                        val adapter = itemsRecyclerView.adapter as CartAdapter
-                        val selectedItems = adapter.getSelectedItems()
-                        val externalRRN = EXTERNAL_RRN_PREFIX+refIdFromEditText
-                        if(selectedTransactionType.equals(LoadItems.TICKET)){
-                             ticketAmount = amountEditText.text.toString().toDouble()
-                        }
-                        val jsonRequest = getPayloadJSON(externalRRN,DEFAULT_VALUE,selectedItems,ticketAmount)
-                        LoggerManager.log(this, "Clicked Proceed Button ${selectedTransactionType}")
-                        if(transactionMode == "USB"){
-                             spinXml = getPayloadSpinXML(externalRRN,DEFAULT_VALUE,selectedItems,ticketAmount)
-                            usbRequest(spinXml)
-                        }else if(transactionMode == "CLOUD"){
-                            spinXml = getPayloadSpinXML(externalRRN,DEFAULT_VALUE,selectedItems,ticketAmount)
-                            cloudRequest(spinXml)
-                        }else if(transactionMode == "LOCAL"){
-                            spinXml = getPayloadSpinXML(externalRRN,DEFAULT_VALUE,selectedItems,ticketAmount)
-                            localRequest(spinXml)
-                        }else{
-                            processSaleTxn(intentApplication, activityResultLauncher, jsonRequest)
+                        if (isDefaultDvPay) {
+                            var request = DejavooTransactionRequest(TerminalType.DvPay)
+                            request.paymentType = DejavooPaymentType.Credit
+                            request.referenceId = externalRRN
+                            request.transactionType = DejavooTransactionType.fromString(selectedTransactionType)
+                            request.setAmount(txnTotalAmount)
+                            request.authenticationKey = ""
+                            request.registerId = ""
+                            request.tpn = TPN
+                            request.tip = customerTip.toFloat()
+
+                            InternalTerminal("com.app.dvpaylitedeeplink").commitTransaction(
+                                context, request, object : IRequestCallback<DejavooTransactionResponse> {
+                                    override fun onResponse(response: DejavooTransactionResponse) {
+                                        Log.w("CartActivity", "Transaction response: ${response.responseMessage}")
+                                        Log.w("CartActivity", "Transaction response: ${response.resultCode}")
+                                        Log.w("CartActivity", "Transaction response: ${response.error}")
+                                        if (response.resultCode.toString().equals("Succeded", ignoreCase = true)) {
+                                            clearCart()
+                                            val txnCompletePopUp = TxnCompletePopUp(activity)
+                                            txnCompletePopUp.showPopUpDialog(true, LoadItems.TRANSACTION, "")
+                                        } else {
+                                            clearCart()
+                                            val errorMessage = response.responseMessage ?: "Transaction failed"
+                                            val txnCompletePopUp = TxnCompletePopUp(activity)
+                                            txnCompletePopUp.showPopUpDialog(
+                                                false,
+                                                LoadItems.TRANSACTION,
+                                                errorMessage
+                                            )
+                                        }
+                                    }
+                                    override fun onError(throwable: DejavooThrowable) {
+                                        Log.w("CartActivity", "error transaction response $throwable")
+                                        clearCart()
+                                        val errorMessage = "Transaction failed"
+                                        val txnCompletePopUp = TxnCompletePopUp(activity)
+                                        txnCompletePopUp.showPopUpDialog(
+                                            false,
+                                            LoadItems.TRANSACTION,
+                                            errorMessage.toString()
+                                        )
+                                    }
+                                }
+                            )
+                        } else {
+                            val adapter = itemsRecyclerView.adapter as CartAdapter
+                            val selectedItems = adapter.getSelectedItems()
+                            val externalRRN = EXTERNAL_RRN_PREFIX+refIdFromEditText
+                            if(selectedTransactionType.equals(LoadItems.TICKET)){
+                                ticketAmount = amountEditText.text.toString().toDouble()
+                            }
+                            val jsonRequest = getPayloadJSON(externalRRN,DEFAULT_VALUE,selectedItems,ticketAmount)
+                            LoggerManager.log(this, "Clicked Proceed Button ${selectedTransactionType}")
+                            if(transactionMode == "USB"){
+                                spinXml = getPayloadSpinXML(externalRRN,DEFAULT_VALUE,selectedItems,ticketAmount)
+                                usbRequest(spinXml)
+                            }else if(transactionMode == "CLOUD"){
+                                spinXml = getPayloadSpinXML(externalRRN,DEFAULT_VALUE,selectedItems,ticketAmount)
+                                cloudRequest(spinXml)
+                            }else if(transactionMode == "LOCAL"){
+                                spinXml = getPayloadSpinXML(externalRRN,DEFAULT_VALUE,selectedItems,ticketAmount)
+                                localRequest(spinXml)
+                            }else{
+                                processSaleTxn(intentApplication, activityResultLauncher, jsonRequest)
+                            }
                         }
                     }else{
                         LoggerManager.log(this, "Enter External RRN")
@@ -408,6 +466,26 @@ class CartActivity : AppCompatActivity() {
                 val intent = Intent(this, MainActivity::class.java)
                 startActivity(intent)
         }
+
+        if (PrefsHelper.isDefaultDvPay(context)) {
+            Log.e("CartActivity", "isDefaultDvPay::")
+            getTerminalInfo()
+        }
+    }
+
+    private fun getTerminalInfo() {
+        var internalTerminal = InternalTerminal("com.app.dvpaylitedeeplink")
+        internalTerminal.getTerminalInfo(context, object : IRequestCallback<DvPayTerminalInfo> {
+            override fun onResponse(p0: DvPayTerminalInfo?) {
+                TPN = p0!!.tpn.toString()
+                Log.e("CartActivity","TPN----"+TPN)
+            }
+
+            override fun onError(p0: DejavooThrowable?) {
+                Log.e("CartActivity","error in getting ")
+            }
+
+        })
     }
 
     override fun onResume() {
@@ -430,6 +508,7 @@ class CartActivity : AppCompatActivity() {
         registerId = PrefsHelper.getRegisterId(this).toString()
         authKey = PrefsHelper.getAuthId(this).toString()
         ipAddress = PrefsHelper.getIpAddress(this).toString()
+        isDefaultDvPay = PrefsHelper.isDefaultDvPay(this)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -446,7 +525,7 @@ class CartActivity : AppCompatActivity() {
 
 
             if (data != null) {
-                customerTip = data.getDoubleExtra("tip",0.00)!!
+                customerTip = data.getDoubleExtra("tip", 0.00)!!
                 Log.d("CartActivity", "Customer tip received: $customerTip")
                 updateTotalAmount(txnTotalAmount)
             } else {
@@ -468,116 +547,216 @@ class CartActivity : AppCompatActivity() {
             externalRRN = Utils.generateRandom(12).toString()
             ticketAmt = totalAmount
             Log.d("CartActivity", "Generated external RRN: $externalRRN")
-            var jsonRequest: JSONObject = JSONObject()
-            var spinRequest:String = ""
-            Log.d("CartActivity", "registration transactionMode  : $transactionMode")
-            if(transactionMode == "USB"){
-               spinRequest = getPayloadSpinXML(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems,ticketAmt)
-                usbRequest(spinRequest)
-            }else if(transactionMode == "CLOUD"){
-                spinRequest = getPayloadSpinXML(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems,ticketAmt)
-                cloudRequest(spinRequest)
-            }else if(transactionMode == "LOCAL"){
-                spinRequest = getPayloadSpinXML(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems,ticketAmt)
-                localRequest(spinRequest)
-            }else{
-                jsonRequest = getPayloadJSON(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems,ticketAmt)
-                Log.d("CartActivity", "Initialized JSON payload")
+            Log.d("CartActivity", "isDefaultDvPay: $isDefaultDvPay")
+            Log.d("CartActivity", "selectedTransactionType: $selectedTransactionType")
+            if (isDefaultDvPay) {
+                if (selectedTransactionType.equals("PRE_AUTH", ignoreCase = true)) {
+                    selectedTransactionType = "Auth"
+                } else if (selectedTransactionType.equals("Refund", ignoreCase = true)) {
+                    selectedTransactionType = "Return"
+                }
 
-                val cartObject = JSONObject()
+                var request = DejavooTransactionRequest(TerminalType.DvPay)
+                request.paymentType = DejavooPaymentType.Credit
+                request.referenceId = externalRRN
+                request.setAmount(txnTotalAmount)
+                request.authenticationKey = ""
+                request.registerId = ""
+                request.tpn = "305323645064"
+                request.tip = customerTip.toFloat()
+                request.transactionType = DejavooTransactionType.fromString(selectedTransactionType)
 
-                val itemsArray = JSONArray(selectedItems.map { item ->
-                    JSONObject().apply {
-                        put("Name", item.name)
-                        put("Price", formatToTwoDecimalPlaces(item.price))
-                        put("CardPrice", formatToTwoDecimalPlaces(item.price * 1.04))
-                        put("Quantity", item.quantity)
-                        put("AdditionalInfo", item.additionalInfo)
 
-                        if (!item.modifiers.isNullOrEmpty()) {
-                            val modifiersArray = JSONArray(item.modifiers!!.map { modifier ->
-                                JSONObject().apply {
-                                    put("Name", modifier.name)
-                                    put("Options", JSONArray(modifier.options?.map { option ->
-                                        JSONObject().apply {
-                                            put("Name", option.name)
-                                            put("Price", formatToTwoDecimalPlaces(option.price))
-                                            put("Quantity", option.quantity)
-                                        }
-                                    }))
-                                }
-                            })
-                            put("Modifiers", modifiersArray)
+                /* request.setSignatureCapable(signCapableEnabled);
+                 request.setInvoiceNumber(String.valueOf(invoiceId);
+                 request.setTip(tip);
+                 request.setReceiptType(DejavooTransactionRequest.ReceiptType.Both);
+                 request.setPrintReceipt(terminal.getPrintReceiptModeType());
+                 request.setSignature(sign);
+                 request.setExtReceiptData(itemListPrintout)*/
+
+                InternalTerminal("com.app.dvpaylitedeeplink").commitTransaction(
+                    context, request, object : IRequestCallback<DejavooTransactionResponse> {
+                        override fun onResponse(response: DejavooTransactionResponse) {
+                            Log.w(
+                                "CartActivity",
+                                "Transaction response: ${response.responseMessage}"
+                            )
+                            Log.w("CartActivity", "Transaction response: ${response.resultCode}")
+                            Log.w("CartActivity", "Transaction response: ${response.error}")
+                            Log.w(
+                                "CartActivity",
+                                "Transaction response message: ${response.message}"
+                            )
+                            if (response.resultCode.toString()
+                                    .equals("Succeded", ignoreCase = true)
+                            ) {
+                                clearCart()
+                                val txnCompletePopUp = TxnCompletePopUp(activity)
+                                txnCompletePopUp.showPopUpDialog(true, LoadItems.TRANSACTION, "")
+                            } else {
+                                clearCart()
+                                val errorMessage = response.responseMessage ?: "Transaction failed"
+                                val txnCompletePopUp = TxnCompletePopUp(activity)
+                                txnCompletePopUp.showPopUpDialog(
+                                    false,
+                                    LoadItems.TRANSACTION,
+                                    errorMessage
+                                )
+                            }
+                        }
+
+                        override fun onError(throwable: DejavooThrowable) {
+                            Log.w("CartActivity", "error transaction response $throwable")
+                            clearCart()
+                            val errorMessage = "Transaction failed"
+                            val txnCompletePopUp = TxnCompletePopUp(activity)
+                            txnCompletePopUp.showPopUpDialog(
+                                false,
+                                LoadItems.TRANSACTION,
+                                errorMessage.toString()
+                            )
                         }
                     }
-                })
-                Log.d("CartActivity", "Items array created with ${selectedItems.size} items")
-
-                val cardAmountsArray = JSONArray(cart.amounts.map { amount ->
-                    val cardPrice = if (amount.name.equals("Tip", ignoreCase = true)) {
-                        amount.value
-                    } else if (amount.name.equals("Total", ignoreCase = true)) {
-                        val fee = (4.0 / 100) * amount.value
-                        amount.value + fee + customerTip
-                    } else {
-                        val fee = (4.0 / 100) * amount.value
-                        amount.value + fee
-                    }
-
-                    JSONObject().apply {
-                        put("Name", amount.name)
-                        put("Value", formatToTwoDecimalPlaces(cardPrice))
-                    }
-                })
-                val cashAmountsArray = JSONArray(cart.amounts.map { amount ->
-                    val cashPrice = if (amount.name.equals("Total", ignoreCase = true)) {
-                        amount.value+customerTip
-                    }else{
-                        amount.value
-                    }
-                    JSONObject().apply {
-                        put("Name", amount.name)
-                        put("Value", formatToTwoDecimalPlaces(cashPrice))
-                    }
-                })
-                Log.d("CartActivity", "CashPrices array created with ${cart.amounts.size} entries")
-
-                cartObject.put("Items", itemsArray)
-                cartObject.put("Amounts", cardAmountsArray)
-                cartObject.put("CashPrices", cashAmountsArray)
-
-                if (enableLineItems) {
-                    jsonRequest.put("Cart", cartObject)
-                    Log.d("CartActivity", "Line items enabled; cart object added to payload")
-                }
-                Log.d("CartActivity", "Final JSON Object: ${spinRequest}")
-                Log.d("CartActivity", "Processing sale transaction...")
-                val editedJsonString = data?.getStringExtra("editedJson")
-                if (!editedJsonString.isNullOrEmpty()) {
-                    val finalJson = JSONObject(editedJsonString)
-                    Log.d("CartActivity", "Confirmed JSON: $finalJson")
-                    processSaleTxn(intentApplication, activityResultLauncher, finalJson)
-                }
-                if(showJsonPreview){
-                    val intent = Intent(this, JsonPreviewActivity::class.java)
-                    intent.putExtra("jsonPayload", jsonRequest.toString(2))
-                    startActivityForResult(intent, 456)
-                }else{
-                    processSaleTxn(intentApplication, activityResultLauncher, jsonRequest)
-                }
-                customerTip = 0.00
-            }
-            if (requestCode == 456 && resultCode == Activity.RESULT_OK) {
-                val editedJsonString = data?.getStringExtra("editedJson")
-                if (!editedJsonString.isNullOrEmpty()) {
-                    val finalJson = JSONObject(editedJsonString)
-                    Log.d("CartActivity", "Confirmed JSON: $finalJson")
-                    processSaleTxn(intentApplication, activityResultLauncher, finalJson)
-                }
+                )
             } else {
-                Log.d("CartActivity", "Request code or result code did not match expected values")
+                var jsonRequest: JSONObject = JSONObject()
+                var spinRequest: String = ""
+                Log.d("CartActivity", "registration transactionMode  : $transactionMode")
+                if (transactionMode == "USB") {
+                    spinRequest = getPayloadSpinXML(
+                        EXTERNAL_RRN_PREFIX + externalRRN,
+                        totalAmount,
+                        selectedItems,
+                        ticketAmt
+                    )
+                    usbRequest(spinRequest)
+                } else if (transactionMode == "CLOUD") {
+                    spinRequest = getPayloadSpinXML(
+                        EXTERNAL_RRN_PREFIX + externalRRN,
+                        totalAmount,
+                        selectedItems,
+                        ticketAmt
+                    )
+                    cloudRequest(spinRequest)
+                } else if (transactionMode == "LOCAL") {
+                    spinRequest = getPayloadSpinXML(
+                        EXTERNAL_RRN_PREFIX + externalRRN,
+                        totalAmount,
+                        selectedItems,
+                        ticketAmt
+                    )
+                    localRequest(spinRequest)
+                } else {
+                    jsonRequest = getPayloadJSON(
+                        EXTERNAL_RRN_PREFIX + externalRRN,
+                        totalAmount,
+                        selectedItems,
+                        ticketAmt
+                    )
+                    Log.d("CartActivity", "Initialized JSON payload")
+
+                    val cartObject = JSONObject()
+
+                    val itemsArray = JSONArray(selectedItems.map { item ->
+                        JSONObject().apply {
+                            put("Name", item.name)
+                            put("Price", formatToTwoDecimalPlaces(item.price))
+                            put("CardPrice", formatToTwoDecimalPlaces(item.price * 1.04))
+                            put("Quantity", item.quantity)
+                            put("AdditionalInfo", item.additionalInfo)
+
+                            if (!item.modifiers.isNullOrEmpty()) {
+                                val modifiersArray = JSONArray(item.modifiers!!.map { modifier ->
+                                    JSONObject().apply {
+                                        put("Name", modifier.name)
+                                        put("Options", JSONArray(modifier.options?.map { option ->
+                                            JSONObject().apply {
+                                                put("Name", option.name)
+                                                put("Price", formatToTwoDecimalPlaces(option.price))
+                                                put("Quantity", option.quantity)
+                                            }
+                                        }))
+                                    }
+                                })
+                                put("Modifiers", modifiersArray)
+                            }
+                        }
+                    })
+                    Log.d("CartActivity", "Items array created with ${selectedItems.size} items")
+
+                    val cardAmountsArray = JSONArray(cart.amounts.map { amount ->
+                        val cardPrice = if (amount.name.equals("Tip", ignoreCase = true)) {
+                            amount.value
+                        } else if (amount.name.equals("Total", ignoreCase = true)) {
+                            val fee = (4.0 / 100) * amount.value
+                            amount.value + fee + customerTip
+                        } else {
+                            val fee = (4.0 / 100) * amount.value
+                            amount.value + fee
+                        }
+
+                        JSONObject().apply {
+                            put("Name", amount.name)
+                            put("Value", formatToTwoDecimalPlaces(cardPrice))
+                        }
+                    })
+                    val cashAmountsArray = JSONArray(cart.amounts.map { amount ->
+                        val cashPrice = if (amount.name.equals("Total", ignoreCase = true)) {
+                            amount.value + customerTip
+                        } else {
+                            amount.value
+                        }
+                        JSONObject().apply {
+                            put("Name", amount.name)
+                            put("Value", formatToTwoDecimalPlaces(cashPrice))
+                        }
+                    })
+                    Log.d(
+                        "CartActivity",
+                        "CashPrices array created with ${cart.amounts.size} entries"
+                    )
+
+                    cartObject.put("Items", itemsArray)
+                    cartObject.put("Amounts", cardAmountsArray)
+                    cartObject.put("CashPrices", cashAmountsArray)
+
+                    if (enableLineItems) {
+                        jsonRequest.put("Cart", cartObject)
+                        Log.d("CartActivity", "Line items enabled; cart object added to payload")
+                    }
+                    Log.d("CartActivity", "Final JSON Object: ${spinRequest}")
+                    Log.d("CartActivity", "Processing sale transaction...")
+                    val editedJsonString = data?.getStringExtra("editedJson")
+                    if (!editedJsonString.isNullOrEmpty()) {
+                        val finalJson = JSONObject(editedJsonString)
+                        Log.d("CartActivity", "Confirmed JSON: $finalJson")
+                        processSaleTxn(intentApplication, activityResultLauncher, finalJson)
+                    }
+                    if (showJsonPreview) {
+                        val intent = Intent(this, JsonPreviewActivity::class.java)
+                        intent.putExtra("jsonPayload", jsonRequest.toString(2))
+                        startActivityForResult(intent, 456)
+                    } else {
+                        processSaleTxn(intentApplication, activityResultLauncher, jsonRequest)
+                    }
+                    customerTip = 0.00
+                }
+                if (requestCode == 456 && resultCode == Activity.RESULT_OK) {
+                    val editedJsonString = data?.getStringExtra("editedJson")
+                    if (!editedJsonString.isNullOrEmpty()) {
+                        val finalJson = JSONObject(editedJsonString)
+                        Log.d("CartActivity", "Confirmed JSON: $finalJson")
+                        processSaleTxn(intentApplication, activityResultLauncher, finalJson)
+                    }
+                } else {
+                    Log.d(
+                        "CartActivity",
+                        "Request code or result code did not match expected values"
+                    )
+                }
             }
-            }
+        }
     }
 
 

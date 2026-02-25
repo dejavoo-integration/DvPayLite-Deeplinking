@@ -17,8 +17,9 @@ object PrefsHelper {
     private const val KEY_IP_ADDRESS = "ip_address"
     private const val KEY_TPN = "tpn_value"
     private const val KEY_SELECTED_MODE = "selected_mode"
+    private const val KEY_DEF_DVPAY = "default_dvpay"
 
-    fun saveSettings(context: Context, approval: Boolean, breakup: Boolean, tipScreen: Boolean, dual: Boolean , showLineItems:Boolean, sendL2L3: Boolean,showJsonPreview :Boolean) {
+    fun saveSettings(context: Context, approval: Boolean, breakup: Boolean, tipScreen: Boolean, dual: Boolean , showLineItems:Boolean, sendL2L3: Boolean,showJsonPreview :Boolean, isDefaultDvPay : Boolean) {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
         prefs.edit().apply {
             putBoolean(KEY_APPROVAL, approval)
@@ -28,6 +29,7 @@ object PrefsHelper {
             putBoolean(KEY_LINE_ITEM, showLineItems)
             putBoolean(KEY_L2L3_LINE_ITEM, sendL2L3)
             putBoolean(KEY_JSON_PREVIEW, showJsonPreview)
+            putBoolean(KEY_DEF_DVPAY, isDefaultDvPay)
             apply()
         }
     }
@@ -139,5 +141,8 @@ object PrefsHelper {
 
     fun getJsonPreviewStatus(context: Context): Boolean =
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE).getBoolean(KEY_JSON_PREVIEW, false)
+
+    fun isDefaultDvPay(context: Context): Boolean =
+        context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE).getBoolean(KEY_DEF_DVPAY, false)
 
 }
