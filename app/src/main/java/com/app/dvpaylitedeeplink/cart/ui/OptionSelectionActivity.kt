@@ -33,6 +33,7 @@ class OptionSelectionActivity : AppCompatActivity() {
     private lateinit var linearShowBreakup: LinearLayout
     private lateinit var sendL2L3Data: SwitchCompat
     private lateinit var showJsonPreview: SwitchCompat
+    private lateinit var dvpayConfig: SwitchCompat
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,6 +47,7 @@ class OptionSelectionActivity : AppCompatActivity() {
         switchTip = findViewById(R.id.switchTip)
         switchLineItems = findViewById(R.id.switchLineItems)
         btnConfirm = findViewById(R.id.btnConfirm)
+        dvpayConfig = findViewById(R.id.dvpay_config)
         ivBack = findViewById<AppCompatImageView>(R.id.iv_back)
         tvTotalAmount = findViewById<AppCompatTextView>(R.id.tvTotalAmount)
         edtTipAmount = findViewById<AppCompatEditText>(R.id.edtTipAmount)
@@ -75,7 +77,7 @@ class OptionSelectionActivity : AppCompatActivity() {
                 switchLineItems.isChecked,
                 sendL2L3Data.isChecked,
                 showJsonPreview.isChecked,
-
+                dvpayConfig.isChecked
             )
         }
 
@@ -90,6 +92,7 @@ class OptionSelectionActivity : AppCompatActivity() {
                 switchLineItems.isChecked,
                 sendL2L3Data.isChecked,
                 showJsonPreview.isChecked,
+                dvpayConfig.isChecked
             )
         }
         switchTip.setOnCheckedChangeListener { _, isChecked ->
@@ -103,6 +106,7 @@ class OptionSelectionActivity : AppCompatActivity() {
                 switchLineItems.isChecked,
                 sendL2L3Data.isChecked,
                 showJsonPreview.isChecked,
+                dvpayConfig.isChecked
             )
         }
         switchDual.setOnCheckedChangeListener { _, isChecked ->
@@ -116,6 +120,7 @@ class OptionSelectionActivity : AppCompatActivity() {
                 switchLineItems.isChecked,
                 sendL2L3Data.isChecked,
                 showJsonPreview.isChecked,
+                dvpayConfig.isChecked
             )
         }
         switchLineItems.setOnCheckedChangeListener { _, isChecked ->
@@ -129,6 +134,20 @@ class OptionSelectionActivity : AppCompatActivity() {
                 isChecked,
                 sendL2L3Data.isChecked,
                 showJsonPreview.isChecked,
+                dvpayConfig.isChecked
+            )
+        }
+        dvpayConfig.setOnCheckedChangeListener { _, isChecked ->
+            PrefsHelper.saveSettings(
+                this,
+                switchApproval.isChecked,
+                switchBreakup.isChecked,
+                switchTip.isChecked,
+                switchDual.isChecked,
+                switchLineItems.isChecked,
+                sendL2L3Data.isChecked,
+                showJsonPreview.isChecked,
+                isChecked
             )
         }
         btnConfirm.setOnClickListener {
@@ -152,6 +171,7 @@ class OptionSelectionActivity : AppCompatActivity() {
                 switchLineItems.isChecked,
                 isChecked,
                 showJsonPreview.isChecked,
+                dvpayConfig.isChecked
             )
         }
         showJsonPreview.setOnCheckedChangeListener { _, isChecked ->
@@ -165,6 +185,7 @@ class OptionSelectionActivity : AppCompatActivity() {
                 switchLineItems.isChecked,
                 sendL2L3Data.isChecked,
                 isChecked,
+                dvpayConfig.isChecked
             )
         }
 
