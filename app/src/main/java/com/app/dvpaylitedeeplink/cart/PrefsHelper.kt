@@ -60,7 +60,6 @@ object PrefsHelper {
             putString(KEY_MODE, "DEEPLINK")
             putString(KEY_TPN, tpn)
             remove(KEY_REGISTER_ID)
-            remove(KEY_AUTH_ID)
             remove(KEY_IP_ADDRESS)
             apply()
         }
@@ -72,7 +71,6 @@ object PrefsHelper {
             putString(KEY_MODE, "USB")
             putString(KEY_REGISTER_ID, registerId)
             remove(KEY_IP_ADDRESS)
-            remove(KEY_AUTH_ID)
             remove(KEY_TPN)
             apply()
         }

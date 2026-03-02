@@ -240,8 +240,8 @@ class RegistrationActivity : AppCompatActivity() {
                 R.id.rbCloud -> {
                     LoggerManager.log(this, "Select Cloud Mode")
                     selectedMode = Mode.CLOUD
-                    edtCloudRegisterId.setText("")
-                    edtCloudAuthKey.setText("")
+                    edtCloudRegisterId.setText(PrefsHelper.getRegisterId(this))
+                    edtCloudAuthKey.setText(PrefsHelper.getAuthId(this))
                     showCloud()
 
                 }
@@ -258,7 +258,7 @@ class RegistrationActivity : AppCompatActivity() {
                 R.id.rbUsb -> {
                     LoggerManager.log(this, "Select USB Mode")
                     selectedMode = Mode.USB
-                    edtUsbRegisterId.setText("")
+                    edtUsbRegisterId.setText(PrefsHelper.getRegisterId(this))
                     showUsb()
                     setupUsb()
 

@@ -956,45 +956,51 @@ class CartActivity : AppCompatActivity() {
 
 
     fun usbRequest(request: String) {
+        try {
+            activity.runOnUiThread {
+         Log.i("usbrequest","usbRequest Main request : ${request.toString()}")
+         Log.i("usbrequest","usbRequest Main request : ${usbPosManager?.isConnected()}")
+            val progressDialog = android.app.AlertDialog.Builder(this)
+                .setTitle("Please wait")
+                .setMessage("Processing transaction...")
+                .setCancelable(false) // cannot dismiss by tapping outside
+                .create()
+            progressDialog.show()
+            LoggerManager.log(this@CartActivity, "Processing Dialog open")
+            LoggerManager.log(this, "Processing USB Request : ${request}")
+            usbPosManager?.sendAndReceive(request, object : UsbPosCallback {
 
-     Log.i("usbrequest","usbRequest Main request : ${request.toString()}")
-     Log.i("usbrequest","usbRequest Main request : ${usbPosManager?.isConnected()}")
-        val progressDialog = android.app.AlertDialog.Builder(this)
-            .setTitle("Please wait")
-            .setMessage("Processing transaction...")
-            .setCancelable(false) // cannot dismiss by tapping outside
-            .create()
-        progressDialog.show()
-        LoggerManager.log(this@CartActivity, "Processing Dialog open")
-        LoggerManager.log(this, "Processing USB Request : ${request}")
-        usbPosManager?.sendAndReceive(request, object : UsbPosCallback {
+                override fun onResult(response: String?, totalBytes: Int) {
+                    runOnUiThread {
 
-            override fun onResult(response: String?, totalBytes: Int) {
-                runOnUiThread {
+                        if (progressDialog.isShowing) {
+                            LoggerManager.log(this@CartActivity, "Processing Dialog Close")
+                            progressDialog.dismiss()
+                        }
 
-                    if (progressDialog.isShowing) {
-                        LoggerManager.log(this@CartActivity, "Processing Dialog Close")
-                        progressDialog.dismiss()
-                    }
-
-                    if (response != null) {
-                        Log.i("USB", response)
-                        LoggerManager.log(this@CartActivity, "USB Result  : ${response}")
-                        Toast.makeText(
-                            this@CartActivity,
-                            response,
-                            Toast.LENGTH_LONG
-                        ).show()
-                    } else {
-                        LoggerManager.log(this@CartActivity, "USB Result  : No POS response")
-                        Toast.makeText(this@CartActivity,
-                            "No POS response",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        if (response != null) {
+                            Log.i("USB", response)
+                            LoggerManager.log(this@CartActivity, "USB Result  : ${response}")
+                            Toast.makeText(
+                                this@CartActivity,
+                                response,
+                                Toast.LENGTH_LONG
+                            ).show()
+                        } else {
+                            LoggerManager.log(this@CartActivity, "USB Result  : No POS response")
+                            Toast.makeText(this@CartActivity,
+                                "No POS response",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
                 }
+            })
             }
-        })
+        } catch (e: Exception) {
+
+
+        }
     }
 
     private fun updateMenuVisibility() {
@@ -1101,12 +1107,19 @@ class CartActivity : AppCompatActivity() {
                         LoggerManager.log(this@CartActivity, "Processing Dialog Close")
                         progressDialog.dismiss()
                     }
-                    Toast.makeText(
+                    /*Toast.makeText(
                         this@CartActivity,
                         "Error: ${e.message}",
                         Toast.LENGTH_LONG
+                    ).show()*/
+
+                    Toast.makeText(
+                        this@CartActivity,
+                        "Can't Able to Connect Spin, performing Transaction through USB",
+                        Toast.LENGTH_LONG
                     ).show()
                 }
+                usbRequest(xmlRequest)
                 LoggerManager.log(this@CartActivity, "Request failed : ")
                 Log.e("SPIN_ERROR", "Request failed", e)
             }

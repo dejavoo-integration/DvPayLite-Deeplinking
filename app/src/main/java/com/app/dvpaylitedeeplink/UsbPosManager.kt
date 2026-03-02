@@ -15,6 +15,7 @@ import com.app.dvpaylitedeeplink.UsbStatusListener
 import com.hoho.android.usbserial.driver.*
 import kotlin.concurrent.thread
 
+
 class UsbPosManager(private val context: Context) {
 
     companion object {
@@ -34,8 +35,26 @@ class UsbPosManager(private val context: Context) {
     /* ================= INIT ================= */
 
     fun init() {
+        checkForAlreadyConnectedDevices()
         registerReceiver()
         //autoConnectUsb()
+    }
+
+    private fun checkForAlreadyConnectedDevices() {
+        try {
+            val deviceList = usbManager.deviceList
+
+            if (deviceList.isEmpty()) {
+                Log.d("USB", "No USB devices connected")
+                return
+            }
+
+            for (device in deviceList.values) {
+                Log.d("USB", "Already connected device: " + device.deviceName)
+                autoConnectUsb()
+            }
+        } catch (e: java.lang.Exception) {
+        }
     }
 
     fun release() {
