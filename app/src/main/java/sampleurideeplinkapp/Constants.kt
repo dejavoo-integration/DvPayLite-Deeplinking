@@ -29,6 +29,7 @@ object Constants {
     const val REISSUE : String = "REISSUE"
     const val DEACTIVATE : String = "DEACTIVATE"
     const val ADDPOINTS : String = "ADDPOINTS"
+    const val BALANCE : String = "BALANCE"
 
     const val GET_DEVICE: String = "getDevice"
     const val GET_TPN: String = "getTPN"

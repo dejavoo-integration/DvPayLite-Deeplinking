@@ -34,10 +34,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var transactionRefId:AppCompatEditText
     private lateinit var editTextTip:AppCompatEditText
     private lateinit var editTextIsvID:AppCompatEditText
+    private lateinit var editTextDisplayText:AppCompatEditText
     private lateinit var transactionSpinner: Spinner
     private lateinit var cardAcceptanceSpinner: Spinner
     private lateinit var paymentSpinner: Spinner
     private lateinit var receiptSpinner: Spinner
+    private lateinit var displayAmountSpinner: Spinner
+    private lateinit var cancelSpinner: Spinner
     private lateinit var approvalSpinner: Spinner
     private lateinit var txnType:String
     private lateinit var cardAcceptanceData:String
@@ -47,6 +50,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var buttonGetTPN:AppCompatButton
     private lateinit var buttonDeviceDetails:AppCompatButton
     private lateinit var buttonStatusCheck:AppCompatButton
+    private lateinit var displayAmount:String
+    private lateinit var cancelOptionRequired:String
     private lateinit var editTextMerchantId: AppCompatEditText
     private lateinit var mmIdLinearLayout: LinearLayout
 
@@ -59,6 +64,8 @@ class MainActivity : AppCompatActivity() {
         cardAcceptanceSpinner = findViewById(R.id.acceptance_spinner)
         paymentSpinner = findViewById(R.id.payment_spinner)
         receiptSpinner = findViewById(R.id.receipt_spinner)
+        displayAmountSpinner = findViewById(R.id.displayAmt_spinner)
+        cancelSpinner = findViewById(R.id.cancel_spinner)
         approvalSpinner = findViewById(R.id.approval_spinner)
         terminalTPN = findViewById(R.id.tpn)
         transactionAmout = findViewById(R.id.transaction_amount)
@@ -68,6 +75,7 @@ class MainActivity : AppCompatActivity() {
         buttonStatusCheck = findViewById(R.id.buttonStatusCheck)
         editTextTip = findViewById(R.id.editTextTip)
         editTextIsvID = findViewById(R.id.edittext_isvId)
+        editTextDisplayText = findViewById(R.id.et_displayMsg)
         editTextMerchantId = findViewById(R.id.editTextMerchantId)
         mmIdLinearLayout = findViewById(R.id.mmidLinear)
         val intentApplication = IntentApplication(applicationContext)
@@ -150,6 +158,27 @@ class MainActivity : AppCompatActivity() {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 paymentType = parent?.getItemAtPosition(position).toString()
                 updateTransactionSpinner()
+                // Do something with the selected item
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                // Do something when nothing is selected
+            }
+        }
+        displayAmountSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                displayAmount = parent?.getItemAtPosition(position).toString()
+                // Do something with the selected item
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                // Do something when nothing is selected
+            }
+        }
+
+        cancelSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                cancelOptionRequired = parent?.getItemAtPosition(position).toString()
                 // Do something with the selected item
             }
 
@@ -419,7 +448,7 @@ class MainActivity : AppCompatActivity() {
                 processTicketTransaction(intentApplication, activityResultLauncher)
             }
 
-            "INQUIRE", "DEACTIVATE" -> {
+            "INQUIRE", "DEACTIVATE", "BALANCE" -> {
                 processInquiryOrDeactivateGiftTxn(intentApplication, activityResultLauncher)
             }
         }
@@ -447,7 +476,20 @@ class MainActivity : AppCompatActivity() {
         if (isTxnStatusScreenRequired != "No Tag") {
             jsonRequest.put("isTxnStatusScreenRequired", isTxnStatusScreenRequired)
         }
-
+        jsonRequest.put("displayText", editTextDisplayText.text.toString())
+        jsonRequest.put("displayAmount", displayAmount)
+        jsonRequest.put("cancelOptionRequired", cancelOptionRequired)
+        when (cardAcceptanceData) {
+            "Empty(For Testing)" -> {
+                jsonRequest.put("cardAcceptanceTime","")
+            }
+            "Random Value(30sec)" -> {
+                jsonRequest.put("cardAcceptanceTime","30")
+            }
+            "Never" -> {
+                jsonRequest.put("cardAcceptanceTime","Never")
+            }
+        }
         Log.e("DVPAYLITE","jsonRequest--$jsonRequest")
 
         intentApplication.setTransactionListener(object :
@@ -551,6 +593,20 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("IsvId", editTextIsvID.text.toString())
         jsonRequest.put("TPN", terminalTPN.text.toString().trim())
         jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
+        jsonRequest.put("displayText", editTextDisplayText.text.toString())
+        jsonRequest.put("displayAmount", displayAmount)
+        jsonRequest.put("cancelOptionRequired", cancelOptionRequired)
+        when (cardAcceptanceData) {
+            "Empty(For Testing)" -> {
+                jsonRequest.put("cardAcceptanceTime","")
+            }
+            "Random Value(30sec)" -> {
+                jsonRequest.put("cardAcceptanceTime","30")
+            }
+            "Never" -> {
+                jsonRequest.put("cardAcceptanceTime","Never")
+            }
+        }
         Log.e("DVPAYLITE","jsonRequest--$jsonRequest")
 
         intentApplication.setTransactionListener(object :
@@ -617,6 +673,9 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("TPN", terminalTPN.text.toString().trim())
         jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
 
+        jsonRequest.put("displayText", editTextDisplayText.text.toString())
+        jsonRequest.put("displayAmount", displayAmount)
+        jsonRequest.put("cancelOptionRequired", cancelOptionRequired)
         when (cardAcceptanceData) {
             "Empty(For Testing)" -> {
                 jsonRequest.put("cardAcceptanceTime","")
@@ -712,6 +771,10 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("IsvId", editTextIsvID.text.toString())
         jsonRequest.put("TPN", terminalTPN.text.toString().trim())
         jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
+        jsonRequest.put("displayText", editTextDisplayText.text.toString())
+        jsonRequest.put("displayText", editTextDisplayText.text.toString())
+        jsonRequest.put("displayAmount", displayAmount)
+        jsonRequest.put("cancelOptionRequired", cancelOptionRequired)
         when (cardAcceptanceData) {
             "Empty(For Testing)" -> {
                 jsonRequest.put("cardAcceptanceTime","")
@@ -791,7 +854,20 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("TPN", terminalTPN.text.toString().trim())
         jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
         Log.e("Request", "Request: $jsonRequest")
-
+        jsonRequest.put("displayText", editTextDisplayText.text.toString())
+        jsonRequest.put("displayAmount", displayAmount)
+        jsonRequest.put("cancelOptionRequired", cancelOptionRequired)
+        when (cardAcceptanceData) {
+            "Empty(For Testing)" -> {
+                jsonRequest.put("cardAcceptanceTime","")
+            }
+            "Random Value(30sec)" -> {
+                jsonRequest.put("cardAcceptanceTime","30")
+            }
+            "Never" -> {
+                jsonRequest.put("cardAcceptanceTime","Never")
+            }
+        }
         intentApplication.setTransactionListener(object :
             TransactionListener {
             override fun onApplicationLaunched(result: JSONObject?) {
@@ -1122,5 +1198,11 @@ class MainActivity : AppCompatActivity() {
     private fun formatToTwoDecimalPlaces(value: Double): String {
         return if (value==DEFAULT_VALUE) "0.00" else (String.format("%.2f", value))
     }*/
+
+
+    override fun onResume() {
+        super.onResume()
+        Log.i("DVPAYLITE", "onResume - onResume")
+    }
 
 }

@@ -325,10 +325,76 @@ class CartActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         getUserConfig()
+//        processSaleOrRefundTxn(intentApplication, activityResultLauncher)
         Log.i("CartActivity",
             "Show Approval Screen: $showApproval------ Show Breakup Screen: $showBreakup---- Show Dual Screen: $showDual----- Enable Line Items $enableLineItems----- Show Tip Screen: $showTipScreen----- Enable l2l3 Items $enableL2L3Items----show Json Preview $showJsonPreview")
     }
+    private fun processSaleOrRefundTxn( intentApplication: IntentApplication,
+                                        activityResultLauncher: ActivityResultLauncher<Intent>) {
 
+        val jsonRequest = JSONObject()
+        jsonRequest.put("type", "SALE")
+        jsonRequest.put("paymentType", "CREDIT")
+        jsonRequest.put("amount", "10")
+        jsonRequest.put("tip", "")
+        jsonRequest.put("applicationType", "DVPAYLITE")
+        jsonRequest.put("refId", "DL"+Utils.generateRandom(12))
+        jsonRequest.put("receiptType", "No")
+        jsonRequest.put("IsvId", "")
+        jsonRequest.put("displayText", "Please tap Your card..")
+
+        jsonRequest.put("cardAcceptanceTime","Never")
+
+        Log.e("Request", "Request: $jsonRequest")
+
+        intentApplication.setTransactionListener(object :
+            TransactionListener {
+            override fun onApplicationLaunched(result: JSONObject?) {
+                //application launched success json data
+                Toast.makeText(
+                    this@CartActivity,
+                    "onApplicationLaunched: " + result.toString(),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+
+            override fun onApplicationLaunchFailed(errorResult: JSONObject) {
+                //application launched failed json data
+                Toast.makeText(
+                    this@CartActivity,
+                    "onApplicationLaunchFailed: $errorResult",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+
+            override fun onTransactionSuccess(transactionResult: JSONObject?) {
+                //Transaction Success json data
+                Log.e("DVPAYLITE", "transactionResult.toString() - ${transactionResult.toString()}")
+                Toast.makeText(
+                    this@CartActivity,
+                    "onTransactionSuccess: " + transactionResult.toString(),
+                    Toast.LENGTH_LONG
+                ).show()
+
+                var sign = transactionResult!!.get("sign")
+                Log.e("DVPAYLITE", "transactionResult.toString() - sign -- $sign")
+            }
+
+            override fun onTransactionFailed(errorResult: JSONObject) {
+                //Transaction Failed json data
+                Log.e("DVPAYLITE", "errorResult.toString() - ${errorResult.toString()}")
+                Toast.makeText(
+                    this@CartActivity,
+                    "onTransactionFailed: $errorResult",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        })
+        intentApplication.performTransaction(
+            jsonRequest,
+            activityResultLauncher
+        )
+    }
     private fun getUserConfig() {
         showApproval = PrefsHelper.getApproval(this)
         showBreakup = PrefsHelper.getBreakup(this)

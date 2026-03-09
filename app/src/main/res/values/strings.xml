@@ -22,6 +22,7 @@
         <item>INC_AUTH</item>
         <item>TICKET</item>
         <item>SETTLE</item>
+        <item>BALANCE</item>
     </string-array>
     <string-array name="CardAcceptanceTime">
         <item>Never</item>
@@ -71,5 +72,9 @@
         <item>REISSUE</item>
         <item>VOID</item>
         <item>ADDPOINTS</item>
+    </string-array>
+    <string-array name="DisplayAmount">
+        <item>Yes</item>
+        <item>No</item>
     </string-array>
 </resources>

@@ -117,6 +117,67 @@
                 android:background="@android:drawable/btn_dropdown"
                 android:padding="15dp" />
 
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/et_displayMsg"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="45dp"
+                android:gravity="center"
+                android:maxLength="25"
+                android:hint="Enter display message" />
+            <LinearLayout
+                android:layout_marginTop="20dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:hint="Display Amount Required?"
+                    android:maxLength="25" />
+
+                <Spinner
+                    android:layout_marginStart="10dp"
+                    android:id="@+id/displayAmt_spinner"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:background="@android:drawable/btn_dropdown"
+                    android:entries="@array/DisplayAmount"
+                    android:gravity="center"
+                    android:padding="10dp" />
+            </LinearLayout>
+            <LinearLayout
+                android:layout_marginTop="20dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:hint="Is cancel option required?"
+                    android:maxLength="25" />
+
+                <Spinner
+                    android:layout_marginStart="10dp"
+                    android:id="@+id/cancel_spinner"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:background="@android:drawable/btn_dropdown"
+                    android:entries="@array/DisplayAmount"
+                    android:gravity="center"
+                    android:padding="10dp" />
+            </LinearLayout>
             <Spinner
                 android:id="@+id/acceptance_spinner"
                 android:layout_width="wrap_content"
