@@ -61,6 +61,13 @@
                 <action android:name="android.hardware.usb.action.USB_DEVICE_DETACHED" />
             </intent-filter>
         </receiver>
+        <service
+            android:name=".DvUpService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.dvup.DVUP_SERVICE" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>
