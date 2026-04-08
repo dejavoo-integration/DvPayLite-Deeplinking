@@ -65,7 +65,7 @@
             android:name=".DvUpService"
             android:exported="true">
             <intent-filter>
-                <action android:name="com.dvup.DVUP_SERVICE" />
+                <action android:name="com.app.dvup.DVUP_SERVICE" />
             </intent-filter>
         </service>
     </application>
