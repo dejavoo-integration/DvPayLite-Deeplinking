@@ -2,6 +2,7 @@ package com.app.dvpaylitedeeplink
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import android.view.View
 import android.widget.AdapterView
@@ -14,16 +15,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.AppCompatEditText
-import com.app.dvpaylitedeeplink.cart.PrefsHelper
+import com.app.dvpaylitedeeplink.unattended.DvPayLiteStatus
 import com.denovo.app.invokeiposgo.enums.ApplicationType
 import com.denovo.app.invokeiposgo.enums.TransactionType
 import com.denovo.app.invokeiposgo.interfaces.*
 import com.denovo.app.invokeiposgo.launcher.IntentApplication
-import org.json.JSONArray
 import org.json.JSONObject
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
     private lateinit var registerApp:AppCompatButton
@@ -46,6 +43,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var buttonGetTPN:AppCompatButton
     private lateinit var buttonDeviceDetails:AppCompatButton
     private lateinit var buttonStatusCheck:AppCompatButton
+    val dvPayLiteStatus = DvPayLiteStatus()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -632,6 +630,7 @@ class MainActivity : AppCompatActivity() {
             TransactionListener {
             override fun onApplicationLaunched(result: JSONObject?) {
                 //application launched success json data
+                listenDvPayLiteScreen(intentApplication, jsonRequest, activityResultLauncher)
                 Toast.makeText(
                     this@MainActivity,
                     "onApplicationLaunched: " + result.toString(),
@@ -640,6 +639,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onApplicationLaunchFailed(errorResult: JSONObject) {
+                stopPolling()
                 //application launched failed json data
                 Toast.makeText(
                     this@MainActivity,
@@ -649,6 +649,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onTransactionSuccess(transactionResult: JSONObject?) {
+                stopPolling()
                 //Transaction Success json data
                 Log.e("DVPAYLITE", "transactionResult.toString() - ${transactionResult.toString()}")
                 Toast.makeText(
@@ -662,6 +663,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onTransactionFailed(errorResult: JSONObject) {
+                stopPolling()
                 //Transaction Failed json data
                 Log.e("DVPAYLITE", "errorResult.toString() - ${errorResult.toString()}")
                 Toast.makeText(
@@ -675,6 +677,34 @@ class MainActivity : AppCompatActivity() {
             jsonRequest,
             activityResultLauncher
         )
+    }
+
+    private fun listenDvPayLiteScreen(
+        intentApplication: IntentApplication,
+        jsonRequest: JSONObject,
+        activityResultLauncher: ActivityResultLauncher<Intent>
+    ) {
+        try {
+            Handler().postDelayed(Runnable {
+                stopPolling()
+                dvPayLiteStatus.bindService(this@MainActivity)
+                dvPayLiteStatus.setStatusCallBack {
+                    intentApplication.performTransaction(
+                        jsonRequest,
+                        activityResultLauncher
+                    )
+                }
+            },5000)
+        } catch (e: Exception) {
+            Log.e("Request", "Request: ${e.toString()}")
+        }
+    }
+
+    private fun stopPolling(){
+        try {
+            dvPayLiteStatus.unbindService(this@MainActivity)
+        } catch (e: Exception) {
+        }
     }
 
     private fun processAuthTxn( intentApplication: IntentApplication,
@@ -710,6 +740,7 @@ class MainActivity : AppCompatActivity() {
             TransactionListener {
             override fun onApplicationLaunched(result: JSONObject?) {
                 //application launched success json data
+                listenDvPayLiteScreen(intentApplication,jsonRequest,activityResultLauncher)
                 Toast.makeText(
                     this@MainActivity,
                     "onApplicationLaunched: " + result.toString(),
@@ -719,6 +750,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onApplicationLaunchFailed(errorResult: JSONObject) {
                 //application launched failed json data
+                stopPolling()
                 Toast.makeText(
                     this@MainActivity,
                     "onApplicationLaunchFailed: $errorResult",
@@ -728,6 +760,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onTransactionSuccess(transactionResult: JSONObject?) {
                 //Transaction Success json data
+                stopPolling()
                 Log.e("DVPAYLITE", "transactionResult.toString() - ${transactionResult.toString()}")
                 Toast.makeText(
                     this@MainActivity,
@@ -740,6 +773,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onTransactionFailed(errorResult: JSONObject) {
+                stopPolling()
                 //Transaction Failed json data
                 Log.e("DVPAYLITE", "errorResult.toString() - ${errorResult.toString()}")
                 Toast.makeText(
