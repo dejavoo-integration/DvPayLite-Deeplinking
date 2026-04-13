@@ -458,6 +458,7 @@ public class SampleUriActivity extends AppCompatActivity {
             JSONObject jsonRequest = new JSONObject();
             jsonRequest.put("type", type);
             jsonRequest.put("applicationType", "DVPAYLITE");
+            jsonRequest.put("MerchantId", merchantId);
 
             Log.e("Request", "Request: " + jsonRequest.toString());
             host_settle = URLEncoder.encode(jsonRequest.toString(), "UTF-8");
