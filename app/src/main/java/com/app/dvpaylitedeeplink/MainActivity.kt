@@ -1,5 +1,8 @@
 package com.app.dvpaylitedeeplink
 
+import android.app.Notification
+import android.app.NotificationManager
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
@@ -15,10 +18,15 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.AppCompatEditText
+import androidx.core.app.NotificationCompat
 import com.app.dvpaylitedeeplink.unattended.DvPayLiteStatus
 import com.denovo.app.invokeiposgo.enums.ApplicationType
 import com.denovo.app.invokeiposgo.enums.TransactionType
-import com.denovo.app.invokeiposgo.interfaces.*
+import com.denovo.app.invokeiposgo.interfaces.GetDeviceListener
+import com.denovo.app.invokeiposgo.interfaces.GetTPNListener
+import com.denovo.app.invokeiposgo.interfaces.SettlementListener
+import com.denovo.app.invokeiposgo.interfaces.TerminalAddListener
+import com.denovo.app.invokeiposgo.interfaces.TransactionListener
 import com.denovo.app.invokeiposgo.launcher.IntentApplication
 import org.json.JSONObject
 
@@ -630,7 +638,7 @@ class MainActivity : AppCompatActivity() {
             TransactionListener {
             override fun onApplicationLaunched(result: JSONObject?) {
                 //application launched success json data
-                listenDvPayLiteScreen(intentApplication, jsonRequest, activityResultLauncher)
+                //listenDvPayLiteScreen(intentApplication, jsonRequest, activityResultLauncher)
                 Toast.makeText(
                     this@MainActivity,
                     "onApplicationLaunched: " + result.toString(),
@@ -639,7 +647,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onApplicationLaunchFailed(errorResult: JSONObject) {
-                stopPolling()
+                //stopPolling()
                 //application launched failed json data
                 Toast.makeText(
                     this@MainActivity,
@@ -649,7 +657,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onTransactionSuccess(transactionResult: JSONObject?) {
-                stopPolling()
+                //stopPolling()
                 //Transaction Success json data
                 Log.e("DVPAYLITE", "transactionResult.toString() - ${transactionResult.toString()}")
                 Toast.makeText(
@@ -663,7 +671,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onTransactionFailed(errorResult: JSONObject) {
-                stopPolling()
+                //stopPolling()
                 //Transaction Failed json data
                 Log.e("DVPAYLITE", "errorResult.toString() - ${errorResult.toString()}")
                 Toast.makeText(
