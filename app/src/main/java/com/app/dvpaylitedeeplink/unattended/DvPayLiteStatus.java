@@ -24,18 +24,21 @@ public class DvPayLiteStatus {
     private ServiceConnection payLiteConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
+            Log.d("DvUp", "onServiceConnected: ");
             dvPayLiteService = IDvPayLiteService.Stub.asInterface(service);
             startPolling();
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
+            Log.d("DvUp", "onServiceDisconnected: ");
             dvPayLiteService = null;
             stopPolling();
+            statusCallBack.servcieNotConnected();
         }
     };
 
-    public void bindService(Activity activity){
+    public void bindService(Context activity){
         Log.d("DvUp", "bindService: ");
         Intent intent = new Intent("com.app.dvup.DvPayLite_SERVICE");
         intent.setPackage("com.denovo.app.denovopay");
@@ -75,7 +78,7 @@ public class DvPayLiteStatus {
                 }
             }
 
-            handler.postDelayed(this, 5000);
+            handler.postDelayed(this, 60000);
         }
     };
 

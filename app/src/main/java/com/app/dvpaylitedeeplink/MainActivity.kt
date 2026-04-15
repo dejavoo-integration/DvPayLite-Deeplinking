@@ -20,6 +20,7 @@ import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.app.NotificationCompat
 import com.app.dvpaylitedeeplink.unattended.DvPayLiteStatus
+import com.app.dvpaylitedeeplink.unattended.StatusCallBack
 import com.denovo.app.invokeiposgo.enums.ApplicationType
 import com.denovo.app.invokeiposgo.enums.TransactionType
 import com.denovo.app.invokeiposgo.interfaces.GetDeviceListener
@@ -77,6 +78,8 @@ class MainActivity : AppCompatActivity() {
                 result: ActivityResult ->
             intentApplication.handleResultCallBack(result)
         }
+
+        startCheckingTxn(intentApplication,activityResultLauncher)
 
         buttonStatusCheck.setOnClickListener(View.OnClickListener {
             try {
@@ -202,6 +205,29 @@ class MainActivity : AppCompatActivity() {
 
         updateTransactionSpinner()
 
+    }
+
+    private fun startCheckingTxn(
+        intentApplication: IntentApplication,
+        activityResultLauncher: ActivityResultLauncher<Intent>
+    ) {
+        try {
+            Handler().postDelayed(Runnable {
+                stopPolling()
+                dvPayLiteStatus.bindService(this)
+                dvPayLiteStatus.setStatusCallBack(object : StatusCallBack{
+                    override fun getStatus(`object`: Any?) {
+                        processAuthTxn1(intentApplication,activityResultLauncher)
+                    }
+
+                    override fun servcieNotConnected() {
+                        startCheckingTxn(intentApplication,activityResultLauncher)
+                    }
+                })
+            },5000)
+        } catch (e: Exception) {
+            Log.e("Request", "Request: ${e.toString()}")
+        }
     }
 
     private fun updateTransactionSpinner() {
@@ -696,12 +722,12 @@ class MainActivity : AppCompatActivity() {
             Handler().postDelayed(Runnable {
                 stopPolling()
                 dvPayLiteStatus.bindService(this@MainActivity)
-                dvPayLiteStatus.setStatusCallBack {
+                /*dvPayLiteStatus.setStatusCallBack {
                     intentApplication.performTransaction(
                         jsonRequest,
                         activityResultLauncher
                     )
-                }
+                }*/
             },5000)
         } catch (e: Exception) {
             Log.e("Request", "Request: ${e.toString()}")
@@ -748,7 +774,7 @@ class MainActivity : AppCompatActivity() {
             TransactionListener {
             override fun onApplicationLaunched(result: JSONObject?) {
                 //application launched success json data
-                listenDvPayLiteScreen(intentApplication,jsonRequest,activityResultLauncher)
+                //listenDvPayLiteScreen(intentApplication,jsonRequest,activityResultLauncher)
                 Toast.makeText(
                     this@MainActivity,
                     "onApplicationLaunched: " + result.toString(),
@@ -758,7 +784,6 @@ class MainActivity : AppCompatActivity() {
 
             override fun onApplicationLaunchFailed(errorResult: JSONObject) {
                 //application launched failed json data
-                stopPolling()
                 Toast.makeText(
                     this@MainActivity,
                     "onApplicationLaunchFailed: $errorResult",
@@ -768,7 +793,6 @@ class MainActivity : AppCompatActivity() {
 
             override fun onTransactionSuccess(transactionResult: JSONObject?) {
                 //Transaction Success json data
-                stopPolling()
                 Log.e("DVPAYLITE", "transactionResult.toString() - ${transactionResult.toString()}")
                 Toast.makeText(
                     this@MainActivity,
@@ -781,7 +805,81 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onTransactionFailed(errorResult: JSONObject) {
-                stopPolling()
+                //Transaction Failed json data
+                Log.e("DVPAYLITE", "errorResult.toString() - ${errorResult.toString()}")
+                Toast.makeText(
+                    this@MainActivity,
+                    "onTransactionFailed: $errorResult",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        })
+        intentApplication.performTransaction(
+            jsonRequest,
+            activityResultLauncher
+        )
+    }
+
+    fun getPreAuthRequest(): JSONObject {
+        val jsonRequest = JSONObject()
+
+        jsonRequest.put("type", "PRE_AUTH")
+        jsonRequest.put("amount", "18")
+        jsonRequest.put("applicationType", "DVPAYLITE")
+
+        // Dynamic refId
+        jsonRequest.put("refId", "DL" + Utils.generateRandom(12))
+
+        jsonRequest.put("receiptType", "No")
+        jsonRequest.put("IsvId", "")
+        jsonRequest.put("cardAcceptanceTime", "Never")
+        jsonRequest.put("isTxnStatusScreenRequired", "Yes")
+
+        return jsonRequest
+    }
+
+
+    private fun processAuthTxn1( intentApplication: IntentApplication,
+                                        activityResultLauncher: ActivityResultLauncher<Intent>) {
+
+        val jsonRequest = getPreAuthRequest()
+
+
+        intentApplication.setTransactionListener(object :
+            TransactionListener {
+            override fun onApplicationLaunched(result: JSONObject?) {
+                //application launched success json data
+                //listenDvPayLiteScreen(intentApplication,jsonRequest,activityResultLauncher)
+                Toast.makeText(
+                    this@MainActivity,
+                    "onApplicationLaunched: " + result.toString(),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+
+            override fun onApplicationLaunchFailed(errorResult: JSONObject) {
+                //application launched failed json data
+                Toast.makeText(
+                    this@MainActivity,
+                    "onApplicationLaunchFailed: $errorResult",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+
+            override fun onTransactionSuccess(transactionResult: JSONObject?) {
+                //Transaction Success json data
+                Log.e("DVPAYLITE", "transactionResult.toString() - ${transactionResult.toString()}")
+                Toast.makeText(
+                    this@MainActivity,
+                    "onTransactionSuccess: " + transactionResult.toString(),
+                    Toast.LENGTH_LONG
+                ).show()
+
+                var sign = transactionResult!!.get("sign")
+                Log.e("DVPAYLITE", "transactionResult.toString() - sign -- $sign")
+            }
+
+            override fun onTransactionFailed(errorResult: JSONObject) {
                 //Transaction Failed json data
                 Log.e("DVPAYLITE", "errorResult.toString() - ${errorResult.toString()}")
                 Toast.makeText(

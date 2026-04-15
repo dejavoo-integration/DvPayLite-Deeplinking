@@ -16,19 +16,20 @@ android {
     }
 
     signingConfigs {
-        release {
-            storeFile file("kozen.jks")
-            storePassword "kozen"
-            keyAlias "xc-buildsrv"
-            keyPassword "kozen"
+        debug {
+            storeFile file("kozen_p8_dvpaylite.jks")
+            storePassword "Kozen2022"
+            keyAlias "kozenossign"
+            keyPassword "Kozen2022"
             v1SigningEnabled true
             v2SigningEnabled true
         }
-        debug {
-            storeFile file("kozen.jks")
-            storePassword "kozen"
-            keyAlias "xc-buildsrv"
-            keyPassword "kozen"
+
+        release {
+            storeFile file("denovopay_keystore.jks")
+            storePassword "denovopay@123"
+            keyAlias "denovopay@123"
+            keyPassword "denovopay@123"
             v1SigningEnabled true
             v2SigningEnabled true
         }
