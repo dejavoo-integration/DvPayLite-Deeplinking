@@ -3,25 +3,20 @@ package com.app.dvpaylitedeeplink;
 import androidx.core.app.NotificationCompat;
 
 import android.app.Notification;
-import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
-import android.os.Build;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
-import android.util.Log;
 
-import com.app.dvup.IDvUpService;
+import com.app.dejaup.IDejaUpService;
 
-public class DvUpService extends Service {
+public class DejaUpService extends Service {
 
-    private final IDvUpService.Stub binder = new IDvUpService.Stub() {
+    private final IDejaUpService.Stub binder = new IDejaUpService.Stub() {
         @Override
-        public void onDvPayLiteGoingToReboot() {
-            Log.d("DvUp", "DvPayLite will reboot in 30 seconds");
-            showRebootNotification();
-            // Optional: prepare (stop tasks, logs, etc.)
+        public void onDvPayLiteGoingToReboot(int seconds) {
+            showRebootNotification(seconds);
         }
     };
 
@@ -30,14 +25,14 @@ public class DvUpService extends Service {
         return binder;
     }
 
-    private void showRebootNotification() {
+    private void showRebootNotification(int seconds) {
         NotificationManager manager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
+        String message = "DvPayLite is going to reboot in " + seconds + " secs for maintenance";
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
                 .setSmallIcon(android.R.drawable.ic_dialog_alert)
                 .setContentTitle("Maintenance Alert")
-                .setContentText("DvPayLite is going to reboot in 30 secs for maintenance")
+                .setContentText(message)
                 .setPriority(NotificationCompat.PRIORITY_MAX) // 🔥 VERY IMPORTANT
                 .setDefaults(Notification.DEFAULT_ALL)        // 🔥 sound + vibration
                 .setAutoCancel(true);

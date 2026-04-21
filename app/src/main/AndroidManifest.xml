@@ -62,7 +62,7 @@
             </intent-filter>
         </receiver>
         <service
-            android:name=".DvUpService"
+            android:name=".DejaUpService"
             android:exported="true">
             <intent-filter>
                 <action android:name="com.app.dvup.DVUP_SERVICE" />

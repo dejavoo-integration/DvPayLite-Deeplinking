@@ -79,7 +79,7 @@ class MainActivity : AppCompatActivity() {
             intentApplication.handleResultCallBack(result)
         }
 
-        startCheckingTxn(intentApplication,activityResultLauncher)
+        //startCheckingTxn(intentApplication,activityResultLauncher)
 
         buttonStatusCheck.setOnClickListener(View.OnClickListener {
             try {

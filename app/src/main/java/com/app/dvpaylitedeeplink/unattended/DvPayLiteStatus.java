@@ -11,7 +11,7 @@ import android.os.Looper;
 import android.os.RemoteException;
 import android.util.Log;
 
-import com.app.dvup.IDvPayLiteService;
+import com.app.dejaup.IDvPayLiteService;
 
 public class DvPayLiteStatus {
     private IDvPayLiteService dvPayLiteService;
@@ -65,7 +65,7 @@ public class DvPayLiteStatus {
         public void run() {
             if (dvPayLiteService != null) {
                 try {
-                    boolean isOnScreen = dvPayLiteService.isOnTargetScreen();
+                    boolean isOnScreen = dvPayLiteService.isOnPaymentScreen();
                     Log.d("DvUp", "Is target screen: " + isOnScreen);
                     // your logic
                     if (!isOnScreen) {
@@ -78,7 +78,7 @@ public class DvPayLiteStatus {
                 }
             }
 
-            handler.postDelayed(this, 60000);
+            handler.postDelayed(this, 30000);
         }
     };
 
