@@ -39,10 +39,16 @@ class RegistrationActivity : AppCompatActivity() {
     private lateinit var ivBack: AppCompatImageView
 
     private lateinit var rgMode: RadioGroup
+    private lateinit var rgAvs: RadioGroup
+    private lateinit var rgLoaderLogo: RadioGroup
     private lateinit var rbDeepLink: RadioButton
     private lateinit var rbCloud: RadioButton
     private lateinit var rbUsb: RadioButton
     private lateinit var rbLocal: RadioButton
+    private lateinit var rbAvsYes: RadioButton
+    private lateinit var rbAvsNo: RadioButton
+    private lateinit var rbLogoYes: RadioButton
+    private lateinit var rbLogoNo: RadioButton
 
     private lateinit var layoutDeepLink: LinearLayout
     private lateinit var layoutCloud: LinearLayout
@@ -50,6 +56,12 @@ class RegistrationActivity : AppCompatActivity() {
     private lateinit var layoutLocal: LinearLayout
 
     private lateinit var edtDeepLinkTPN: AppCompatEditText
+
+    private lateinit var edtPrimaryColor: AppCompatEditText
+    private lateinit var edtSecondaryColor: AppCompatEditText
+    private lateinit var edtNegativeColor: AppCompatEditText
+    private lateinit var edtFont: AppCompatEditText
+
     private lateinit var edtCloudRegisterId: AppCompatEditText
     private lateinit var edtCloudAuthKey: AppCompatEditText
     private lateinit var edtLocalIpAddress: AppCompatEditText
@@ -67,12 +79,19 @@ class RegistrationActivity : AppCompatActivity() {
 
 
     private var selectedMode: Mode = Mode.DEEPLINK
+    private var selectedAvs: SelectionOption = SelectionOption.YES
+    private var selectedLogo: SelectionOption = SelectionOption.YES
 
     enum class Mode {
         DEEPLINK,
         CLOUD,
         LOCAL,
         USB
+    }
+
+    enum class SelectionOption {
+        YES,
+        NO
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -122,6 +141,19 @@ class RegistrationActivity : AppCompatActivity() {
         layoutLocal = findViewById(R.id.layoutLocal)
 
         edtDeepLinkTPN = findViewById(R.id.edtDeepLinkTPN)
+
+        edtPrimaryColor = findViewById(R.id.edt_primary_color)
+        edtSecondaryColor = findViewById(R.id.edt_secondary_color)
+        edtNegativeColor = findViewById(R.id.edt_negative_color)
+        edtFont = findViewById(R.id.edt_font_family)
+
+        rgAvs = findViewById(R.id.rgavs)
+        rbAvsYes = findViewById(R.id.rbyes)
+        rbAvsNo = findViewById(R.id.rbno)
+        rgLoaderLogo = findViewById(R.id.rglogo)
+        rbLogoYes = findViewById(R.id.rblogoyes)
+        rbLogoNo = findViewById(R.id.rblogono)
+
         edtCloudRegisterId = findViewById(R.id.edtCloudRegisterid)
         edtCloudAuthKey = findViewById(R.id.edtCloudAuthKey)
         edtLocalIpAddress = findViewById(R.id.edtLocalIpAddress)
@@ -133,6 +165,10 @@ class RegistrationActivity : AppCompatActivity() {
 
         btnConfirm = findViewById(R.id.btnConfirm)
         ivBack = findViewById(R.id.iv_back)
+
+        edtPrimaryColor.setText("#03C880")
+        edtSecondaryColor.setText("#616161")
+        edtNegativeColor.setText("#BD0F17")
     }
 
     private fun initUI() {
@@ -144,6 +180,43 @@ class RegistrationActivity : AppCompatActivity() {
                     rbDeepLink.isChecked = true
                     selectedMode = Mode.DEEPLINK
                     edtDeepLinkTPN.setText(PrefsHelper.getTpn(this))
+                    edtPrimaryColor.setText(PrefsHelper.getPrimaryColor(this))
+                    edtSecondaryColor.setText(PrefsHelper.getSecondaryColor(this))
+                    edtNegativeColor.setText(PrefsHelper.getNegativeColor(this))
+                    edtFont.setText(PrefsHelper.getFont(this))
+
+                    val savedAvs = PrefsHelper.getSelectedAvs(this)
+                    when (savedAvs) {
+                        SelectionOption.YES.name -> {
+                            rbAvsYes.isChecked = true
+                            rbAvsNo.isChecked = false
+                        }
+                        SelectionOption.NO.name -> {
+                            rbAvsYes.isChecked = false
+                            rbAvsNo.isChecked = true
+                        }
+                        else -> {
+                            rbAvsYes.isChecked = true
+                            rbAvsNo.isChecked = false
+                        }
+                    }
+
+                    val savedLogo = PrefsHelper.getSelectedLogo(this)
+                    when (savedLogo) {
+                        SelectionOption.YES.name -> {
+                            rbLogoYes.isChecked = true
+                            rbLogoNo.isChecked = false
+                        }
+                        SelectionOption.NO.name -> {
+                            rbLogoYes.isChecked = false
+                            rbLogoNo.isChecked = true
+                        }
+                        else -> {
+                            rbLogoYes.isChecked = true
+                            rbLogoNo.isChecked = false
+                        }
+                    }
+
                     showDeepLink()
 
                 }
@@ -266,6 +339,41 @@ class RegistrationActivity : AppCompatActivity() {
             }
         }
 
+        rgAvs.setOnCheckedChangeListener { _, checkedId ->
+
+            when (checkedId) {
+
+                R.id.rbyes -> {
+                    LoggerManager.log(this, "Select Avs Yes")
+                    selectedAvs = SelectionOption.YES
+                }
+
+                R.id.rbno -> {
+                    LoggerManager.log(this, "Select Avs No")
+                    selectedAvs = SelectionOption.NO
+
+                }
+            }
+        }
+
+        rgLoaderLogo.setOnCheckedChangeListener { _, checkedId ->
+
+            when (checkedId) {
+
+                R.id.rblogoyes -> {
+                    LoggerManager.log(this, "Select Logo yes")
+                    selectedLogo = SelectionOption.YES
+
+                }
+
+                R.id.rblogono -> {
+                    LoggerManager.log(this, "Select Logo no")
+                    selectedLogo = SelectionOption.NO
+
+                }
+            }
+        }
+
         btnConfirm.setOnClickListener {
             if (validateInputs()) {
                 handleConfirm()
@@ -369,6 +477,11 @@ class RegistrationActivity : AppCompatActivity() {
 
             Mode.DEEPLINK -> {
                 val tpn = edtDeepLinkTPN.text.toString().trim()
+                val primaryColor = edtPrimaryColor.text.toString().trim()
+                val secondaryColor = edtSecondaryColor.text.toString().trim()
+                val negativeColor = edtNegativeColor.text.toString().trim()
+                val font = edtFont.text.toString().trim()
+
                 try {
                     registerApp(intentApplication, activityResultLauncher)
                 } catch (e: Exception) {
@@ -379,7 +492,7 @@ class RegistrationActivity : AppCompatActivity() {
                         Toast.LENGTH_LONG
                     ).show()
                 }
-                PrefsHelper.saveDeepLink(this, tpn)
+                PrefsHelper.saveDeepLink(this, tpn,primaryColor,secondaryColor,negativeColor,selectedAvs.name,selectedLogo.name, font)
                 PrefsHelper.saveMode(this, Mode.DEEPLINK.name)
                 Toast.makeText(this, "DeepLink Selected\nTPN: $tpn", Toast.LENGTH_SHORT).show()
                 LoggerManager.log(this, "DeepLink mode Register")

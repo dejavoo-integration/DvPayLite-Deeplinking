@@ -51,6 +51,7 @@ import com.app.dvpaylitedeeplink.usb.UsbPosManager
 import com.denovo.app.invokeiposgo.interfaces.SettlementListener
 import com.denovo.app.invokeiposgo.interfaces.TransactionListener
 import com.denovo.app.invokeiposgo.launcher.IntentApplication
+import com.denovo.app.invokeiposgo.models.TransactionData
 import com.google.android.material.navigation.NavigationView
 import com.hoho.android.usbserial.driver.UsbSerialPort
 import okhttp3.HttpUrl
@@ -315,6 +316,7 @@ class CartActivity : AppCompatActivity() {
                 LoadItems.TICKET -> {
                     var ticketAmount = 0.0
                     val refIdFromEditText = referenceIDEditText.text.toString()
+
                     if (refIdFromEditText.isNotEmpty()) {
                         val adapter = itemsRecyclerView.adapter as CartAdapter
                         val selectedItems = adapter.getSelectedItems()
@@ -770,6 +772,20 @@ class CartActivity : AppCompatActivity() {
                 }
                 put("Level3LineItems", l2l3Data.getJSONObject("Level3LineItems"))
             }
+
+            val primaryColor = PrefsHelper.getPrimaryColor(context)
+            val secondaryColor = PrefsHelper.getSecondaryColor(context)
+            val negativeColor = PrefsHelper.getNegativeColor(context)
+            val font = PrefsHelper.getFont(context)
+            val requiredAvs = PrefsHelper.getSelectedAvs(context)
+            val requiredLogo = PrefsHelper.getSelectedLogo(context)
+
+            put("primaryColor", primaryColor)
+            put("secondaryColor", secondaryColor)
+            put("negativeButtonColor", negativeColor)
+            put("fontFamily", font)
+            put("removeLoaderLogo", requiredLogo)
+            put("requiredAvs", requiredAvs)
         }
     }
 

@@ -17,6 +17,12 @@ object PrefsHelper {
     private const val KEY_IP_ADDRESS = "ip_address"
     private const val KEY_TPN = "tpn_value"
     private const val KEY_SELECTED_MODE = "selected_mode"
+    private const val KEY_PRIMARY_COLOR = "primary_color"
+    private const val KEY_SECONDARY_COLOR = "secondary_color"
+    private const val KEY_NEGATIVE_COLOR = "negative_color"
+    private const val KEY_FONT = "selected_font"
+    private const val KEY_SELECTED_AVS = "selected_avs"
+    private const val KEY_SELECTED_LOGO = "selected_logo"
 
     fun saveSettings(context: Context, approval: Boolean, breakup: Boolean, tipScreen: Boolean, dual: Boolean , showLineItems:Boolean, sendL2L3: Boolean,showJsonPreview :Boolean) {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -54,11 +60,18 @@ object PrefsHelper {
         }
     }
 
-    fun saveDeepLink(context: Context, tpn: String) {
+    fun saveDeepLink(context: Context, tpn: String, primaryColor : String, secondaryColor: String, negativeColor:String,
+                     selectedAvs: String, selectedLogo:String, font : String) {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
         prefs.edit().apply {
             putString(KEY_MODE, "DEEPLINK")
             putString(KEY_TPN, tpn)
+            putString(KEY_PRIMARY_COLOR, primaryColor)
+            putString(KEY_SECONDARY_COLOR, secondaryColor)
+            putString(KEY_NEGATIVE_COLOR, negativeColor)
+            putString(KEY_SELECTED_AVS, selectedAvs)
+            putString(KEY_SELECTED_LOGO, selectedLogo)
+            putString(KEY_FONT, font)
             remove(KEY_REGISTER_ID)
             remove(KEY_IP_ADDRESS)
             apply()
@@ -100,6 +113,24 @@ object PrefsHelper {
     fun getTpn(context: Context): String? =
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
             .getString(KEY_TPN, "")
+    fun getPrimaryColor(context: Context): String? =
+        context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+            .getString(KEY_PRIMARY_COLOR, "")
+    fun getSecondaryColor(context: Context): String? =
+        context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+            .getString(KEY_SECONDARY_COLOR, "")
+    fun getNegativeColor(context: Context): String? =
+        context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+            .getString(KEY_NEGATIVE_COLOR, "")
+    fun getSelectedAvs(context: Context): String? =
+        context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+            .getString(KEY_SELECTED_AVS, "")
+    fun getSelectedLogo(context: Context): String? =
+        context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+            .getString(KEY_SELECTED_LOGO, "")
+    fun getFont(context: Context): String? =
+        context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+            .getString(KEY_FONT, "")
 
     fun clearModeData(context: Context) {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)

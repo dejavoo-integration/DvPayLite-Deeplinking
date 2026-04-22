@@ -44,6 +44,10 @@
         </RelativeLayout>
     </androidx.appcompat.widget.Toolbar>
 
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
     <!-- Main Content -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -97,19 +101,144 @@
             android:orientation="vertical"
             android:visibility="gone">
 
-            <androidx.appcompat.widget.AppCompatEditText
-                android:id="@+id/edtDeepLinkTPN"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="16dp"
-                android:background="@drawable/bg_txt_curved"
-                android:hint="Enter TPN"
-                android:gravity="center"
-                android:inputType="number"
-                android:textColor="@color/black"
-                android:textSize="16sp" />
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/edtDeepLinkTPN"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_txt_curved"
+                    android:hint="Enter TPN"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:textColor="@color/black"
+                    android:textSize="16sp" />
 
-        </LinearLayout>
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/edt_primary_color"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_txt_curved"
+                    android:hint="Primary color"
+                    android:gravity="center"
+                    android:inputType="text"
+                    android:textColor="@color/black"
+                    android:textSize="16sp" />
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/edt_secondary_color"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_txt_curved"
+                    android:hint="Secondary color"
+                    android:gravity="center"
+                    android:inputType="text"
+                    android:textColor="@color/black"
+                    android:textSize="16sp" />
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/edt_negative_color"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_txt_curved"
+                    android:hint="Negative Color"
+                    android:gravity="center"
+                    android:inputType="text"
+                    android:textColor="@color/black"
+                    android:textSize="16sp" />
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/edt_font_family"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_txt_curved"
+                    android:hint="Font"
+                    android:gravity="center"
+                    android:inputType="text"
+                    android:textColor="@color/black"
+                    android:textSize="16sp" />
+
+                <RadioGroup
+                    android:id="@+id/rgavs"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginTop="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:text="Required Avs"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/black"
+                        android:gravity="center_vertical"
+                        android:layout_gravity="center"
+                        android:layout_marginBottom="4dp"/>
+
+                    <RadioButton
+                        android:id="@+id/rbyes"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:layout_marginStart="20dp"
+                        android:text="Yes" />
+
+                    <RadioButton
+                        android:id="@+id/rbno"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:gravity="center_vertical"
+                        android:text="No" />
+
+                </RadioGroup>
+
+                <RadioGroup
+                    android:id="@+id/rglogo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginTop="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:text="Remove Loader Logo"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/black"
+                        android:gravity="center_vertical"
+                        android:layout_gravity="center"
+                        android:layout_marginBottom="4dp"/>
+
+                    <RadioButton
+                        android:id="@+id/rblogoyes"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:layout_marginStart="20dp"
+                        android:text="Yes" />
+
+                    <RadioButton
+                        android:id="@+id/rblogono"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:gravity="center_vertical"
+                        android:text="No" />
+
+                </RadioGroup>
+
+
+
+            </LinearLayout>
+
 
         <!-- Cloud Layout -->
         <LinearLayout
@@ -243,5 +372,7 @@
             android:textSize="16sp" />
 
     </LinearLayout>
+    </ScrollView>
+
 
 </LinearLayout>
