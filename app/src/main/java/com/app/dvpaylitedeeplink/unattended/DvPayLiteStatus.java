@@ -78,7 +78,7 @@ public class DvPayLiteStatus {
                 }
             }
 
-            handler.postDelayed(this, 30000);
+            handler.postDelayed(this, 60000);
         }
     };
 
