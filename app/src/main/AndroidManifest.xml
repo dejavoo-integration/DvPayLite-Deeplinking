@@ -43,6 +43,9 @@
             android:name=".MainActivity"
             android:exported="false" />
         <activity
+            android:name="sampleurideeplinkapp.SampleUriActivity"
+            android:exported="false" />
+        <activity
             android:name=".cart.ui.CartActivity"
             android:exported="true"
             android:theme="@style/Theme.DvPayLiteDeepLink">

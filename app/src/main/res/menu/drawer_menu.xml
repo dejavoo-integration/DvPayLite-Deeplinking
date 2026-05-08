@@ -42,4 +42,8 @@
         android:id="@+id/nav_peripheral"
         android:icon="@drawable/pheripherals"
         android:title="Peripheral" />
+    <item
+        android:id="@+id/nav_uri"
+        android:icon="@drawable/baseline_webhook_24"
+        android:title="URI" />
 </menu>

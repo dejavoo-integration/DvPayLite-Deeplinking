@@ -168,5 +168,4 @@ object PrefsHelper {
 
     fun getJsonPreviewStatus(context: Context): Boolean =
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE).getBoolean(KEY_JSON_PREVIEW, false)
-
 }

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment App Trigger</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        input {
+            padding: 10px;
+            font-size: 12px;
+            text-align: center;
+            margin-bottom: 10px;
+            margin-top: 10px;
+        }
+        button {
+            background-color: #e3e3e6;
+            text-align: center;
+            margin: 5px;
+            padding: 10px 15px;
+            font-size: 12px;
+        }
+        .dropdown-container {
+            display: flex;
+            gap: 10px;
+        }
+        select {
+            padding: 10px;
+            font-size: 10px;
+            text-align: center;
+            margin-bottom: 10px;
+            margin-top: 10px;
+        }
+        approval-div {
+           display: flex;
+           flex-direction: column;
+           gap: 10px;
+        }
+    </style>
+</head>
+<body>
+<h3>Make a Payment</h3>
+<input type="number" id="tpnTextInput" placeholder="Enter TPN"/>
+<div>
+    <button id="registerButton" onclick="handleRegisterClick()">Register</button>
+    <button id="getTPNButton" onclick="getTPNClick()">Get TPN</button>
+    <button id="getDeviceutton" onclick="getDeviceClick()">Get Device</button>
+</div>
+
+<input type="number" id="amountTextInput" placeholder="Enter Amount"/>
+<input type="number" id="tipInput" placeholder="Enter Tip"/>
+<input type="text" id="refIdtextInput" placeholder="Enter Ref Id if Tip Adjust/Ticket"/>
+<input type="text" id="merchantIdTextInput" placeholder="Enter MerchantId"/>
+
+<div class="dropdown-container">
+    <select id="optionDropdown" onchange="handleDropdownChange()">
+        <option value="SALE">SALE</option>
+        <option value="REFUND">REFUND</option>
+        <option value="VOID">VOID</option>
+        <option value="TIP ADJUST">TIP ADJUST</option>
+        <option value="PRE_AUTH">PRE_AUTH</option>
+        <option value="INC_AUTH">INC_AUTH</option>
+        <option value="TICKET">TICKET</option>
+        <option value="SETTLE">SETTLE</option>
+        <option value="BALANCE">BALANCE</option>
+        <option value="ADMINISTRATIVE_TXN">ADMINISTRATIVE_TXN</option>
+    </select>
+    <select id="optionPaymentType" onchange="paymentTypeDropdownChange()">
+        <option value="CREDIT">CREDIT</option>
+        <option value="DEBIT">DEBIT</option>
+        <option value="EBT_FOOD">EBT_FOOD</option>
+        <option value="EBT_CASH">EBT_CASH</option>
+        <option value="GIFT">GIFT</option>
+        <option value="LOYALTY">LOYALTY</option>
+    </select>
+    <select id="optionReceiptType" onchange="receiptDropdownChange()">
+        <option value="No">No</option>
+        <option value="Both">Both</option>
+        <option value="Merchant">Merchant</option>
+        <option value="Customer">Customer</option>
+        <option value="">Empty(For Testing)</option>
+    </select>
+</div>
+<approval-div >
+    <label for="ApprovalScreenType"><small>Is Approval screen required?</small></label>
+    <div class="dropdown-container">
+    <select id="ApprovalScreenType" onchange="approvalDropdownChange()">
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+        <option value="No Tag(For Testing)">No Tag(For Testing)</option>
+        <option value="">Empty(For Testing)</option>
+    </select>
+
+    <input type="number" id="isvIdTextInput" placeholder="Enter IsvId" oninput="this.value = this.value.slice(0, 12)" />
+    </div>
+</approval-div>
+<div class="dropdown-container">
+    <button id="payButton" onclick="handleClick()">Make transaction</button>
+    <button id="statusButton" onclick="handleStatusCheck()">Check txn Status</button>
+</div>
+<div id="urlDisplayResponse"></div>
+</body>
+</html>
+
+<script type="text/javascript">
+
+    let receivedUrl = "";
+    let response = "";
+    let selectedOption = "";
+    let receiptSelected = "";
+    let paymentTypeSelected = "";
+    let approvalSelected = "";
+
+    function receiveUrl(url) {
+        console.log("Received URL: " + url);
+        receivedUrl = url;
+        window.location.href = url;
+    }
+
+    function handleClick() {
+        const type = selectedOption || 'SALE';
+        const paymentType = paymentTypeSelected || 'CREDIT';
+        const receiptType = receiptSelected === "Empty(For Testing)" ? "" : receiptSelected || 'No';
+        const tpn = document.getElementById("tpnTextInput").value;
+        const amount = document.getElementById("amountTextInput").value;
+        const tipInput = document.getElementById("tipInput").value;
+        const refId = document.getElementById("refIdtextInput").value;
+        const hostType = selectedOption === "SETTLE" ? 'settle' : 'pay';
+        const isvID = document.getElementById("isvIdTextInput").value;
+        const merchantId = document.getElementById("merchantIdTextInput").value;
+        const approvalType = approvalSelected === "Empty(For Testing)" ? "" : approvalSelected === "No Tag(For Testing)" ? "No Tag" : approvalSelected || "Yes";
+
+        Android.selectedType(hostType,tpn,type,amount,tipInput,refId,receiptType,paymentType,approvalType,isvID, merchantId);
+    }
+
+    function handleStatusCheck() {
+        const type = 'STATUS';
+        const paymentType = paymentTypeSelected || 'CREDIT';
+        const receiptType = receiptSelected === "Empty(For Testing)" ? "" : receiptSelected || 'No';
+        const tpn = document.getElementById("tpnTextInput").value;
+        const amount = document.getElementById("amountTextInput").value;
+        const tipInput = document.getElementById("tipInput").value;
+        const refId = document.getElementById("refIdtextInput").value;
+        const isvID = document.getElementById("isvIdTextInput").value;
+        const merchantId = document.getElementById("merchantIdTextInput").value;
+        const approvalType = approvalSelected === "Empty(For Testing)" ? "" : approvalSelected === "No Tag(For Testing)" ? "No Tag" : approvalSelected || "Yes";
+
+        Android.selectedType("pay",tpn,type,amount,tipInput,refId,receiptType,paymentType,approvalType,isvID, merchantId);
+    }
+
+    function receiveResponse(response) {
+        console.log("Received response: " + response);
+        response = response;
+<!--        document.getElementById('urlDisplayResponse').innerText = response;-->
+    }
+
+    function handleRegisterClick() {
+        const tpn = document.getElementById("tpnTextInput").value;
+        Android.validateType("register",tpn,"");
+    }
+
+    function getTPNClick() {
+        Android.validateType("get","","getTPN");
+    }
+
+    function getDeviceClick() {
+        Android.validateType("get","","getDevice");
+    }
+
+    function handleDropdownChange() {
+         const dropdown = document.getElementById("optionDropdown");
+         selectedOption = dropdown.options[dropdown.selectedIndex].text;
+    }
+
+    function receiptDropdownChange() {
+         const dropdown = document.getElementById("optionReceiptType");
+         receiptSelected = dropdown.options[dropdown.selectedIndex].text;
+    }
+
+    function paymentTypeDropdownChange() {
+    const dropdown = document.getElementById("optionPaymentType");
+    paymentTypeSelected = dropdown.options[dropdown.selectedIndex].text;
+
+    const optionDropdown = document.getElementById("optionDropdown");
+    optionDropdown.innerHTML = ""; // Clear existing options
+
+    let options = [];
+
+    if (paymentTypeSelected === "GIFT") {
+        options = [
+            "ACTIVATE", "REDEEM", "REFUND", "RELOAD",
+            "INQUIRE", "DEACTIVATE", "REISSUE", "VOID"
+        ];
+    } else if (paymentTypeSelected === "LOYALTY") {
+        options = [
+            "ACTIVATE", "REDEEM", "REFUND", "RELOAD",
+            "INQUIRE", "DEACTIVATE", "REISSUE", "VOID", "ADDPOINTS"
+        ];
+    } else {
+        options = [
+            "SALE", "REFUND", "VOID", "TIP ADJUST",
+            "PRE_AUTH", "INC_AUTH", "TICKET",
+            "SETTLE", "BALANCE", "ADMINISTRATIVE_TXN"
+        ];
+    }
+
+    options.forEach(value => {
+        const option = document.createElement("option");
+        option.value = value;
+        option.text = value;
+        optionDropdown.appendChild(option);
+    });
+
+    // Set selectedOption to the first one for consistency
+    selectedOption = options[0];
+}
+
+
+    function approvalDropdownChange() {
+         const dropdown = document.getElementById("ApprovalScreenType");
+         approvalSelected = dropdown.options[dropdown.selectedIndex].text;
+    }
+</script>
+

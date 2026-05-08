@@ -10,8 +10,8 @@ android {
         applicationId "com.app.dvpaylitedeeplink"
         minSdk 23
         targetSdk 33
-        versionCode 16
-        versionName "16.0"
+        versionCode 18
+        versionName "18.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -72,7 +72,9 @@ dependencies {
     implementation 'com.denovo:invoke-dvpay-lite:1.2.2.4'
     implementation 'com.github.bumptech.glide:glide:4.15.1'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.15.1'
-    implementation files('libs/app-release.aar')
+    implementation files('libs/invoke-test.aar')
+    implementation 'com.google.code.gson:gson:2.8.9'
+
     implementation("androidx.cardview:cardview:1.0.0")
     implementation("com.github.mik3y:usb-serial-for-android:3.8.1")
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
