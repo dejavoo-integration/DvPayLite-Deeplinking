@@ -51,7 +51,6 @@ import com.app.dvpaylitedeeplink.usb.UsbPosManager
 import com.denovo.app.invokeiposgo.interfaces.SettlementListener
 import com.denovo.app.invokeiposgo.interfaces.TransactionListener
 import com.denovo.app.invokeiposgo.launcher.IntentApplication
-import com.denovo.app.invokeiposgo.models.TransactionData
 import com.google.android.material.navigation.NavigationView
 import com.hoho.android.usbserial.driver.UsbSerialPort
 import okhttp3.HttpUrl
@@ -631,6 +630,25 @@ class CartActivity : AppCompatActivity() {
         jsonRequest.put("type", "SETTLE")
         jsonRequest.put("applicationType", "DVPAYLITE")
 
+        val primaryColor = PrefsHelper.getPrimaryColor(context)
+        val secondaryColor = PrefsHelper.getSecondaryColor(context)
+        val negativeColor = PrefsHelper.getNegativeColor(context)
+        val font = PrefsHelper.getFont(context)
+        val requiredAvs = PrefsHelper.getSelectedAvs(context)
+        val requiredLogo = PrefsHelper.getSelectedLogo(context)
+
+        // SDK parses this with Gson as an object; passing a CustomUI instance
+        // into JSONObject.put() stringifies it and causes IllegalStateException.
+        val customUIJson = JSONObject().apply {
+            put("primaryColor", primaryColor)
+            put("secondaryColor", secondaryColor)
+            put("negativeButtonColor", negativeColor)
+            put("fontFamily", font)
+            put("removeLoaderLogo", requiredLogo)
+            put("requiredAvs", requiredAvs)
+        }
+        jsonRequest.put("customUI", customUIJson)
+
         intentApplication.setSettlementListener(object :
             SettlementListener {
 
@@ -780,12 +798,17 @@ class CartActivity : AppCompatActivity() {
             val requiredAvs = PrefsHelper.getSelectedAvs(context)
             val requiredLogo = PrefsHelper.getSelectedLogo(context)
 
-            put("primaryColor", primaryColor)
-            put("secondaryColor", secondaryColor)
-            put("negativeButtonColor", negativeColor)
-            put("fontFamily", font)
-            put("removeLoaderLogo", requiredLogo)
-            put("requiredAvs", requiredAvs)
+            // SDK parses this with Gson as an object; passing a CustomUI instance
+            // into JSONObject.put() stringifies it and causes IllegalStateException.
+            val customUIJson = JSONObject().apply {
+                put("primaryColor", primaryColor)
+                put("secondaryColor", secondaryColor)
+                put("negativeButtonColor", negativeColor)
+                put("fontFamily", font)
+                put("removeLoaderLogo", requiredLogo)
+                put("requiredAvs", requiredAvs)
+            }
+            put("customUI", customUIJson)
         }
     }
 
