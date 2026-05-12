@@ -238,7 +238,7 @@ class CartActivity : AppCompatActivity() {
                     if (externalRRN != null) {
                         referenceIDEditText.setText(externalRRN)
                     }
-                    showReferenceIDLayout(true)
+                    showReferenceIDLayout(true, true)
                 }
                 R.id.nav_peripheral -> {
                     LoggerManager.log(this, "Select Peripheral")
@@ -531,7 +531,7 @@ class CartActivity : AppCompatActivity() {
 
 
             if (data != null) {
-                customerTip = data.getDoubleExtra("tip",0.00)!!
+                customerTip = data.getDoubleExtra("tip", 0.00)!!
                 tpn = data.getStringExtra("TPN").toString()
                 merchantId = data.getStringExtra("MerchantId").toString()
                 Log.d("CartActivity", "Customer tip received: $customerTip")
@@ -558,19 +558,41 @@ class CartActivity : AppCompatActivity() {
             ticketAmt = totalAmount
             Log.d("CartActivity", "Generated external RRN: $externalRRN")
             var jsonRequest: JSONObject = JSONObject()
-            var spinRequest:String = ""
+            var spinRequest: String = ""
             Log.d("CartActivity", "registration transactionMode  : $transactionMode")
-            if(transactionMode == "USB"){
-               spinRequest = getPayloadSpinXML(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems,ticketAmt)
+            if (transactionMode == "USB") {
+                spinRequest = getPayloadSpinXML(
+                    EXTERNAL_RRN_PREFIX + externalRRN,
+                    totalAmount,
+                    selectedItems,
+                    ticketAmt
+                )
                 usbRequest(spinRequest)
-            }else if(transactionMode == "CLOUD"){
-                spinRequest = getPayloadSpinXML(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems,ticketAmt)
+            } else if (transactionMode == "CLOUD") {
+                spinRequest = getPayloadSpinXML(
+                    EXTERNAL_RRN_PREFIX + externalRRN,
+                    totalAmount,
+                    selectedItems,
+                    ticketAmt
+                )
                 cloudRequest(spinRequest)
-            }else if(transactionMode == "LOCAL"){
-                spinRequest = getPayloadSpinXML(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems,ticketAmt)
+            } else if (transactionMode == "LOCAL") {
+                spinRequest = getPayloadSpinXML(
+                    EXTERNAL_RRN_PREFIX + externalRRN,
+                    totalAmount,
+                    selectedItems,
+                    ticketAmt
+                )
                 localRequest(spinRequest)
-            }else{
-                jsonRequest = getPayloadJSON(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems,ticketAmt)
+            } else {
+                jsonRequest = getPayloadJSON(
+                    EXTERNAL_RRN_PREFIX + externalRRN,
+                    totalAmount,
+                    selectedItems,
+                    tpn,
+                    merchantId,
+                    ticketAmt
+                )
                 Log.d("CartActivity", "Initialized JSON payload")
 
                 val cartObject = JSONObject()
@@ -620,8 +642,8 @@ class CartActivity : AppCompatActivity() {
                 })
                 val cashAmountsArray = JSONArray(cart.amounts.map { amount ->
                     val cashPrice = if (amount.name.equals("Total", ignoreCase = true)) {
-                        amount.value+customerTip
-                    }else{
+                        amount.value + customerTip
+                    } else {
                         amount.value
                     }
                     JSONObject().apply {
@@ -635,39 +657,38 @@ class CartActivity : AppCompatActivity() {
                 cartObject.put("Amounts", cardAmountsArray)
                 cartObject.put("CashPrices", cashAmountsArray)
 
-            if (enableLineItems) {
-                jsonRequest.put("Cart", cartObject)
-                Log.d("CartActivity", "Line items enabled; cart object added to payload")
-            }
-            Log.d("CartActivity", "Final JSON Object: $jsonRequest")
-            Log.d("CartActivity", "Processing sale transaction...")
+                if (enableLineItems) {
+                    jsonRequest.put("Cart", cartObject)
+                    Log.d("CartActivity", "Line items enabled; cart object added to payload")
+                }
+                Log.d("CartActivity", "Final JSON Object: $jsonRequest")
+                Log.d("CartActivity", "Processing sale transaction...")
                 val editedJsonString = data?.getStringExtra("editedJson")
                 if (!editedJsonString.isNullOrEmpty()) {
                     val finalJson = JSONObject(editedJsonString)
                     Log.d("CartActivity", "Confirmed JSON: $finalJson")
                     processSaleTxn(intentApplication, activityResultLauncher, finalJson)
                 }
-            if(showJsonPreview){
-                val intent = Intent(this, JsonPreviewActivity::class.java)
-                intent.putExtra("jsonPayload", jsonRequest.toString(2))
-                startActivityForResult(intent, 456)
-            }else{
-                processSaleTxn(intentApplication, activityResultLauncher, jsonRequest)
+                if (showJsonPreview) {
+                    val intent = Intent(this, JsonPreviewActivity::class.java)
+                    intent.putExtra("jsonPayload", jsonRequest.toString(2))
+                    startActivityForResult(intent, 456)
+                } else {
+                    processSaleTxn(intentApplication, activityResultLauncher, jsonRequest)
+                }
+                customerTip = 0.00
             }
-            customerTip = 0.00
-        }
-        if (requestCode == 456 && resultCode == Activity.RESULT_OK) {
-            val editedJsonString = data?.getStringExtra("editedJson")
-            if (!editedJsonString.isNullOrEmpty()) {
-                val finalJson = JSONObject(editedJsonString)
-                Log.d("CartActivity", "Confirmed JSON: $finalJson")
-                processSaleTxn(intentApplication, activityResultLauncher, finalJson)
+            if (requestCode == 456 && resultCode == Activity.RESULT_OK) {
+                val editedJsonString = data?.getStringExtra("editedJson")
+                if (!editedJsonString.isNullOrEmpty()) {
+                    val finalJson = JSONObject(editedJsonString)
+                    Log.d("CartActivity", "Confirmed JSON: $finalJson")
+                    processSaleTxn(intentApplication, activityResultLauncher, finalJson)
+                }
+            } else {
+                Log.d("CartActivity", "Request code or result code did not match expected values")
             }
         }
-        else {
-            Log.d("CartActivity", "Request code or result code did not match expected values")
-        }
-            }
     }
 
 
