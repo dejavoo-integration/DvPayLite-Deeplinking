@@ -34,6 +34,7 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.app.dvpaylitedeeplink.BuildConfig
+import com.app.dvpaylitedeeplink.Constants
 import com.app.dvpaylitedeeplink.JsonPreviewActivity
 import com.app.dvpaylitedeeplink.MainActivity
 import com.app.dvpaylitedeeplink.MyApp
@@ -59,7 +60,6 @@ import okhttp3.Protocol
 import okhttp3.Request
 import org.json.JSONArray
 import org.json.JSONObject
-import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 
 
@@ -407,6 +407,14 @@ class CartActivity : AppCompatActivity() {
             LoggerManager.log(this@CartActivity, "Move to Old MainActivity")
                 val intent = Intent(this, MainActivity::class.java)
                 startActivity(intent)
+        }
+        checkUnAttendedDevice()
+    }
+
+    private fun checkUnAttendedDevice() {
+        if (Utils.isUnattendedDevice()) {
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
         }
     }
 

@@ -224,7 +224,7 @@ class MainActivity : AppCompatActivity() {
                         startCheckingTxn(intentApplication,activityResultLauncher)
                     }
                 })
-            },5000)
+            },60000)
         } catch (e: Exception) {
             Log.e("Request", "Request: ${e.toString()}")
         }
