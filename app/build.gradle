@@ -10,8 +10,8 @@ android {
         applicationId "com.app.dvpaylitedeeplink"
         minSdk 23
         targetSdk 33
-        versionCode 16
-        versionName "16.0"
+        versionCode 21
+        versionName "21.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
