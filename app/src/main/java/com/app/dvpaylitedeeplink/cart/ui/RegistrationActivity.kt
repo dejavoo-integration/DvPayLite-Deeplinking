@@ -31,6 +31,7 @@ import com.app.dvpaylitedeeplink.usb.UsbPosManager
 import com.denovo.app.invokeiposgo.interfaces.TerminalAddListener
 import com.denovo.app.invokeiposgo.launcher.IntentApplication
 import org.json.JSONObject
+import java.util.logging.Logger
 
 
 class RegistrationActivity : AppCompatActivity() {
@@ -344,11 +345,13 @@ class RegistrationActivity : AppCompatActivity() {
             when (checkedId) {
 
                 R.id.rbyes -> {
+                    Log.d("Deeplink", "Select Avs Yes")
                     LoggerManager.log(this, "Select Avs Yes")
                     selectedAvs = SelectionOption.YES
                 }
 
                 R.id.rbno -> {
+                    Log.d("Deeplink", "Select Avs No")
                     LoggerManager.log(this, "Select Avs No")
                     selectedAvs = SelectionOption.NO
 
@@ -361,12 +364,14 @@ class RegistrationActivity : AppCompatActivity() {
             when (checkedId) {
 
                 R.id.rblogoyes -> {
+                    Log.d("Deeplink", "Select Logo Yes")
                     LoggerManager.log(this, "Select Logo yes")
                     selectedLogo = SelectionOption.YES
 
                 }
 
                 R.id.rblogono -> {
+                    Log.d("Deeplink", "Select Logo No")
                     LoggerManager.log(this, "Select Logo no")
                     selectedLogo = SelectionOption.NO
 
@@ -375,6 +380,7 @@ class RegistrationActivity : AppCompatActivity() {
         }
 
         btnConfirm.setOnClickListener {
+            Log.d("Deeplink", "Select btnConfirm")
             if (validateInputs()) {
                 handleConfirm()
             }
@@ -472,6 +478,7 @@ class RegistrationActivity : AppCompatActivity() {
     // ===============================
 
     private fun handleConfirm() {
+        Log.d("Deeplink", "Select handleConfirm")
 
         when (selectedMode) {
 
@@ -481,6 +488,9 @@ class RegistrationActivity : AppCompatActivity() {
                 val secondaryColor = edtSecondaryColor.text.toString().trim()
                 val negativeColor = edtNegativeColor.text.toString().trim()
                 val font = edtFont.text.toString().trim()
+
+                Log.d("Deeplink", "selectedAvs.name----"+selectedAvs.name)
+                Log.d("Deeplink", "selectedLogo.name----"+selectedLogo.name)
 
                 try {
                     registerApp(intentApplication, activityResultLauncher)

@@ -43,4 +43,28 @@ public class WebAppInterface {
         mcontext.validateType(hostType);
     }
 
+    @JavascriptInterface
+    public void selectedType(String hostType, String tpn, String type, String amount, String tip, String refId, String receiptType,
+                             String paymentType, String approvalType, String isvID, String merchantId, String primaryColor, String secondaryColor,
+                             String negativeColor,String font, String AVS, String loader) {
+        Log.d("WebAppInterface", "Received selected type & item: " + hostType + type + amount + receiptType);
+        mcontext.tpn = tpn;
+        mcontext.amount = amount;
+        mcontext.type = type;
+        mcontext.tip = tip;
+        mcontext.refId = refId;
+        mcontext.receiptType = receiptType;
+        mcontext.paymentType = paymentType;
+        mcontext.approvalType = approvalType;
+        mcontext.isvID = isvID;
+        mcontext.merchantId = merchantId;
+        mcontext.primaryColor = primaryColor;
+        mcontext.secondaryColor = secondaryColor;
+        mcontext.negativeColor = negativeColor;
+        mcontext.fontType = font;
+        mcontext.avs = AVS;
+        mcontext.loader = loader;
+        mcontext.validateType(hostType);
+    }
+
 }

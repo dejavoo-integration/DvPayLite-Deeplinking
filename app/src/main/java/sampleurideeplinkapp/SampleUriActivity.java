@@ -34,6 +34,12 @@ public class SampleUriActivity extends AppCompatActivity {
     String approvalType;
     String isvID;
     String merchantId;
+    String primaryColor;
+    String secondaryColor;
+    String negativeColor;
+    String fontType;
+    String avs;
+    String loader;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -123,6 +129,16 @@ public class SampleUriActivity extends AppCompatActivity {
             jsonRequest.put("MerchantId", merchantId);
             jsonRequest.put("TPN", tpn);
 
+            JSONObject customUIObj = new JSONObject();
+            customUIObj.put("primaryColor", primaryColor);
+            customUIObj.put("secondaryColor", secondaryColor);
+            customUIObj.put("negativeButtonColor", negativeColor);
+            customUIObj.put("fontFamily", fontType);
+            customUIObj.put("removeLoaderLogo", loader);
+            customUIObj.put("requiredAvs", avs);
+
+            jsonRequest.put("customUI", customUIObj);
+
             Log.e("Request", "Request: " + jsonRequest.toString());
             return URLEncoder.encode(jsonRequest.toString(), "UTF-8");
         } catch (JSONException | UnsupportedEncodingException e) {
@@ -146,6 +162,16 @@ public class SampleUriActivity extends AppCompatActivity {
             }
             jsonRequest.put("IsvId", isvID);
 
+            JSONObject customUIObj = new JSONObject();
+            customUIObj.put("primaryColor", primaryColor);
+            customUIObj.put("secondaryColor", secondaryColor);
+            customUIObj.put("negativeButtonColor", negativeColor);
+            customUIObj.put("fontFamily", fontType);
+            customUIObj.put("removeLoaderLogo", loader);
+            customUIObj.put("requiredAvs", avs);
+
+            jsonRequest.put("customUI", customUIObj);
+
             Log.e("Request", "Request: " + jsonRequest.toString());
             return URLEncoder.encode(jsonRequest.toString(), "UTF-8");
         } catch (JSONException | UnsupportedEncodingException e) {
@@ -166,6 +192,16 @@ public class SampleUriActivity extends AppCompatActivity {
                 jsonRequest.put("isTxnStatusScreenRequired", approvalType);
             }
             jsonRequest.put("IsvId", isvID);
+
+            JSONObject customUIObj = new JSONObject();
+            customUIObj.put("primaryColor", primaryColor);
+            customUIObj.put("secondaryColor", secondaryColor);
+            customUIObj.put("negativeButtonColor", negativeColor);
+            customUIObj.put("fontFamily", fontType);
+            customUIObj.put("removeLoaderLogo", loader);
+            customUIObj.put("requiredAvs", avs);
+
+            jsonRequest.put("customUI", customUIObj);
 
             Log.e("Request", "Request: " + jsonRequest.toString());
             return URLEncoder.encode(jsonRequest.toString(), "UTF-8");
@@ -191,6 +227,16 @@ public class SampleUriActivity extends AppCompatActivity {
             }
             jsonRequest.put("IsvId", isvID);
 
+            JSONObject customUIObj = new JSONObject();
+            customUIObj.put("primaryColor", primaryColor);
+            customUIObj.put("secondaryColor", secondaryColor);
+            customUIObj.put("negativeButtonColor", negativeColor);
+            customUIObj.put("fontFamily", fontType);
+            customUIObj.put("removeLoaderLogo", loader);
+            customUIObj.put("requiredAvs", avs);
+
+            jsonRequest.put("customUI", customUIObj);
+
             Log.e("Request", "Request: " + jsonRequest.toString());
             return URLEncoder.encode(jsonRequest.toString(), "UTF-8");
         } catch (JSONException | UnsupportedEncodingException e) {
@@ -213,6 +259,16 @@ public class SampleUriActivity extends AppCompatActivity {
                 jsonRequest.put("isTxnStatusScreenRequired", approvalType);
             }
             jsonRequest.put("IsvId", isvID);
+
+            JSONObject customUIObj = new JSONObject();
+            customUIObj.put("primaryColor", primaryColor);
+            customUIObj.put("secondaryColor", secondaryColor);
+            customUIObj.put("negativeButtonColor", negativeColor);
+            customUIObj.put("fontFamily", fontType);
+            customUIObj.put("removeLoaderLogo", loader);
+            customUIObj.put("requiredAvs", avs);
+
+            jsonRequest.put("customUI", customUIObj);
 
             Log.e("Request", "Request: " + jsonRequest.toString());
             return URLEncoder.encode(jsonRequest.toString(), "UTF-8");
@@ -237,6 +293,16 @@ public class SampleUriActivity extends AppCompatActivity {
             }
             jsonRequest.put("IsvId", isvID);
 
+            JSONObject customUIObj = new JSONObject();
+            customUIObj.put("primaryColor", primaryColor);
+            customUIObj.put("secondaryColor", secondaryColor);
+            customUIObj.put("negativeButtonColor", negativeColor);
+            customUIObj.put("fontFamily", fontType);
+            customUIObj.put("removeLoaderLogo", loader);
+            customUIObj.put("requiredAvs", avs);
+
+            jsonRequest.put("customUI", customUIObj);
+
             Log.e("Request", "Request: " + jsonRequest.toString());
             return URLEncoder.encode(jsonRequest.toString(), "UTF-8");
         } catch (JSONException | UnsupportedEncodingException e) {
@@ -258,6 +324,16 @@ public class SampleUriActivity extends AppCompatActivity {
                 jsonRequest.put("isTxnStatusScreenRequired", approvalType);
             }
             jsonRequest.put("IsvId", isvID);
+
+            JSONObject customUIObj = new JSONObject();
+            customUIObj.put("primaryColor", primaryColor);
+            customUIObj.put("secondaryColor", secondaryColor);
+            customUIObj.put("negativeButtonColor", negativeColor);
+            customUIObj.put("fontFamily", fontType);
+            customUIObj.put("removeLoaderLogo", loader);
+            customUIObj.put("requiredAvs", avs);
+
+            jsonRequest.put("customUI", customUIObj);
 
             Log.e("Request", "Request: " + jsonRequest.toString());
             return URLEncoder.encode(jsonRequest.toString(), "UTF-8");
@@ -283,6 +359,16 @@ public class SampleUriActivity extends AppCompatActivity {
                 jsonRequest.put("isTxnStatusScreenRequired", approvalType);
             }
             jsonRequest.put("IsvId", isvID);
+
+            JSONObject customUIObj = new JSONObject();
+            customUIObj.put("primaryColor", primaryColor);
+            customUIObj.put("secondaryColor", secondaryColor);
+            customUIObj.put("negativeButtonColor", negativeColor);
+            customUIObj.put("fontFamily", fontType);
+            customUIObj.put("removeLoaderLogo", loader);
+            customUIObj.put("requiredAvs", avs);
+
+            jsonRequest.put("customUI", customUIObj);
 
             Log.e("Request", "Request: " + jsonRequest.toString());
             return URLEncoder.encode(jsonRequest.toString(), "UTF-8");
@@ -392,6 +478,17 @@ public class SampleUriActivity extends AppCompatActivity {
             } else if (selectedType.equals(Constants.GET_DEVICE)) {
                 jsonRequest.put("type", Constants.GET_DEVICE);
             }
+
+            JSONObject customUIObj = new JSONObject();
+            customUIObj.put("primaryColor", primaryColor);
+            customUIObj.put("secondaryColor", secondaryColor);
+            customUIObj.put("negativeButtonColor", negativeColor);
+            customUIObj.put("fontFamily", fontType);
+            customUIObj.put("removeLoaderLogo", loader);
+            customUIObj.put("requiredAvs", avs);
+
+            jsonRequest.put("customUI", customUIObj);
+
             hostGetTPN = URLEncoder.encode(jsonRequest.toString(), "UTF-8");
             Log.e("getTpn", "getTpn Request: " + jsonRequest.toString());
         } catch (JSONException | UnsupportedEncodingException e) {
@@ -442,6 +539,17 @@ public class SampleUriActivity extends AppCompatActivity {
             JSONObject jsonRequest = new JSONObject();
             jsonRequest.put("tpn", tpn);
             jsonRequest.put("applicationType", applicationType);
+
+            JSONObject customUIObj = new JSONObject();
+            customUIObj.put("primaryColor", primaryColor);
+            customUIObj.put("secondaryColor", secondaryColor);
+            customUIObj.put("negativeButtonColor", negativeColor);
+            customUIObj.put("fontFamily", fontType);
+            customUIObj.put("removeLoaderLogo", loader);
+            customUIObj.put("requiredAvs", avs);
+
+            jsonRequest.put("customUI", customUIObj);
+
             host_Register = URLEncoder.encode(jsonRequest.toString(), "UTF-8");
             Log.e("getRegisterApp", "getRegisterApp Request: " + jsonRequest.toString());
         } catch (JSONException | UnsupportedEncodingException e) {
@@ -459,6 +567,16 @@ public class SampleUriActivity extends AppCompatActivity {
             jsonRequest.put("type", type);
             jsonRequest.put("applicationType", "DVPAYLITE");
             jsonRequest.put("MerchantId", merchantId);
+
+            JSONObject customUIObj = new JSONObject();
+            customUIObj.put("primaryColor", primaryColor);
+            customUIObj.put("secondaryColor", secondaryColor);
+            customUIObj.put("negativeButtonColor", negativeColor);
+            customUIObj.put("fontFamily", fontType);
+            customUIObj.put("removeLoaderLogo", loader);
+            customUIObj.put("requiredAvs", avs);
+
+            jsonRequest.put("customUI", customUIObj);
 
             Log.e("Request", "Request: " + jsonRequest.toString());
             host_settle = URLEncoder.encode(jsonRequest.toString(), "UTF-8");
@@ -482,6 +600,16 @@ public class SampleUriActivity extends AppCompatActivity {
                 jsonRequest.put("isTxnStatusScreenRequired", approvalType);
             }
             jsonRequest.put("IsvId", isvID);
+
+            JSONObject customUIObj = new JSONObject();
+            customUIObj.put("primaryColor", primaryColor);
+            customUIObj.put("secondaryColor", secondaryColor);
+            customUIObj.put("negativeButtonColor", negativeColor);
+            customUIObj.put("fontFamily", fontType);
+            customUIObj.put("removeLoaderLogo", loader);
+            customUIObj.put("requiredAvs", avs);
+
+            jsonRequest.put("customUI", customUIObj);
 
             Log.e("Request", "Request: " + jsonRequest.toString());
             return URLEncoder.encode(jsonRequest.toString(), "UTF-8");

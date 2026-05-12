@@ -58,6 +58,26 @@
 <input type="number" id="tipInput" placeholder="Enter Tip"/>
 <input type="text" id="refIdtextInput" placeholder="Enter Ref Id if Tip Adjust/Ticket"/>
 <input type="text" id="merchantIdTextInput" placeholder="Enter MerchantId"/>
+<input type="text" id="primaryColortextInput" placeholder="Enter Primary color"/>
+<input type="text" id="secondaryColortextInput" placeholder="Enter Secondary color"/>
+<input type="text" id="negativeColortextInput" placeholder="Enter Negative Color"/>
+<input type="text" id="fonttextInput" placeholder="Enter font"/>
+
+<div class="dropdown-container">
+    <h3>AVS</h3>
+    <select id = "optionAvs" onchange="handleAvsChange()">
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+    </select>
+</div>
+
+<div class="dropdown-container">
+    <h3>Remove Logo</h3>
+    <select id = "optionLoader" onchange="handleLoaderChange()">
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+    </select>
+</div>
 
 <div class="dropdown-container">
     <select id="optionDropdown" onchange="handleDropdownChange()">
@@ -117,6 +137,8 @@
     let receiptSelected = "";
     let paymentTypeSelected = "";
     let approvalSelected = "";
+    let selectedAvsOption = "";
+    let selectedLoaderOption = "";
 
     function receiveUrl(url) {
         console.log("Received URL: " + url);
@@ -127,6 +149,8 @@
     function handleClick() {
         const type = selectedOption || 'SALE';
         const paymentType = paymentTypeSelected || 'CREDIT';
+        const avs = selectedAvsOption || 'YES';
+        const removeLoader = selectedLoaderOption || 'YES';
         const receiptType = receiptSelected === "Empty(For Testing)" ? "" : receiptSelected || 'No';
         const tpn = document.getElementById("tpnTextInput").value;
         const amount = document.getElementById("amountTextInput").value;
@@ -135,9 +159,14 @@
         const hostType = selectedOption === "SETTLE" ? 'settle' : 'pay';
         const isvID = document.getElementById("isvIdTextInput").value;
         const merchantId = document.getElementById("merchantIdTextInput").value;
+        const primaryColor = document.getElementById("primaryColortextInput").value;
+        const secondaryColor = document.getElementById("secondaryColortextInput").value;
+        const negativeColor = document.getElementById("negativeColortextInput").value;
+        const font = document.getElementById("fonttextInput").value;
         const approvalType = approvalSelected === "Empty(For Testing)" ? "" : approvalSelected === "No Tag(For Testing)" ? "No Tag" : approvalSelected || "Yes";
 
-        Android.selectedType(hostType,tpn,type,amount,tipInput,refId,receiptType,paymentType,approvalType,isvID, merchantId);
+        Android.selectedType(hostType,tpn,type,amount,tipInput,refId,receiptType,paymentType,approvalType,isvID, merchantId,primaryColor, secondaryColor, negativeColor,
+        font, avs, removeLoader);
     }
 
     function handleStatusCheck() {
@@ -150,9 +179,16 @@
         const refId = document.getElementById("refIdtextInput").value;
         const isvID = document.getElementById("isvIdTextInput").value;
         const merchantId = document.getElementById("merchantIdTextInput").value;
+        const avs = selectedAvsOption || 'YES';
+        const removeLoader = selectedLoaderOption || 'YES';
+        const primaryColor = document.getElementById("primaryColortextInput").value;
+        const secondaryColor = document.getElementById("secondaryColortextInput").value;
+        const negativeColor = document.getElementById("negativeColortextInput").value;
+        const font = document.getElementById("fonttextInput").value;
         const approvalType = approvalSelected === "Empty(For Testing)" ? "" : approvalSelected === "No Tag(For Testing)" ? "No Tag" : approvalSelected || "Yes";
 
-        Android.selectedType("pay",tpn,type,amount,tipInput,refId,receiptType,paymentType,approvalType,isvID, merchantId);
+        Android.selectedType("pay",tpn,type,amount,tipInput,refId,receiptType,paymentType,approvalType,isvID, merchantId,primaryColor, secondaryColor, negativeColor,
+        font, avs, removeLoader);
     }
 
     function receiveResponse(response) {
@@ -177,6 +213,15 @@
     function handleDropdownChange() {
          const dropdown = document.getElementById("optionDropdown");
          selectedOption = dropdown.options[dropdown.selectedIndex].text;
+    }
+
+     function handleAvsChange() {
+         const avsdropdown = document.getElementById("optionAvs");
+         selectedAvsOption = avsdropdown.options[avsdropdown.selectedIndex].text;
+    }
+    function handleLoaderChange() {
+         const loaderdropdown = document.getElementById("optionLoader");
+         selectedLoaderOption = loaderdropdown.options[loaderdropdown.selectedIndex].text;
     }
 
     function receiptDropdownChange() {
