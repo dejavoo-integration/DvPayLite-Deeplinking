@@ -28,6 +28,21 @@ public class WebAppInterface {
     }
 
     @JavascriptInterface
+    public void validateType(String type, String tpn, String selectedType, String primaryColor, String secondaryColor,
+                             String negativeColor,String font, String AVS, String loader) {
+        Log.d("WebAppInterface", "Received type: " + type);
+        mcontext.tpn = tpn;
+        mcontext.selectedType = selectedType;
+        mcontext.primaryColor = primaryColor;
+        mcontext.secondaryColor = secondaryColor;
+        mcontext.negativeColor = negativeColor;
+        mcontext.fontType = font;
+        mcontext.avs = AVS;
+        mcontext.loader = loader;
+        mcontext.validateType(type);
+    }
+
+    @JavascriptInterface
     public void selectedType(String hostType, String tpn, String type, String amount, String tip, String refId, String receiptType, String paymentType, String approvalType, String isvID, String merchantId) {
         Log.d("WebAppInterface", "Received selected type & item: " + hostType + type + amount + receiptType);
         mcontext.tpn = tpn;

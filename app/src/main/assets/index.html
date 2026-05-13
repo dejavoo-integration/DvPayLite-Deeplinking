@@ -199,7 +199,14 @@
 
     function handleRegisterClick() {
         const tpn = document.getElementById("tpnTextInput").value;
-        Android.validateType("register",tpn,"");
+          const avs = selectedAvsOption || 'YES';
+        const removeLoader = selectedLoaderOption || 'YES';
+        const primaryColor = document.getElementById("primaryColortextInput").value;
+        const secondaryColor = document.getElementById("secondaryColortextInput").value;
+        const negativeColor = document.getElementById("negativeColortextInput").value;
+        const font = document.getElementById("fonttextInput").value;
+        Android.validateType("register",tpn,"",primaryColor, secondaryColor, negativeColor,
+        font, avs, removeLoader);
     }
 
     function getTPNClick() {
