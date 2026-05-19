@@ -82,32 +82,30 @@
                 android:textSize="16sp" />
 
             <androidx.appcompat.widget.AppCompatEditText
-                android:id="@+id/edtTax1"
+                android:id="@+id/editTextTpn"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:layout_marginTop="12dp"
                 android:background="@drawable/bg_txt_curved"
                 android:gravity="center"
-                android:hint="Tax1"
+                android:hint="Enter TPN"
                 android:inputType="numberDecimal"
                 android:paddingStart="12dp"
                 android:textColor="@color/black"
-                android:textSize="16sp"
-                android:visibility="gone"/>
+                android:textSize="16sp"/>
 
             <androidx.appcompat.widget.AppCompatEditText
-                android:id="@+id/edtTax2"
+                android:id="@+id/editTextMerchantId"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:layout_marginTop="12dp"
                 android:background="@drawable/bg_txt_curved"
                 android:gravity="center"
-                android:hint="Tax2"
+                android:hint="Enter Merchant ID"
                 android:inputType="numberDecimal"
                 android:paddingStart="12dp"
                 android:textColor="@color/black"
-                android:textSize="16sp"
-                android:visibility="gone"/>
+                android:textSize="16sp"/>
 
         </LinearLayout>
 

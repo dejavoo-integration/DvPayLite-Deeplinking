@@ -60,6 +60,11 @@ import okhttp3.Protocol
 import okhttp3.Request
 import org.json.JSONArray
 import org.json.JSONObject
+import sampleurideeplinkapp.SampleUriActivity
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 
 
@@ -103,6 +108,9 @@ class CartActivity : AppCompatActivity() {
     private var spinRequest = false
     private var txnTotalAmount: Double =0.0
     private var customerTip: Double = 0.00
+    private lateinit var editTextTpn: AppCompatEditText
+    private lateinit var editTextMerchantId: AppCompatEditText
+    private lateinit var mmIdLinearLayout: LinearLayout
     private lateinit var usbManager: UsbManager
     private var serialPort: UsbSerialPort? = null
     private  var usbPosManager: UsbPosManager ? = null
@@ -147,7 +155,9 @@ class CartActivity : AppCompatActivity() {
 
         ivHamburger = findViewById(R.id.iv_hamburger)
         toolbar = findViewById(R.id.toolbar)
-
+        editTextTpn = findViewById<AppCompatEditText>(R.id.editTextTpn)
+        editTextMerchantId = findViewById<AppCompatEditText>(R.id.editTextMerchantId)
+        mmIdLinearLayout = findViewById<LinearLayout>(R.id.mmidLinear)
         setSupportActionBar(toolbar)
 
         // Optional: disable default title if you have a custom one in layout
@@ -205,7 +215,7 @@ class CartActivity : AppCompatActivity() {
                     if (externalRRN != null) {
                         referenceIDEditText.setText(externalRRN)
                     }
-                    showReferenceIDLayout(true)
+                    showReferenceIDLayout(true, true)
                 }
                 R.id.nav_ticket -> {
                     LoggerManager.log(this, "Select Ticket")
@@ -214,12 +224,13 @@ class CartActivity : AppCompatActivity() {
                         referenceIDEditText.setText(externalRRN)
                             amountEditText.setText(ticketAmt?.toDouble().toString())
                     }
-                    showReferenceIDLayout(true)
+                    showReferenceIDLayout(true, true)
                 }
                 R.id.nav_settlement -> {
                     LoggerManager.log(this, "Select Settlement")
                     selectedTransactionType = LoadItems.SETTLEMENT
-                    showReferenceIDLayout(false)
+                    showReferenceIDLayout(false, true)
+
                 }
 
                 R.id.nav_statusCheck -> {
@@ -228,11 +239,16 @@ class CartActivity : AppCompatActivity() {
                     if (externalRRN != null) {
                         referenceIDEditText.setText(externalRRN)
                     }
-                    showReferenceIDLayout(true)
+                    showReferenceIDLayout(true, true)
                 }
                 R.id.nav_peripheral -> {
                     LoggerManager.log(this, "Select Peripheral")
                     val intent = Intent(this, PeripheralActivity::class.java)
+                    startActivity(intent)
+                    drawerLayout.closeDrawers()
+                }
+                R.id.nav_uri -> {
+                    val intent = Intent(this, SampleUriActivity::class.java)
                     startActivity(intent)
                     drawerLayout.closeDrawers()
                 }
@@ -264,14 +280,14 @@ class CartActivity : AppCompatActivity() {
                                 referenceIDEditText.setText(externalRRN)
                                 amountEditText.setText(ticketAmt?.toDouble().toString())
                             }
-                            showReferenceIDLayout(true)
+                            showReferenceIDLayout(true, true)
                         }
                         LoadItems.SETTLEMENT -> {
-                            showReferenceIDLayout(false)
+                            showReferenceIDLayout(false, true)
                         }
 
                         else -> {
-                            showReferenceIDLayout(true)
+                            showReferenceIDLayout(true, true)
                         }
                     }
                 }
@@ -313,19 +329,23 @@ class CartActivity : AppCompatActivity() {
             when (selectedTransactionType) {
                 LoadItems.VOID,
                 LoadItems.TICKET -> {
+                    val tpn = editTextTpn.text.toString().trim()
+                    val merchantId = editTextMerchantId.text.toString().trim()
                     var ticketAmount = 0.0
                     val refIdFromEditText = referenceIDEditText.text.toString()
+
                     if (refIdFromEditText.isNotEmpty()) {
                         val adapter = itemsRecyclerView.adapter as CartAdapter
                         val selectedItems = adapter.getSelectedItems()
                         val externalRRN = EXTERNAL_RRN_PREFIX+refIdFromEditText
                         if(selectedTransactionType.equals(LoadItems.TICKET)){
-                             ticketAmount = amountEditText.text.toString().toDouble()
+                            ticketAmount = amountEditText.text.toString().toDouble()
                         }
-                        val jsonRequest = getPayloadJSON(externalRRN,DEFAULT_VALUE,selectedItems,ticketAmount)
+                        val jsonRequest = getPayloadJSON(externalRRN,DEFAULT_VALUE,selectedItems, tpn, merchantId, ticketAmount)
+                        Log.e("DL", "Request: $jsonRequest")
                         LoggerManager.log(this, "Clicked Proceed Button ${selectedTransactionType}")
                         if(transactionMode == "USB"){
-                             spinXml = getPayloadSpinXML(externalRRN,DEFAULT_VALUE,selectedItems,ticketAmount)
+                            spinXml = getPayloadSpinXML(externalRRN,DEFAULT_VALUE,selectedItems,ticketAmount)
                             usbRequest(spinXml)
                         }else if(transactionMode == "CLOUD"){
                             spinXml = getPayloadSpinXML(externalRRN,DEFAULT_VALUE,selectedItems,ticketAmount)
@@ -425,7 +445,72 @@ class CartActivity : AppCompatActivity() {
         Log.i("CartActivity",
             "Show Approval Screen: $showApproval------ Show Breakup Screen: $showBreakup---- Show Dual Screen: $showDual----- Enable Line Items $enableLineItems----- Show Tip Screen: $showTipScreen----- Enable l2l3 Items $enableL2L3Items----show Json Preview $showJsonPreview")
     }
+    private fun processSaleOrRefundTxn( intentApplication: IntentApplication,
+                                        activityResultLauncher: ActivityResultLauncher<Intent>) {
 
+        val jsonRequest = JSONObject()
+        jsonRequest.put("type", "SALE")
+        jsonRequest.put("paymentType", "CREDIT")
+        jsonRequest.put("amount", "10")
+        jsonRequest.put("tip", "")
+        jsonRequest.put("applicationType", "DVPAYLITE")
+        jsonRequest.put("refId", "DL"+Utils.generateRandom(12))
+        jsonRequest.put("receiptType", "No")
+        jsonRequest.put("IsvId", "")
+        jsonRequest.put("displayText", "Please tap Your card..")
+
+        jsonRequest.put("cardAcceptanceTime","Never")
+
+        Log.e("Request", "Request: $jsonRequest")
+
+        intentApplication.setTransactionListener(object :
+            TransactionListener {
+            override fun onApplicationLaunched(result: JSONObject?) {
+                //application launched success json data
+                Toast.makeText(
+                    this@CartActivity,
+                    "onApplicationLaunched: " + result.toString(),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+
+            override fun onApplicationLaunchFailed(errorResult: JSONObject) {
+                //application launched failed json data
+                Toast.makeText(
+                    this@CartActivity,
+                    "onApplicationLaunchFailed: $errorResult",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+
+            override fun onTransactionSuccess(transactionResult: JSONObject?) {
+                //Transaction Success json data
+                Log.e("DVPAYLITE", "transactionResult.toString() - ${transactionResult.toString()}")
+                Toast.makeText(
+                    this@CartActivity,
+                    "onTransactionSuccess: " + transactionResult.toString(),
+                    Toast.LENGTH_LONG
+                ).show()
+
+                var sign = transactionResult!!.get("sign")
+                Log.e("DVPAYLITE", "transactionResult.toString() - sign -- $sign")
+            }
+
+            override fun onTransactionFailed(errorResult: JSONObject) {
+                //Transaction Failed json data
+                Log.e("DVPAYLITE", "errorResult.toString() - ${errorResult.toString()}")
+                Toast.makeText(
+                    this@CartActivity,
+                    "onTransactionFailed: $errorResult",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        })
+        intentApplication.performTransaction(
+            jsonRequest,
+            activityResultLauncher
+        )
+    }
     private fun getUserConfig() {
         showApproval = PrefsHelper.getApproval(this)
         showBreakup = PrefsHelper.getBreakup(this)
@@ -444,7 +529,8 @@ class CartActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
 
         Log.d("CartActivity", "onActivityResult called with requestCode: $requestCode, resultCode: $resultCode")
-
+        var tpn = ""
+        var merchantId = ""
         if (requestCode == 123 && resultCode == Activity.RESULT_OK) {
             Log.d("CartActivity", "Request code matched and result OK")
 
@@ -454,8 +540,12 @@ class CartActivity : AppCompatActivity() {
 
 
             if (data != null) {
-                customerTip = data.getDoubleExtra("tip",0.00)!!
+                customerTip = data.getDoubleExtra("tip", 0.00)!!
+                tpn = data.getStringExtra("TPN").toString()
+                merchantId = data.getStringExtra("MerchantId").toString()
                 Log.d("CartActivity", "Customer tip received: $customerTip")
+                Log.d("CartActivity", "tpn received: $tpn")
+                Log.d("CartActivity", "merchantId received: $merchantId")
                 updateTotalAmount(txnTotalAmount)
             } else {
                 Log.w("CartActivity", "Intent data is null; no tip received")
@@ -477,19 +567,41 @@ class CartActivity : AppCompatActivity() {
             ticketAmt = totalAmount
             Log.d("CartActivity", "Generated external RRN: $externalRRN")
             var jsonRequest: JSONObject = JSONObject()
-            var spinRequest:String = ""
+            var spinRequest: String = ""
             Log.d("CartActivity", "registration transactionMode  : $transactionMode")
-            if(transactionMode == "USB"){
-               spinRequest = getPayloadSpinXML(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems,ticketAmt)
+            if (transactionMode == "USB") {
+                spinRequest = getPayloadSpinXML(
+                    EXTERNAL_RRN_PREFIX + externalRRN,
+                    totalAmount,
+                    selectedItems,
+                    ticketAmt
+                )
                 usbRequest(spinRequest)
-            }else if(transactionMode == "CLOUD"){
-                spinRequest = getPayloadSpinXML(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems,ticketAmt)
+            } else if (transactionMode == "CLOUD") {
+                spinRequest = getPayloadSpinXML(
+                    EXTERNAL_RRN_PREFIX + externalRRN,
+                    totalAmount,
+                    selectedItems,
+                    ticketAmt
+                )
                 cloudRequest(spinRequest)
-            }else if(transactionMode == "LOCAL"){
-                spinRequest = getPayloadSpinXML(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems,ticketAmt)
+            } else if (transactionMode == "LOCAL") {
+                spinRequest = getPayloadSpinXML(
+                    EXTERNAL_RRN_PREFIX + externalRRN,
+                    totalAmount,
+                    selectedItems,
+                    ticketAmt
+                )
                 localRequest(spinRequest)
-            }else{
-                jsonRequest = getPayloadJSON(EXTERNAL_RRN_PREFIX + externalRRN, totalAmount,selectedItems,ticketAmt)
+            } else {
+                jsonRequest = getPayloadJSON(
+                    EXTERNAL_RRN_PREFIX + externalRRN,
+                    totalAmount,
+                    selectedItems,
+                    tpn,
+                    merchantId,
+                    ticketAmt
+                )
                 Log.d("CartActivity", "Initialized JSON payload")
 
                 val cartObject = JSONObject()
@@ -539,8 +651,8 @@ class CartActivity : AppCompatActivity() {
                 })
                 val cashAmountsArray = JSONArray(cart.amounts.map { amount ->
                     val cashPrice = if (amount.name.equals("Total", ignoreCase = true)) {
-                        amount.value+customerTip
-                    }else{
+                        amount.value + customerTip
+                    } else {
                         amount.value
                     }
                     JSONObject().apply {
@@ -558,7 +670,7 @@ class CartActivity : AppCompatActivity() {
                     jsonRequest.put("Cart", cartObject)
                     Log.d("CartActivity", "Line items enabled; cart object added to payload")
                 }
-                Log.d("CartActivity", "Final JSON Object: ${spinRequest}")
+                Log.d("CartActivity", "Final JSON Object: $jsonRequest")
                 Log.d("CartActivity", "Processing sale transaction...")
                 val editedJsonString = data?.getStringExtra("editedJson")
                 if (!editedJsonString.isNullOrEmpty()) {
@@ -566,11 +678,11 @@ class CartActivity : AppCompatActivity() {
                     Log.d("CartActivity", "Confirmed JSON: $finalJson")
                     processSaleTxn(intentApplication, activityResultLauncher, finalJson)
                 }
-                if(showJsonPreview){
+                if (showJsonPreview) {
                     val intent = Intent(this, JsonPreviewActivity::class.java)
                     intent.putExtra("jsonPayload", jsonRequest.toString(2))
                     startActivityForResult(intent, 456)
-                }else{
+                } else {
                     processSaleTxn(intentApplication, activityResultLauncher, jsonRequest)
                 }
                 customerTip = 0.00
@@ -585,7 +697,7 @@ class CartActivity : AppCompatActivity() {
             } else {
                 Log.d("CartActivity", "Request code or result code did not match expected values")
             }
-            }
+        }
     }
 
 
@@ -636,6 +748,28 @@ class CartActivity : AppCompatActivity() {
         val jsonRequest = JSONObject()
         jsonRequest.put("type", "SETTLE")
         jsonRequest.put("applicationType", "DVPAYLITE")
+        jsonRequest.put("TPN", editTextTpn.text.toString().trim())
+        jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
+        Log.e("DL", "Settlement request: $jsonRequest")
+
+        val primaryColor = PrefsHelper.getPrimaryColor(context)
+        val secondaryColor = PrefsHelper.getSecondaryColor(context)
+        val negativeColor = PrefsHelper.getNegativeColor(context)
+        val font = PrefsHelper.getFont(context)
+        val requiredAvs = PrefsHelper.getSelectedAvs(context)
+        val requiredLogo = PrefsHelper.getSelectedLogo(context)
+
+        // SDK parses this with Gson as an object; passing a CustomUI instance
+        // into JSONObject.put() stringifies it and causes IllegalStateException.
+        val customUIJson = JSONObject().apply {
+            put("primaryColor", primaryColor)
+            put("secondaryColor", secondaryColor)
+            put("negativeButtonColor", negativeColor)
+            put("fontFamily", font)
+            put("removeLoaderLogo", requiredLogo)
+            put("requiredAvs", requiredAvs)
+        }
+        jsonRequest.put("customUI", customUIJson)
 
         intentApplication.setSettlementListener(object :
             SettlementListener {
@@ -742,15 +876,17 @@ class CartActivity : AppCompatActivity() {
         }
     }
 
-    private fun showReferenceIDLayout(showRRNLinear:Boolean) {
+    private fun showReferenceIDLayout(showRRNLinear:Boolean, showMMidLinear: Boolean) {
         clearCart()
         referenceIDLinear.visibility = View.VISIBLE
         externalRRNLinear.visibility = if (showRRNLinear) View.VISIBLE else View.GONE
         amountEditText.visibility = if(selectedTransactionType == LoadItems.TICKET)  View.VISIBLE else View.GONE
         itemsRecyclerView.visibility = View.GONE
+        mmIdLinearLayout.visibility = View.VISIBLE
+
     }
 
-    private fun getPayloadJSON(referenceId:String,totalAmount:Double, items: List<Item>,ticketAmount:Double):JSONObject{
+    private fun getPayloadJSON(referenceId:String,totalAmount:Double, items: List<Item>, tpn: String, merchantId: String,ticketAmount:Double):JSONObject{
         val totalAmt = formatToTwoDecimalPlaces(totalAmount)
         txnTotalAmount = totalAmount
         return JSONObject().apply {
@@ -769,6 +905,8 @@ class CartActivity : AppCompatActivity() {
             put("showBreakupScreen", if (showBreakup) "Yes" else "No")
             put("showDualPriceScreen", if (showDual) "Yes" else "No")
             put("showTipScreen", if (showTipScreen) "Yes" else "No")
+            put("TPN", tpn)
+            put("MerchantId", merchantId)
             if (enableL2L3Items) {
                 val l2l3Data = buildL2L3Data(items)
                 for (key in l2l3Data.keys()) {
@@ -778,6 +916,25 @@ class CartActivity : AppCompatActivity() {
                 }
                 put("Level3LineItems", l2l3Data.getJSONObject("Level3LineItems"))
             }
+
+            val primaryColor = PrefsHelper.getPrimaryColor(context)
+            val secondaryColor = PrefsHelper.getSecondaryColor(context)
+            val negativeColor = PrefsHelper.getNegativeColor(context)
+            val font = PrefsHelper.getFont(context)
+            val requiredAvs = PrefsHelper.getSelectedAvs(context)
+            val requiredLogo = PrefsHelper.getSelectedLogo(context)
+
+            // SDK parses this with Gson as an object; passing a CustomUI instance
+            // into JSONObject.put() stringifies it and causes IllegalStateException.
+            val customUIJson = JSONObject().apply {
+                put("primaryColor", primaryColor)
+                put("secondaryColor", secondaryColor)
+                put("negativeButtonColor", negativeColor)
+                put("fontFamily", font)
+                put("removeLoaderLogo", requiredLogo)
+                put("requiredAvs", requiredAvs)
+            }
+            put("customUI", customUIJson)
         }
     }
 

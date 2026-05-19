@@ -74,8 +74,7 @@ class OptionSelectionActivity : AppCompatActivity() {
                 switchDual.isChecked,
                 switchLineItems.isChecked,
                 sendL2L3Data.isChecked,
-                showJsonPreview.isChecked,
-
+                showJsonPreview.isChecked
             )
         }
 
@@ -89,7 +88,7 @@ class OptionSelectionActivity : AppCompatActivity() {
                 switchDual.isChecked,
                 switchLineItems.isChecked,
                 sendL2L3Data.isChecked,
-                showJsonPreview.isChecked,
+                showJsonPreview.isChecked
             )
         }
         switchTip.setOnCheckedChangeListener { _, isChecked ->
@@ -102,7 +101,7 @@ class OptionSelectionActivity : AppCompatActivity() {
                 switchDual.isChecked,
                 switchLineItems.isChecked,
                 sendL2L3Data.isChecked,
-                showJsonPreview.isChecked,
+                showJsonPreview.isChecked
             )
         }
         switchDual.setOnCheckedChangeListener { _, isChecked ->
@@ -115,7 +114,7 @@ class OptionSelectionActivity : AppCompatActivity() {
                 isChecked,
                 switchLineItems.isChecked,
                 sendL2L3Data.isChecked,
-                showJsonPreview.isChecked,
+                showJsonPreview.isChecked
             )
         }
         switchLineItems.setOnCheckedChangeListener { _, isChecked ->
@@ -128,7 +127,7 @@ class OptionSelectionActivity : AppCompatActivity() {
                 switchDual.isChecked,
                 isChecked,
                 sendL2L3Data.isChecked,
-                showJsonPreview.isChecked,
+                showJsonPreview.isChecked
             )
         }
         btnConfirm.setOnClickListener {
@@ -151,11 +150,10 @@ class OptionSelectionActivity : AppCompatActivity() {
                 switchDual.isChecked,
                 switchLineItems.isChecked,
                 isChecked,
-                showJsonPreview.isChecked,
+                showJsonPreview.isChecked
             )
         }
         showJsonPreview.setOnCheckedChangeListener { _, isChecked ->
-            LoggerManager.log(this, "showJsonPreview Clicked")
             PrefsHelper.saveSettings(
                 this,
                 switchApproval.isChecked,
@@ -164,7 +162,7 @@ class OptionSelectionActivity : AppCompatActivity() {
                 switchDual.isChecked,
                 switchLineItems.isChecked,
                 sendL2L3Data.isChecked,
-                isChecked,
+                isChecked
             )
         }
 
