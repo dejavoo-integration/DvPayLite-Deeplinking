@@ -1,6 +1,7 @@
 package com.app.dvpaylitedeeplink.cart
 
 import android.content.Context
+import com.app.dvpaylitedeeplink.cart.ui.RegistrationActivity.RequestFormat
 
 object PrefsHelper {
     private const val PREF_NAME = "app_settings"
@@ -13,6 +14,7 @@ object PrefsHelper {
     private const val KEY_JSON_PREVIEW = "json_preview"
     private const val KEY_MODE = "transaction_mode"
     private const val KEY_REGISTER_ID = "register_id"
+    private const val KEY_TPN_NUMBER = "TPN_NUMBER"
     private const val KEY_AUTH_ID = "auth_id"
     private const val KEY_IP_ADDRESS = "ip_address"
     private const val KEY_TPN = "tpn_value"
@@ -23,6 +25,9 @@ object PrefsHelper {
     private const val KEY_FONT = "selected_font"
     private const val KEY_SELECTED_AVS = "selected_avs"
     private const val KEY_SELECTED_LOGO = "selected_logo"
+    private const val KEY_REQUEST_FORMAT = "request_format"
+    private const val KEY_USB_BULK_ENABLED = "usb_bulk_enabled"
+    private const val KEY_USB_BULK_COUNT = "usb_bulk_count"
 
     fun saveSettings(context: Context, approval: Boolean, breakup: Boolean, tipScreen: Boolean, dual: Boolean , showLineItems:Boolean, sendL2L3: Boolean,showJsonPreview :Boolean) {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -44,6 +49,7 @@ object PrefsHelper {
             putString(KEY_MODE, "CLOUD")
             putString(KEY_REGISTER_ID, registerId)
             putString(KEY_AUTH_ID, authId)
+            remove(KEY_TPN_NUMBER)
             remove(KEY_TPN) // clear other mode data
             apply()
         }
@@ -55,6 +61,7 @@ object PrefsHelper {
             putString(KEY_MODE, "LOCAL")
             putString(KEY_REGISTER_ID, registerId)
             putString(KEY_IP_ADDRESS, ipAddress)
+            remove(KEY_TPN_NUMBER)
             remove(KEY_TPN) // clear other mode data
             apply()
         }
@@ -78,13 +85,25 @@ object PrefsHelper {
         }
     }
 
-    fun saveUsb(context: Context, registerId: String) {
+    fun saveUsb(context: Context, registerId: String, tpnNumber: String) {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
         prefs.edit().apply {
             putString(KEY_MODE, "USB")
             putString(KEY_REGISTER_ID, registerId)
+            putString(KEY_TPN_NUMBER, tpnNumber)
             remove(KEY_IP_ADDRESS)
             remove(KEY_TPN)
+            putBoolean(KEY_USB_BULK_ENABLED, false)
+            putInt(KEY_USB_BULK_COUNT, 1)
+            apply()
+        }
+    }
+
+    fun saveUsbBulkConfig(context: Context, enabled: Boolean, count: Int) {
+        val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        prefs.edit().apply {
+            putBoolean(KEY_USB_BULK_ENABLED, enabled)
+            putInt(KEY_USB_BULK_COUNT, count)
             apply()
         }
     }
@@ -101,6 +120,10 @@ object PrefsHelper {
     fun getRegisterId(context: Context): String? =
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
             .getString(KEY_REGISTER_ID, "")
+
+    fun getTPNNumber(context: Context): String? =
+        context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+            .getString(KEY_TPN_NUMBER, "")
 
     fun getAuthId(context: Context): String? =
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -143,9 +166,35 @@ object PrefsHelper {
         }
     }
 
+    fun isUsbBulkEnabled(context: Context): Boolean {
+        return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+            .getBoolean(KEY_USB_BULK_ENABLED, false)
+    }
+
+    fun getUsbBulkCount(context: Context): Int {
+        return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+            .getInt(KEY_USB_BULK_COUNT, 1)
+    }
+
     fun getSelectMode(context: Context): String {
         return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
             .getString(KEY_SELECTED_MODE, "DEEPLINK") ?: "DEEPLINK"
+    }
+
+    fun saveRequestFormat(context: Context, format: RequestFormat) {
+        val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putString(KEY_REQUEST_FORMAT, format.name).apply()
+    }
+
+    fun getRequestFormat(context: Context): RequestFormat {
+        val value = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+            .getString(KEY_REQUEST_FORMAT, RequestFormat.XML.name)
+
+        return try {
+            RequestFormat.valueOf(value!!)
+        } catch (e: Exception) {
+            RequestFormat.XML
+        }
     }
 
     fun getApproval(context: Context): Boolean =

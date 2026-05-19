@@ -48,58 +48,58 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-    <!-- Main Content -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:orientation="vertical">
-
-        <!-- Radio Buttons -->
-        <RadioGroup
-            android:id="@+id/rgMode"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_marginTop="12dp">
-
-            <RadioButton
-                android:id="@+id/rbDeepLink"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="DeepLink" />
-
-            <RadioButton
-                android:id="@+id/rbCloud"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="20dp"
-                android:text="Spin Cloud" />
-
-            <RadioButton
-                android:id="@+id/rbLocal"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="20dp"
-                android:text="Local" />
-
-            <RadioButton
-                android:id="@+id/rbUsb"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="20dp"
-                android:text="USB" />
-
-        </RadioGroup>
-
-        <!-- DeepLink Layout -->
+        <!-- Main Content -->
         <LinearLayout
-            android:id="@+id/layoutDeepLink"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="gone">
+            android:layout_margin="10dp"
+            android:orientation="vertical">
+
+            <!-- Radio Buttons -->
+            <RadioGroup
+                android:id="@+id/rgMode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginTop="12dp">
+
+                <RadioButton
+                    android:id="@+id/rbDeepLink"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="DeepLink" />
+
+                <RadioButton
+                    android:id="@+id/rbCloud"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:text="Spin Cloud" />
+
+                <RadioButton
+                    android:id="@+id/rbLocal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:text="Local" />
+
+                <RadioButton
+                    android:id="@+id/rbUsb"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:text="USB" />
+
+            </RadioGroup>
+
+            <!-- DeepLink Layout -->
+            <LinearLayout
+                android:id="@+id/layoutDeepLink"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
 
                 <androidx.appcompat.widget.AppCompatEditText
                     android:id="@+id/edtDeepLinkTPN"
@@ -240,138 +240,233 @@
             </LinearLayout>
 
 
-        <!-- Cloud Layout -->
-        <LinearLayout
-            android:id="@+id/layoutCloud"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <androidx.appcompat.widget.AppCompatEditText
-                android:id="@+id/edtCloudAuthKey"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="16dp"
-                android:background="@drawable/bg_txt_curved"
-                android:hint="Enter Auth Key"
-                android:gravity="center"
-                android:inputType="text"
-                android:textColor="@color/black"
-                android:textSize="16sp" />
-
-            <androidx.appcompat.widget.AppCompatEditText
-                android:id="@+id/edtCloudRegisterid"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/bg_txt_curved"
-                android:hint="Register Id"
-                android:gravity="center"
-                android:inputType="text"
-                android:textColor="@color/black"
-                android:textSize="16sp" />
-
-        </LinearLayout>
-
-        <!-- Local Layout -->
-        <LinearLayout
-            android:id="@+id/layoutLocal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <androidx.appcompat.widget.AppCompatEditText
-                android:id="@+id/edtLocalIpAddress"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="16dp"
-                android:background="@drawable/bg_txt_curved"
-                android:hint="Enter pos device Ip Address"
-                android:gravity="center"
-                android:inputType="text"
-                android:textColor="@color/black"
-                android:textSize="16sp" />
-
-            <androidx.appcompat.widget.AppCompatEditText
-                android:id="@+id/edtLocalRegisterId"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/bg_txt_curved"
-                android:hint="Register Id"
-                android:gravity="center"
-                android:inputType="text"
-                android:textColor="@color/black"
-                android:textSize="16sp" />
-
-        </LinearLayout>
-
-        <!-- USB Layout -->
-        <LinearLayout
-            android:id="@+id/layoutUsb"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/tvUsbStatus"
+            <!-- Cloud Layout -->
+            <LinearLayout
+                android:id="@+id/layoutCloud"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="USB Status : "
-                android:textStyle="bold"
-                android:textColor="@color/black"
-                android:gravity="center"/>
+                android:orientation="vertical"
+                android:visibility="gone">
 
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/edtCloudAuthKey"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_txt_curved"
+                    android:hint="Enter Auth Key"
+                    android:gravity="center"
+                    android:inputType="text"
+                    android:textColor="@color/black"
+                    android:textSize="16sp" />
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/edtCloudRegisterid"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_txt_curved"
+                    android:hint="Register Id"
+                    android:gravity="center"
+                    android:inputType="text"
+                    android:textColor="@color/black"
+                    android:textSize="16sp" />
+
+                <RadioGroup
+                    android:id="@+id/rgCloudFormat"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginTop="12dp">
+
+                    <RadioButton
+                        android:id="@+id/rbCloudXml"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="XML" />
+
+                    <RadioButton
+                        android:id="@+id/rbCloudJson"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:text="JSON" />
+
+                </RadioGroup>
+
+            </LinearLayout>
+
+            <!-- Local Layout -->
+            <LinearLayout
+                android:id="@+id/layoutLocal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/edtLocalIpAddress"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_txt_curved"
+                    android:hint="Enter pos device Ip Address"
+                    android:gravity="center"
+                    android:inputType="text"
+                    android:textColor="@color/black"
+                    android:textSize="16sp" />
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/edtLocalRegisterId"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_txt_curved"
+                    android:hint="Register Id"
+                    android:gravity="center"
+                    android:inputType="text"
+                    android:textColor="@color/black"
+                    android:textSize="16sp" />
+
+                <RadioGroup
+                    android:id="@+id/rgLocalFormat"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginTop="12dp">
+
+                    <RadioButton
+                        android:id="@+id/rbLocalXml"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="XML" />
+
+                    <RadioButton
+                        android:id="@+id/rbLocalJson"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:text="JSON" />
+
+                </RadioGroup>
+
+            </LinearLayout>
+
+            <!-- USB Layout -->
+            <LinearLayout
+                android:id="@+id/layoutUsb"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tvUsbStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="USB Status : "
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:gravity="center"/>
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/edtUsbRegister"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_txt_curved"
+                    android:hint="Enter Register Id"
+                    android:gravity="center"
+                    android:inputType="text"
+                    android:textColor="@color/black"
+                    android:textSize="16sp" />
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/edtUsbTpn"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_txt_curved"
+                    android:hint="Enter TPN Number"
+                    android:gravity="center"
+                    android:inputType="text"
+                    android:textColor="@color/black"
+                    android:textSize="16sp" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tvDeviceStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Select Input Type "
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:gravity="center"/>
+
+                <RadioGroup
+                    android:id="@+id/rgUsbFormat"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginTop="12dp">
+
+                    <RadioButton
+                        android:id="@+id/rbUsbXml"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="XML" />
+
+                    <RadioButton
+                        android:id="@+id/rbUsbJson"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:text="JSON" />
+
+                </RadioGroup>
+                <!-- Bulk Testing Switch -->
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/cbBulkTest"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="Enable Bulk Test"/>
+
+                <!-- Transaction Count Input -->
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/edtBulkCount"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/bg_txt_curved"
+                    android:hint="Enter transaction count"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:visibility="gone"
+                    android:textColor="@color/black"
+                    android:textSize="16sp"/>
+
+            </LinearLayout>
+
+            <!-- Confirm Button -->
             <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/btnUsbConnect"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="12dp"
-                android:text="Connect USB" />
-
-            <androidx.appcompat.widget.AppCompatEditText
-                android:id="@+id/edtUsbRegister"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="16dp"
-                android:background="@drawable/bg_txt_curved"
-                android:hint="Enter Register Id"
-                android:gravity="center"
-                android:inputType="text"
-                android:textColor="@color/black"
+                android:id="@+id/btnConfirm"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="30dp"
+                android:background="@drawable/rounded_btn_purple"
+                android:padding="15dp"
+                android:text="Confirm"
+                android:textAllCaps="true"
+                android:textColor="@color/white"
                 android:textSize="16sp" />
 
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/tvDeviceStatus"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Device Info : "
-                android:textStyle="bold"
-                android:textColor="@color/black"
-                android:gravity="center"/>
-
         </LinearLayout>
-
-        <!-- Confirm Button -->
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/btnConfirm"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="30dp"
-            android:background="@drawable/rounded_btn_purple"
-            android:padding="15dp"
-            android:text="Confirm"
-            android:textAllCaps="true"
-            android:textColor="@color/white"
-            android:textSize="16sp" />
-
-    </LinearLayout>
     </ScrollView>
 
 

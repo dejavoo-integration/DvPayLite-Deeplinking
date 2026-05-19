@@ -45,6 +45,12 @@ class RegistrationActivity : AppCompatActivity() {
     private lateinit var rbDeepLink: RadioButton
     private lateinit var rbCloud: RadioButton
     private lateinit var rbUsb: RadioButton
+    private lateinit var rfJsonLocal: RadioButton
+    private lateinit var rfXmlLocal: RadioButton
+    private lateinit var rfJsonCloud: RadioButton
+    private lateinit var rfXmlCloud: RadioButton
+    private lateinit var rfJsonUsb: RadioButton
+    private lateinit var rfxmlUsb: RadioButton
     private lateinit var rbLocal: RadioButton
     private lateinit var rbAvsYes: RadioButton
     private lateinit var rbAvsNo: RadioButton
@@ -68,6 +74,7 @@ class RegistrationActivity : AppCompatActivity() {
     private lateinit var edtLocalIpAddress: AppCompatEditText
     private lateinit var edtLocalRegisterId: AppCompatEditText
     private lateinit var edtUsbRegisterId: AppCompatEditText
+    private lateinit var edtUsbTPNNumber: AppCompatEditText
 
     private lateinit var tvUsbStatus: AppCompatTextView
     private lateinit var tvDeviceStatus: AppCompatTextView
@@ -78,6 +85,8 @@ class RegistrationActivity : AppCompatActivity() {
     private lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
     private lateinit var intentApplication: IntentApplication
 
+    private lateinit var cbBulkTest: SwitchCompat
+    private lateinit var edtBulkCount: AppCompatEditText
 
     private var selectedMode: Mode = Mode.DEEPLINK
     private var selectedAvs: SelectionOption = SelectionOption.YES
@@ -93,6 +102,11 @@ class RegistrationActivity : AppCompatActivity() {
     enum class SelectionOption {
         YES,
         NO
+    }
+
+    enum class RequestFormat {
+        XML,
+        JSON
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -134,6 +148,12 @@ class RegistrationActivity : AppCompatActivity() {
         rbCloud = findViewById(R.id.rbCloud)
         rbUsb = findViewById(R.id.rbUsb)
         rbLocal = findViewById(R.id.rbLocal)
+        rfJsonCloud = findViewById(R.id.rbCloudJson)
+        rfXmlCloud = findViewById(R.id.rbCloudXml)
+        rfJsonLocal = findViewById(R.id.rbLocalJson)
+        rfXmlLocal = findViewById(R.id.rbLocalXml)
+        rfxmlUsb = findViewById(R.id.rbUsbXml)
+        rfJsonUsb = findViewById(R.id.rbUsbJson)
 
 
         layoutDeepLink = findViewById(R.id.layoutDeepLink)
@@ -160,9 +180,12 @@ class RegistrationActivity : AppCompatActivity() {
         edtLocalIpAddress = findViewById(R.id.edtLocalIpAddress)
         edtLocalRegisterId = findViewById(R.id.edtLocalRegisterId)
         edtUsbRegisterId = findViewById(R.id.edtUsbRegister)
+        edtUsbTPNNumber = findViewById(R.id.edtUsbTpn)
         tvUsbStatus = findViewById(R.id.tvUsbStatus)
-        btnUsbConnect = findViewById(R.id.btnUsbConnect)
         tvDeviceStatus = findViewById(R.id.tvDeviceStatus)
+
+        cbBulkTest = findViewById(R.id.cbBulkTest)
+        edtBulkCount = findViewById(R.id.edtBulkCount)
 
         btnConfirm = findViewById(R.id.btnConfirm)
         ivBack = findViewById(R.id.iv_back)
@@ -173,78 +196,82 @@ class RegistrationActivity : AppCompatActivity() {
     }
 
     private fun initUI() {
-            val savedMode = PrefsHelper.getMode(this)
+        val savedMode = PrefsHelper.getMode(this)
 
-            when (savedMode) {
+        when (savedMode) {
 
-                Mode.DEEPLINK.name -> {
-                    rbDeepLink.isChecked = true
-                    selectedMode = Mode.DEEPLINK
-                    edtDeepLinkTPN.setText(PrefsHelper.getTpn(this))
-                    edtPrimaryColor.setText(PrefsHelper.getPrimaryColor(this))
-                    edtSecondaryColor.setText(PrefsHelper.getSecondaryColor(this))
-                    edtNegativeColor.setText(PrefsHelper.getNegativeColor(this))
-                    edtFont.setText(PrefsHelper.getFont(this))
+            Mode.DEEPLINK.name -> {
+                rbDeepLink.isChecked = true
+                selectedMode = Mode.DEEPLINK
+                edtDeepLinkTPN.setText(PrefsHelper.getTpn(this))
+                edtPrimaryColor.setText(PrefsHelper.getPrimaryColor(this))
+                edtSecondaryColor.setText(PrefsHelper.getSecondaryColor(this))
+                edtNegativeColor.setText(PrefsHelper.getNegativeColor(this))
+                edtFont.setText(PrefsHelper.getFont(this))
 
-                    val savedAvs = PrefsHelper.getSelectedAvs(this)
-                    when (savedAvs) {
-                        SelectionOption.YES.name -> {
-                            rbAvsYes.isChecked = true
-                            rbAvsNo.isChecked = false
-                        }
-                        SelectionOption.NO.name -> {
-                            rbAvsYes.isChecked = false
-                            rbAvsNo.isChecked = true
-                        }
-                        else -> {
-                            rbAvsYes.isChecked = true
-                            rbAvsNo.isChecked = false
-                        }
+                val savedAvs = PrefsHelper.getSelectedAvs(this)
+                when (savedAvs) {
+                    SelectionOption.YES.name -> {
+                        rbAvsYes.isChecked = true
+                        rbAvsNo.isChecked = false
                     }
-
-                    val savedLogo = PrefsHelper.getSelectedLogo(this)
-                    when (savedLogo) {
-                        SelectionOption.YES.name -> {
-                            rbLogoYes.isChecked = true
-                            rbLogoNo.isChecked = false
-                        }
-                        SelectionOption.NO.name -> {
-                            rbLogoYes.isChecked = false
-                            rbLogoNo.isChecked = true
-                        }
-                        else -> {
-                            rbLogoYes.isChecked = true
-                            rbLogoNo.isChecked = false
-                        }
+                    SelectionOption.NO.name -> {
+                        rbAvsYes.isChecked = false
+                        rbAvsNo.isChecked = true
                     }
-
-                    showDeepLink()
-
+                    else -> {
+                        rbAvsYes.isChecked = true
+                        rbAvsNo.isChecked = false
+                    }
                 }
 
-                Mode.CLOUD.name -> {
-                    rbCloud.isChecked = true
-                    selectedMode = Mode.CLOUD
-                    edtCloudRegisterId.setText(PrefsHelper.getRegisterId(this))
-                    edtCloudAuthKey.setText(PrefsHelper.getAuthId(this))
-                    showCloud()
-
+                val savedLogo = PrefsHelper.getSelectedLogo(this)
+                when (savedLogo) {
+                    SelectionOption.YES.name -> {
+                        rbLogoYes.isChecked = true
+                        rbLogoNo.isChecked = false
+                    }
+                    SelectionOption.NO.name -> {
+                        rbLogoYes.isChecked = false
+                        rbLogoNo.isChecked = true
+                    }
+                    else -> {
+                        rbLogoYes.isChecked = true
+                        rbLogoNo.isChecked = false
+                    }
                 }
 
-                Mode.USB.name -> {
-                    rbUsb.isChecked = true
-                    selectedMode = Mode.USB
-                    edtUsbRegisterId.setText(PrefsHelper.getRegisterId(this))
-                    showUsb()
+                showDeepLink()
 
-                }
+            }
 
-                Mode.LOCAL.name -> {
-                    rbLocal.isChecked = true
-                    selectedMode = Mode.LOCAL
-                    edtLocalRegisterId.setText(PrefsHelper.getRegisterId(this))
-                    edtLocalIpAddress.setText(PrefsHelper.getIpAddress(this))
-                    showLocal()
+            Mode.CLOUD.name -> {
+                rbCloud.isChecked = true
+                selectedMode = Mode.CLOUD
+                edtCloudRegisterId.setText(PrefsHelper.getRegisterId(this))
+                edtCloudAuthKey.setText(PrefsHelper.getAuthId(this))
+                restoreRequestFormat()
+                showCloud()
+
+            }
+
+            Mode.USB.name -> {
+                rbUsb.isChecked = true
+                selectedMode = Mode.USB
+                edtUsbRegisterId.setText(PrefsHelper.getRegisterId(this))
+                edtUsbTPNNumber.setText(PrefsHelper.getTPNNumber(this))
+                restoreRequestFormat()
+                showUsb()
+
+            }
+
+            Mode.LOCAL.name -> {
+                rbLocal.isChecked = true
+                selectedMode = Mode.LOCAL
+                edtLocalRegisterId.setText(PrefsHelper.getRegisterId(this))
+                edtLocalIpAddress.setText(PrefsHelper.getIpAddress(this))
+                restoreRequestFormat()
+                showLocal()
 
             }
         }
@@ -307,6 +334,7 @@ class RegistrationActivity : AppCompatActivity() {
                     LoggerManager.log(this, "Select DeepLink Mode")
                     selectedMode = Mode.DEEPLINK
                     edtDeepLinkTPN.setText("")
+                    cbBulkTest.visibility = View.GONE
                     showDeepLink()
 
                 }
@@ -316,6 +344,7 @@ class RegistrationActivity : AppCompatActivity() {
                     selectedMode = Mode.CLOUD
                     edtCloudRegisterId.setText(PrefsHelper.getRegisterId(this))
                     edtCloudAuthKey.setText(PrefsHelper.getAuthId(this))
+                    cbBulkTest.visibility = View.GONE
                     showCloud()
 
                 }
@@ -325,6 +354,7 @@ class RegistrationActivity : AppCompatActivity() {
                     selectedMode = Mode.LOCAL
                     edtLocalRegisterId.setText("")
                     edtLocalIpAddress.setText("")
+                    cbBulkTest.visibility = View.GONE
                     showLocal()
 
                 }
@@ -333,8 +363,25 @@ class RegistrationActivity : AppCompatActivity() {
                     LoggerManager.log(this, "Select USB Mode")
                     selectedMode = Mode.USB
                     edtUsbRegisterId.setText(PrefsHelper.getRegisterId(this))
+                    edtUsbTPNNumber.setText(PrefsHelper.getTPNNumber(this))
                     showUsb()
                     setupUsb()
+
+                    //  Show bulk option only for USB
+                    cbBulkTest.visibility = View.VISIBLE
+
+                    // Restore saved values
+                    val isBulk = PrefsHelper.isUsbBulkEnabled(this)
+                    val count = PrefsHelper.getUsbBulkCount(this)
+
+                    cbBulkTest.isChecked = isBulk
+
+                    if (isBulk) {
+                        edtBulkCount.visibility = View.VISIBLE
+                        edtBulkCount.setText(count.toString())
+                    } else {
+                        edtBulkCount.visibility = View.GONE
+                    }
 
                 }
             }
@@ -385,6 +432,9 @@ class RegistrationActivity : AppCompatActivity() {
                 handleConfirm()
             }
         }
+        cbBulkTest.setOnCheckedChangeListener { _, isChecked ->
+            edtBulkCount.visibility = if (isChecked) View.VISIBLE else View.GONE
+        }
     }
 
     private fun hideAllLayouts() {
@@ -420,10 +470,10 @@ class RegistrationActivity : AppCompatActivity() {
 
             Mode.DEEPLINK -> {
                 val value = edtDeepLinkTPN.text.toString().trim()
-               /* if (value.isEmpty()) {
-                    edtDeepLinkTPN.error = "Enter DeepLink TPN"
-                    return false
-                }*/
+                /* if (value.isEmpty()) {
+                     edtDeepLinkTPN.error = "Enter DeepLink TPN"
+                     return false
+                 }*/
             }
 
             Mode.CLOUD -> {
@@ -462,9 +512,10 @@ class RegistrationActivity : AppCompatActivity() {
 
             Mode.USB -> {
                 val usbRegisterId = edtUsbRegisterId.text.toString().trim()
-                if (usbRegisterId.isEmpty()) {
-                    LoggerManager.log(this, "Enter USB Register Id")
-                    edtUsbRegisterId.error = "Enter Register ID"
+                val tpnNumber = edtUsbTPNNumber.text.toString().trim()
+                if ((usbRegisterId.isEmpty() && tpnNumber.isEmpty())) {
+                    LoggerManager.log(this, "Enter Register Id or Tpn Number")
+                    edtUsbRegisterId.error = "Enter Register Id or Tpn Number"
                     return false
                 }
             }
@@ -515,6 +566,8 @@ class RegistrationActivity : AppCompatActivity() {
                 val authKey = edtCloudAuthKey.text.toString().trim()
                 PrefsHelper.saveCloud(this, registerId, authKey)
                 PrefsHelper.saveMode(this, Mode.CLOUD.name)
+                val format = getSelectedRequestFormat()
+                PrefsHelper.saveRequestFormat(this, format)
                 Toast.makeText(this, "Cloud Selected\nregisterId: $registerId\nauthKey: $authKey", Toast.LENGTH_SHORT).show()
                 LoggerManager.log(this, "Confirm Cloud mode Register RegisterId: $registerId AuthKey: $authKey")
                 finish()
@@ -525,25 +578,73 @@ class RegistrationActivity : AppCompatActivity() {
                 val registerId = edtLocalRegisterId.text.toString().trim()
                 PrefsHelper.saveLocal(this, registerId, ipAddress)
                 PrefsHelper.saveMode(this, Mode.LOCAL.name)
+                val format = getSelectedRequestFormat()
+                PrefsHelper.saveRequestFormat(this, format)
                 Toast.makeText(this, "Local Selected\nRegister Id: $registerId\nIp Address: $ipAddress", Toast.LENGTH_SHORT).show()
                 LoggerManager.log(this, "confirm Local mode Register RegisterId: $registerId IpAddress: $ipAddress")
                 finish()
             }
 
             Mode.USB -> {
-                if(usbPosManager.isConnected()){
-                    val usbRegisterId = edtUsbRegisterId.text.toString().trim()
-                    PrefsHelper.saveUsb(this, usbRegisterId)
-                    PrefsHelper.saveMode(this, Mode.USB.name)
-                    Toast.makeText(this, "USB Selected\nusbRegisterId: $usbRegisterId", Toast.LENGTH_SHORT).show()
-                    LoggerManager.log(this, "Confirm USB mode Register RegisterId: $usbRegisterId")
-                  //  validation()
-                    finish()
-                }else{
+
+                if (!usbPosManager.isConnected()) {
                     tvDeviceStatus.text = "POS Device Not connected"
-                    LoggerManager.log(this, "Please Connect POS USB first")
                     Toast.makeText(this, "Please Connect POS USB first", Toast.LENGTH_SHORT).show()
+                    return
                 }
+
+                val usbRegisterId = edtUsbRegisterId.text.toString().trim()
+                val tpnNumber = edtUsbTPNNumber.text.toString().trim()
+
+                if (!(usbRegisterId.isEmpty() || tpnNumber.isEmpty())) {
+                    edtUsbRegisterId.error = "Enter Register ID or Tpn Number"
+                    return
+                }
+
+                PrefsHelper.saveUsb(this, usbRegisterId, tpnNumber)
+                PrefsHelper.saveMode(this, Mode.USB.name)
+
+                val format = getSelectedRequestFormat()
+                PrefsHelper.saveRequestFormat(this, format)
+
+                // ✅ BULK SAVE ONLY (NO EXECUTION)
+                val isBulk = cbBulkTest.isChecked
+
+                var count = 1
+
+                if (isBulk) {
+                    val countText = edtBulkCount.text.toString().trim()
+
+                    if (countText.isEmpty()) {
+                        edtBulkCount.error = "Enter transaction count"
+                        return
+                    }
+
+                    count = try {
+                        countText.toInt()
+                    } catch (e: Exception) {
+                        edtBulkCount.error = "Invalid number"
+                        return
+                    }
+
+                    if (count <= 0) {
+                        edtBulkCount.error = "Invalid count"
+                        return
+                    }
+
+                    // Safety limit
+                    if (count > 1000) count = 1000
+                }
+
+                PrefsHelper.saveUsbBulkConfig(this, isBulk, count)
+
+                Toast.makeText(
+                    this,
+                    "USB Settings Saved\nBulk: $isBulk Count: $count",
+                    Toast.LENGTH_SHORT
+                ).show()
+
+                finish()
             }
         }
     }
@@ -585,51 +686,68 @@ class RegistrationActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        if (usbPosManager.isConnected()) {
+            tvUsbStatus.text = "POS Connected"
+            tvUsbStatus.setTextColor(Color.GREEN)
+        } else {
+            tvUsbStatus.text = "POS Disconnected"
+            tvUsbStatus.setTextColor(Color.RED)
+        }
         setupUsb()
     }
 
+    private fun getSelectedRequestFormat(): RequestFormat {
 
-    fun validation(){
-        val progressDialog = android.app.AlertDialog.Builder(this)
-            .setTitle("Please wait")
-            .setMessage("Checking Device connection..")
-            .setCancelable(false) // cannot dismiss by tapping outside
-            .create()
-        progressDialog.show()
-        LoggerManager.log(this@RegistrationActivity, "Processing Dialog open")
-        LoggerManager.log(this, "Processing USB Validation")
-        val request = "<request><PaymentType>Credit</PaymentType><TransType>VALIDATE</TransType><Amount>1.00</Amount><Tip>0.00</Tip><CashbackAmount>0.00</CashbackAmount><Frequency>OneTime</Frequency><CustomFee>0.00</CustomFee><RefId></RefId><RegisterId>${edtUsbRegisterId.text.toString()}</RegisterId><AuthKey>vPXjq5X8fn</AuthKey><PrintReceipt>No</PrintReceipt><SigCapture>No</SigCapture></request>"
-        Log.i("my_tag","check usb Validation request ${request}")
-        usbPosManager?.sendAndReceive(request, object : UsbPosCallback {
-            override fun onResult(response: String?, totalBytes: Int) {
-                runOnUiThread {
+        return when (selectedMode) {
 
-                    if (!isFinishing && progressDialog.isShowing) {
-                        LoggerManager.log(this@RegistrationActivity, "Processing Dialog Close")
-                        progressDialog.dismiss()
-                    }
+            Mode.CLOUD -> {
+                if (rfJsonCloud.isChecked) RequestFormat.JSON else RequestFormat.XML
+            }
 
-                    if (response != null) {
-                        Log.i("USB", response)
-                        tvDeviceStatus.setText("Device Info : $response")
-                        LoggerManager.log(this@RegistrationActivity, "Device Info : ${response}")
-                        Toast.makeText(
-                            this@RegistrationActivity,
-                            response,
-                            Toast.LENGTH_LONG
-                        ).show()
-                    } else {
-                        LoggerManager.log(this@RegistrationActivity, "Device Info  : No Pos Device Connected")
-                        tvDeviceStatus.setText("Device Info : No Pos Device Connected")
-                        Toast.makeText(this@RegistrationActivity,
-                            "No Pos Device Connected",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                    finish()
+            Mode.LOCAL -> {
+                if (rfJsonLocal.isChecked) RequestFormat.JSON else RequestFormat.XML
+            }
+
+            Mode.USB -> {
+                if (rfJsonUsb.isChecked) RequestFormat.JSON else RequestFormat.XML
+            }
+
+            else -> RequestFormat.XML
+        }
+    }
+
+    private fun restoreRequestFormat() {
+
+        val savedFormat = PrefsHelper.getRequestFormat(this)
+
+        when (selectedMode) {
+
+            Mode.CLOUD -> {
+                if (savedFormat == RequestFormat.JSON) {
+                    rfJsonCloud.isChecked = true
+                } else {
+                    rfXmlCloud.isChecked = true
                 }
             }
-        })
+
+            Mode.LOCAL -> {
+                if (savedFormat == RequestFormat.JSON) {
+                    rfJsonLocal.isChecked = true
+                } else {
+                    rfXmlLocal.isChecked = true
+                }
+            }
+
+            Mode.USB -> {
+                if (savedFormat == RequestFormat.JSON) {
+                    rfJsonUsb.isChecked = true
+                } else {
+                    rfxmlUsb.isChecked = true
+                }
+            }
+
+            else -> {}
+        }
     }
 
 }
