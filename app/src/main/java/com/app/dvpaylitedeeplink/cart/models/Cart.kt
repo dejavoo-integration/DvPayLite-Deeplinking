@@ -14,6 +14,7 @@ data class Item(
     var image : Int,
     var name: String,
     var price: Double,
+    var code: String,
     var quantity: Int,
     var additionalInfo: String,
     var customInfo: List<CustomInfo>? = null, // Optional field
