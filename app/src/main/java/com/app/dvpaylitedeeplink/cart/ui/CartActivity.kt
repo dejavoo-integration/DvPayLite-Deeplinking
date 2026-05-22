@@ -796,16 +796,16 @@ class CartActivity : AppCompatActivity() {
                 }
                 customerTip = 0.00
             }
-            if (requestCode == 456 && resultCode == Activity.RESULT_OK) {
-                val editedJsonString = data?.getStringExtra("editedJson")
-                if (!editedJsonString.isNullOrEmpty()) {
-                    val finalJson = JSONObject(editedJsonString)
-                    Log.d("CartActivity", "Confirmed JSON: $finalJson")
-                    processSaleTxn(intentApplication, activityResultLauncher, finalJson)
-                }
-            } else {
-                Log.d("CartActivity", "Request code or result code did not match expected values")
+        }
+        else if (requestCode == 456 && resultCode == Activity.RESULT_OK) {
+            val editedJsonString = data?.getStringExtra("editedJson")
+            if (!editedJsonString.isNullOrEmpty()) {
+                val finalJson = JSONObject(editedJsonString)
+                Log.d("CartActivity", "Confirmed JSON: $finalJson")
+                processSaleTxn(intentApplication, activityResultLauncher, finalJson)
             }
+        } else {
+            Log.d("CartActivity", "Request code or result code did not match expected values")
         }
     }
 

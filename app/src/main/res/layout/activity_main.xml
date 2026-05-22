@@ -132,14 +132,14 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp"
                     android:gravity="center"
-                    android:hint="Enter Phone" />
+                    android:hint="Enter CustomerMobile " />
 
                 <androidx.appcompat.widget.AppCompatEditText
                     android:id="@+id/ed_email"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:hint="Enter Email" />
+                    android:hint="Enter CustomerEmail " />
 
             </LinearLayout>
 

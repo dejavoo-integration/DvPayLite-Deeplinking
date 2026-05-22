@@ -133,7 +133,8 @@ public class SampleUriActivity extends AppCompatActivity {
             jsonRequest.put("applicationType", "DVPAYLITE");
             jsonRequest.put("MerchantId", merchantId);
             jsonRequest.put("TPN", tpn);
-
+            jsonRequest.put("CustomerMobile", phoneNumber);
+            jsonRequest.put("CustomerEmail", emailId);
             JSONObject customUIObj = new JSONObject();
             customUIObj.put("primaryColor", primaryColor);
             customUIObj.put("secondaryColor", secondaryColor);
@@ -162,6 +163,8 @@ public class SampleUriActivity extends AppCompatActivity {
             jsonRequest.put("receiptType", receiptType);
             jsonRequest.put("MerchantId", merchantId);
             jsonRequest.put("TPN", tpn);
+            jsonRequest.put("CustomerMobile", phoneNumber );
+            jsonRequest.put("CustomerEmail", emailId );
             if (!approvalType.equals("No Tag")) {
                 jsonRequest.put("isTxnStatusScreenRequired", approvalType);
             }
@@ -193,6 +196,12 @@ public class SampleUriActivity extends AppCompatActivity {
             jsonRequest.put("refId", refId);
             jsonRequest.put("MerchantId", merchantId);
             jsonRequest.put("TPN", tpn);
+            jsonRequest.put("CustomerMobile", phoneNumber);
+            jsonRequest.put("CustomerEmail", emailId);
+            jsonRequest.put("CityTax", cityTax );
+            jsonRequest.put("StateTax", stateTax );
+            jsonRequest.put("ReducedStateTax", reducedStateTax);
+
             if (!approvalType.equals("No Tag")) {
                 jsonRequest.put("isTxnStatusScreenRequired", approvalType);
             }
@@ -227,6 +236,12 @@ public class SampleUriActivity extends AppCompatActivity {
             jsonRequest.put("receiptType", receiptType);
             jsonRequest.put("MerchantId", merchantId);
             jsonRequest.put("TPN", tpn);
+            jsonRequest.put("CustomerMobile", phoneNumber);
+            jsonRequest.put("CustomerEmail", emailId);
+            jsonRequest.put("CityTax", cityTax );
+            jsonRequest.put("StateTax", stateTax );
+            jsonRequest.put("ReducedStateTax", reducedStateTax);
+
             if (!approvalType.equals("No Tag")) {
                 jsonRequest.put("isTxnStatusScreenRequired", approvalType);
             }
@@ -260,6 +275,8 @@ public class SampleUriActivity extends AppCompatActivity {
             jsonRequest.put("refId", refId);
             jsonRequest.put("MerchantId", merchantId);
             jsonRequest.put("TPN", tpn);
+            jsonRequest.put("CustomerMobile", phoneNumber);
+            jsonRequest.put("CustomerEmail", emailId);
             if (!approvalType.equals("No Tag")) {
                 jsonRequest.put("isTxnStatusScreenRequired", approvalType);
             }
@@ -293,6 +310,12 @@ public class SampleUriActivity extends AppCompatActivity {
             jsonRequest.put("receiptType", receiptType);
             jsonRequest.put("MerchantId", merchantId);
             jsonRequest.put("TPN", tpn);
+            jsonRequest.put("CustomerMobile", phoneNumber);
+            jsonRequest.put("CustomerEmail", emailId);
+            jsonRequest.put("CityTax", cityTax );
+            jsonRequest.put("StateTax", stateTax );
+            jsonRequest.put("ReducedStateTax", reducedStateTax);
+
             if (!approvalType.equals("No Tag")) {
                 jsonRequest.put("isTxnStatusScreenRequired", approvalType);
             }
@@ -325,6 +348,8 @@ public class SampleUriActivity extends AppCompatActivity {
             jsonRequest.put("receiptType", receiptType);
             jsonRequest.put("MerchantId", merchantId);
             jsonRequest.put("TPN", tpn);
+            jsonRequest.put("CustomerMobile", phoneNumber);
+            jsonRequest.put("CustomerEmail", emailId);
             if (!approvalType.equals("No Tag")) {
                 jsonRequest.put("isTxnStatusScreenRequired", approvalType);
             }
@@ -369,8 +394,8 @@ public class SampleUriActivity extends AppCompatActivity {
             jsonRequest.put("CityTax", cityTax );
             jsonRequest.put("StateTax", stateTax );
             jsonRequest.put("ReducedStateTax", reducedStateTax);
-            jsonRequest.put("PhoneNumber", phoneNumber );
-            jsonRequest.put("EmailId", emailId );
+            jsonRequest.put("CustomerMobile", phoneNumber );
+            jsonRequest.put("CustomerEmail", emailId );
 
             JSONObject customUIObj = new JSONObject();
             customUIObj.put("primaryColor", primaryColor);
@@ -608,6 +633,8 @@ public class SampleUriActivity extends AppCompatActivity {
             jsonRequest.put("receiptType", receiptType);
             jsonRequest.put("MerchantId", merchantId);
             jsonRequest.put("TPN", tpn);
+            jsonRequest.put("CustomerMobile", phoneNumber);
+            jsonRequest.put("CustomerEmail", emailId);
             if (!approvalType.equals("No Tag")) {
                 jsonRequest.put("isTxnStatusScreenRequired", approvalType);
             }

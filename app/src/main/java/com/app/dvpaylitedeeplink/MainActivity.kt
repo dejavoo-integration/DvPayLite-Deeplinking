@@ -514,6 +514,11 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("receiptType", receiptType)
         jsonRequest.put("IsvId", editTextIsvID.text.toString())
         jsonRequest.put("TPN", terminalTPN.text.toString().trim())
+        jsonRequest.put("CustomerMobile ", editTextPhone.text.toString().trim())
+        jsonRequest.put("CustomerEmail", editTextEmail.text.toString().trim())
+        jsonRequest.put("CityTax", editTextCityTax.text.toString())
+        jsonRequest.put("StateTax", editTextStateTax.text.toString())
+        jsonRequest.put("ReducedStateTax", editTextReduceTax.text.toString())
         jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
         if (isTxnStatusScreenRequired != "No Tag") {
             jsonRequest.put("isTxnStatusScreenRequired", isTxnStatusScreenRequired)
@@ -638,6 +643,8 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("displayText", editTextDisplayText.text.toString())
         jsonRequest.put("displayAmount", displayAmount)
         jsonRequest.put("cancelOptionRequired", cancelOptionRequired)
+        jsonRequest.put("CustomerMobile ", editTextPhone.text.toString())
+        jsonRequest.put("CustomerEmail", editTextEmail.text.toString())
         when (cardAcceptanceData) {
             "Empty(For Testing)" -> {
                 jsonRequest.put("cardAcceptanceTime","")
@@ -721,8 +728,8 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("CityTax", editTextCityTax.text.toString())
         jsonRequest.put("StateTax", editTextStateTax.text.toString())
         jsonRequest.put("ReducedStateTax", editTextReduceTax.text.toString())
-        jsonRequest.put("PhoneNumber", editTextPhone.text.toString())
-        jsonRequest.put("EmailId", editTextEmail.text.toString())
+        jsonRequest.put("CustomerMobile ", editTextPhone.text.toString())
+        jsonRequest.put("CustomerEmail", editTextEmail.text.toString())
         when (cardAcceptanceData) {
             "Empty(For Testing)" -> {
                 jsonRequest.put("cardAcceptanceTime","")
@@ -849,6 +856,11 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("receiptType", receiptType)
         jsonRequest.put("IsvId", editTextIsvID.text.toString())
         jsonRequest.put("TPN", terminalTPN.text.toString().trim())
+        jsonRequest.put("CustomerMobile ", editTextPhone.text.toString().trim())
+        jsonRequest.put("CustomerEmail", editTextEmail.text.toString().trim())
+        jsonRequest.put("CityTax", editTextCityTax.text.toString())
+        jsonRequest.put("StateTax", editTextStateTax.text.toString())
+        jsonRequest.put("ReducedStateTax", editTextReduceTax.text.toString())
         jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
         jsonRequest.put("displayText", editTextDisplayText.text.toString())
         jsonRequest.put("displayText", editTextDisplayText.text.toString())
@@ -1007,6 +1019,8 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("refId", transactionRefId.text.toString())
         jsonRequest.put("IsvId", editTextIsvID.text.toString())
         jsonRequest.put("TPN", terminalTPN.text.toString().trim())
+        jsonRequest.put("CustomerMobile ", editTextPhone.text.toString().trim())
+        jsonRequest.put("CustomerEmail", editTextEmail.text.toString().trim())
         jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
         Log.e("Request", "Request: $jsonRequest")
         jsonRequest.put("displayText", editTextDisplayText.text.toString())
@@ -1085,6 +1099,8 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("receiptType", receiptType)
         jsonRequest.put("IsvId", editTextIsvID.text.toString())
         jsonRequest.put("TPN", terminalTPN.text.toString().trim())
+        jsonRequest.put("CustomerMobile ", editTextPhone.text.toString().trim())
+        jsonRequest.put("CustomerEmail", editTextEmail.text.toString().trim())
         jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
         if (isTxnStatusScreenRequired != "No Tag") {
             jsonRequest.put("isTxnStatusScreenRequired", isTxnStatusScreenRequired)
@@ -1201,6 +1217,8 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("receiptType", receiptType)
         jsonRequest.put("IsvId", editTextIsvID.text.toString())
         jsonRequest.put("TPN", terminalTPN.text.toString().trim())
+        jsonRequest.put("CustomerMobile ", editTextPhone.text.toString().trim())
+        jsonRequest.put("CustomerEmail", editTextEmail.text.toString().trim())
         jsonRequest.put("MerchantId", editTextMerchantId.text.toString().trim())
         if (isTxnStatusScreenRequired != "No Tag") {
             jsonRequest.put("isTxnStatusScreenRequired", isTxnStatusScreenRequired)
