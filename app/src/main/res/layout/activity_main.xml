@@ -86,6 +86,63 @@
                 android:layout_marginTop="45dp"
                 android:gravity="center"
                 android:hint="Enter Ref Id if Tip Adjust/Ticket" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:weightSum="3"
+                android:gravity="center"
+                android:orientation="horizontal">
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/cityTax"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:hint="CityTax" />
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/stateTax"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:hint="StateTax" />
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/reduceTax"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:hint="ReduceTax" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:orientation="vertical">
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/ed_phone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:gravity="center"
+                    android:hint="Enter Phone" />
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/ed_email"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:hint="Enter Email" />
+
+            </LinearLayout>
+
             <LinearLayout
                 android:id="@+id/mmidLinear"
                 android:layout_width="match_parent"

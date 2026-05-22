@@ -43,11 +43,23 @@
            flex-direction: column;
            gap: 10px;
         }
+        .tax-input {
+            width: 68px;
+            max-width: 20vw;
+            padding: 6px 4px;
+            font-size: 11px;
+            margin-bottom: 6px;
+            margin-top: 6px;
+        }
     </style>
 </head>
+
 <body>
+
 <h3>Make a Payment</h3>
+
 <input type="number" id="tpnTextInput" placeholder="Enter TPN"/>
+
 <div>
     <button id="registerButton" onclick="handleRegisterClick()">Register</button>
     <button id="getTPNButton" onclick="getTPNClick()">Get TPN</button>
@@ -63,9 +75,11 @@
 <input type="text" id="negativeColortextInput" placeholder="Enter Negative Color"/>
 <input type="text" id="fonttextInput" placeholder="Enter font"/>
 
+
+
 <div class="dropdown-container">
     <h3>AVS</h3>
-    <select id = "optionAvs" onchange="handleAvsChange()">
+    <select id="optionAvs" onchange="handleAvsChange()">
         <option value="Yes">Yes</option>
         <option value="No">No</option>
     </select>
@@ -73,10 +87,19 @@
 
 <div class="dropdown-container">
     <h3>Remove Logo</h3>
-    <select id = "optionLoader" onchange="handleLoaderChange()">
+    <select id="optionLoader" onchange="handleLoaderChange()">
         <option value="Yes">Yes</option>
         <option value="No">No</option>
     </select>
+</div>
+
+<input type="text" id="phoneNumberInput" placeholder="Enter Phone Number"/>
+<input type="email" id="emailInput" placeholder="Enter Email"/>
+
+<div class="dropdown-container">
+    <input type="number" class="tax-input" id="cityTaxInput" placeholder="CityTax"/>
+    <input type="number" class="tax-input" id="stateTaxInput" placeholder="StateTax"/>
+    <input type="number" class="tax-input" id="reduceTaxInput" placeholder="ReduceTax"/>
 </div>
 
 <div class="dropdown-container">
@@ -92,6 +115,7 @@
         <option value="BALANCE">BALANCE</option>
         <option value="ADMINISTRATIVE_TXN">ADMINISTRATIVE_TXN</option>
     </select>
+
     <select id="optionPaymentType" onchange="paymentTypeDropdownChange()">
         <option value="CREDIT">CREDIT</option>
         <option value="DEBIT">DEBIT</option>
@@ -100,6 +124,7 @@
         <option value="GIFT">GIFT</option>
         <option value="LOYALTY">LOYALTY</option>
     </select>
+
     <select id="optionReceiptType" onchange="receiptDropdownChange()">
         <option value="No">No</option>
         <option value="Both">Both</option>
@@ -108,26 +133,30 @@
         <option value="">Empty(For Testing)</option>
     </select>
 </div>
-<approval-div >
+
+<approval-div>
     <label for="ApprovalScreenType"><small>Is Approval screen required?</small></label>
     <div class="dropdown-container">
-    <select id="ApprovalScreenType" onchange="approvalDropdownChange()">
-        <option value="Yes">Yes</option>
-        <option value="No">No</option>
-        <option value="No Tag(For Testing)">No Tag(For Testing)</option>
-        <option value="">Empty(For Testing)</option>
-    </select>
+        <select id="ApprovalScreenType" onchange="approvalDropdownChange()">
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+            <option value="No Tag(For Testing)">No Tag(For Testing)</option>
+            <option value="">Empty(For Testing)</option>
+        </select>
 
-    <input type="number" id="isvIdTextInput" placeholder="Enter IsvId" oninput="this.value = this.value.slice(0, 12)" />
+        <input type="number" id="isvIdTextInput" placeholder="Enter IsvId"
+               oninput="this.value = this.value.slice(0, 12)" />
     </div>
 </approval-div>
+
 <div class="dropdown-container">
     <button id="payButton" onclick="handleClick()">Make transaction</button>
     <button id="statusButton" onclick="handleStatusCheck()">Check txn Status</button>
 </div>
+
 <div id="urlDisplayResponse"></div>
+
 </body>
-</html>
 
 <script type="text/javascript">
 
@@ -152,6 +181,7 @@
         const avs = selectedAvsOption || 'YES';
         const removeLoader = selectedLoaderOption || 'YES';
         const receiptType = receiptSelected === "Empty(For Testing)" ? "" : receiptSelected || 'No';
+
         const tpn = document.getElementById("tpnTextInput").value;
         const amount = document.getElementById("amountTextInput").value;
         const tipInput = document.getElementById("tipInput").value;
@@ -159,125 +189,158 @@
         const hostType = selectedOption === "SETTLE" ? 'settle' : 'pay';
         const isvID = document.getElementById("isvIdTextInput").value;
         const merchantId = document.getElementById("merchantIdTextInput").value;
+
         const primaryColor = document.getElementById("primaryColortextInput").value;
         const secondaryColor = document.getElementById("secondaryColortextInput").value;
         const negativeColor = document.getElementById("negativeColortextInput").value;
         const font = document.getElementById("fonttextInput").value;
-        const approvalType = approvalSelected === "Empty(For Testing)" ? "" : approvalSelected === "No Tag(For Testing)" ? "No Tag" : approvalSelected || "Yes";
 
-        Android.selectedType(hostType,tpn,type,amount,tipInput,refId,receiptType,paymentType,approvalType,isvID, merchantId,primaryColor, secondaryColor, negativeColor,
-        font, avs, removeLoader);
+        const phoneNumber = document.getElementById("phoneNumberInput").value;
+        const email = document.getElementById("emailInput").value;
+
+        const approvalType =
+            approvalSelected === "Empty(For Testing)" ? "" :
+            approvalSelected === "No Tag(For Testing)" ? "No Tag" :
+            approvalSelected || "Yes";
+
+        const cityTax = document.getElementById("cityTaxInput").value;
+        const stateTax = document.getElementById("stateTaxInput").value;
+        const reducedStateTax = document.getElementById("reduceTaxInput").value;
+
+        Android.selectedType(
+            hostType, tpn, type, amount, tipInput, refId,
+            receiptType, paymentType, approvalType, isvID, merchantId,
+            primaryColor, secondaryColor, negativeColor, font,
+            avs, removeLoader,
+            cityTax, stateTax, reducedStateTax,
+            phoneNumber, email
+        );
     }
 
     function handleStatusCheck() {
         const type = 'STATUS';
+
         const paymentType = paymentTypeSelected || 'CREDIT';
         const receiptType = receiptSelected === "Empty(For Testing)" ? "" : receiptSelected || 'No';
+
         const tpn = document.getElementById("tpnTextInput").value;
         const amount = document.getElementById("amountTextInput").value;
         const tipInput = document.getElementById("tipInput").value;
         const refId = document.getElementById("refIdtextInput").value;
+
         const isvID = document.getElementById("isvIdTextInput").value;
         const merchantId = document.getElementById("merchantIdTextInput").value;
+
         const avs = selectedAvsOption || 'YES';
         const removeLoader = selectedLoaderOption || 'YES';
+
         const primaryColor = document.getElementById("primaryColortextInput").value;
         const secondaryColor = document.getElementById("secondaryColortextInput").value;
         const negativeColor = document.getElementById("negativeColortextInput").value;
         const font = document.getElementById("fonttextInput").value;
-        const approvalType = approvalSelected === "Empty(For Testing)" ? "" : approvalSelected === "No Tag(For Testing)" ? "No Tag" : approvalSelected || "Yes";
 
-        Android.selectedType("pay",tpn,type,amount,tipInput,refId,receiptType,paymentType,approvalType,isvID, merchantId,primaryColor, secondaryColor, negativeColor,
-        font, avs, removeLoader);
-    }
+        const phoneNumber = document.getElementById("phoneNumberInput").value;
+        const email = document.getElementById("emailInput").value;
 
-    function receiveResponse(response) {
-        console.log("Received response: " + response);
-        response = response;
-<!--        document.getElementById('urlDisplayResponse').innerText = response;-->
+        const approvalType =
+            approvalSelected === "Empty(For Testing)" ? "" :
+            approvalSelected === "No Tag(For Testing)" ? "No Tag" :
+            approvalSelected || "Yes";
+
+        const cityTax = document.getElementById("cityTaxInput").value;
+        const stateTax = document.getElementById("stateTaxInput").value;
+        const reducedStateTax = document.getElementById("reduceTaxInput").value;
+
+        Android.selectedType(
+            "pay", tpn, type, amount, tipInput, refId,
+            receiptType, paymentType, approvalType, isvID, merchantId,
+            primaryColor, secondaryColor, negativeColor, font,
+            avs, removeLoader,
+            cityTax, stateTax, reducedStateTax,
+            phoneNumber, email
+        );
     }
 
     function handleRegisterClick() {
         const tpn = document.getElementById("tpnTextInput").value;
-          const avs = selectedAvsOption || 'YES';
+        const avs = selectedAvsOption || 'YES';
         const removeLoader = selectedLoaderOption || 'YES';
+
         const primaryColor = document.getElementById("primaryColortextInput").value;
         const secondaryColor = document.getElementById("secondaryColortextInput").value;
         const negativeColor = document.getElementById("negativeColortextInput").value;
         const font = document.getElementById("fonttextInput").value;
-        Android.validateType("register",tpn,"",primaryColor, secondaryColor, negativeColor,
-        font, avs, removeLoader);
+
+        Android.validateType(
+            "register", tpn, "",
+            primaryColor, secondaryColor, negativeColor,
+            font, avs, removeLoader
+        );
     }
 
     function getTPNClick() {
-        Android.validateType("get","","getTPN");
+        Android.validateType("get", "", "getTPN");
     }
 
     function getDeviceClick() {
-        Android.validateType("get","","getDevice");
+        Android.validateType("get", "", "getDevice");
     }
 
     function handleDropdownChange() {
-         const dropdown = document.getElementById("optionDropdown");
-         selectedOption = dropdown.options[dropdown.selectedIndex].text;
+        const dropdown = document.getElementById("optionDropdown");
+        selectedOption = dropdown.options[dropdown.selectedIndex].text;
     }
 
-     function handleAvsChange() {
-         const avsdropdown = document.getElementById("optionAvs");
-         selectedAvsOption = avsdropdown.options[avsdropdown.selectedIndex].text;
+    function handleAvsChange() {
+        const avsdropdown = document.getElementById("optionAvs");
+        selectedAvsOption = avsdropdown.options[avsdropdown.selectedIndex].text;
     }
+
     function handleLoaderChange() {
-         const loaderdropdown = document.getElementById("optionLoader");
-         selectedLoaderOption = loaderdropdown.options[loaderdropdown.selectedIndex].text;
+        const loaderdropdown = document.getElementById("optionLoader");
+        selectedLoaderOption = loaderdropdown.options[loaderdropdown.selectedIndex].text;
     }
 
     function receiptDropdownChange() {
-         const dropdown = document.getElementById("optionReceiptType");
-         receiptSelected = dropdown.options[dropdown.selectedIndex].text;
+        const dropdown = document.getElementById("optionReceiptType");
+        receiptSelected = dropdown.options[dropdown.selectedIndex].text;
     }
 
     function paymentTypeDropdownChange() {
-    const dropdown = document.getElementById("optionPaymentType");
-    paymentTypeSelected = dropdown.options[dropdown.selectedIndex].text;
+        const dropdown = document.getElementById("optionPaymentType");
+        paymentTypeSelected = dropdown.options[dropdown.selectedIndex].text;
 
-    const optionDropdown = document.getElementById("optionDropdown");
-    optionDropdown.innerHTML = ""; // Clear existing options
+        const optionDropdown = document.getElementById("optionDropdown");
+        optionDropdown.innerHTML = "";
 
-    let options = [];
+        let options = [];
 
-    if (paymentTypeSelected === "GIFT") {
-        options = [
-            "ACTIVATE", "REDEEM", "REFUND", "RELOAD",
-            "INQUIRE", "DEACTIVATE", "REISSUE", "VOID"
-        ];
-    } else if (paymentTypeSelected === "LOYALTY") {
-        options = [
-            "ACTIVATE", "REDEEM", "REFUND", "RELOAD",
-            "INQUIRE", "DEACTIVATE", "REISSUE", "VOID", "ADDPOINTS"
-        ];
-    } else {
-        options = [
-            "SALE", "REFUND", "VOID", "TIP ADJUST",
-            "PRE_AUTH", "INC_AUTH", "TICKET",
-            "SETTLE", "BALANCE", "ADMINISTRATIVE_TXN"
-        ];
+        if (paymentTypeSelected === "GIFT") {
+            options = ["ACTIVATE","REDEEM","REFUND","RELOAD","INQUIRE","DEACTIVATE","REISSUE","VOID"];
+        } else if (paymentTypeSelected === "LOYALTY") {
+            options = ["ACTIVATE","REDEEM","REFUND","RELOAD","INQUIRE","DEACTIVATE","REISSUE","VOID","ADDPOINTS"];
+        } else {
+            options = [
+                "SALE","REFUND","VOID","TIP ADJUST","PRE_AUTH",
+                "INC_AUTH","TICKET","SETTLE","BALANCE","ADMINISTRATIVE_TXN"
+            ];
+        }
+
+        options.forEach(value => {
+            const option = document.createElement("option");
+            option.value = value;
+            option.text = value;
+            optionDropdown.appendChild(option);
+        });
+
+        selectedOption = options[0];
     }
-
-    options.forEach(value => {
-        const option = document.createElement("option");
-        option.value = value;
-        option.text = value;
-        optionDropdown.appendChild(option);
-    });
-
-    // Set selectedOption to the first one for consistency
-    selectedOption = options[0];
-}
-
 
     function approvalDropdownChange() {
-         const dropdown = document.getElementById("ApprovalScreenType");
-         approvalSelected = dropdown.options[dropdown.selectedIndex].text;
+        const dropdown = document.getElementById("ApprovalScreenType");
+        approvalSelected = dropdown.options[dropdown.selectedIndex].text;
     }
+
 </script>
 
+</html>

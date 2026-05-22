@@ -61,6 +61,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cancelOptionRequired:String
     private lateinit var editTextMerchantId: AppCompatEditText
     private lateinit var mmIdLinearLayout: LinearLayout
+    private lateinit var editTextCityTax: AppCompatEditText
+    private lateinit var editTextStateTax: AppCompatEditText
+    private lateinit var editTextReduceTax: AppCompatEditText
+    private lateinit var editTextPhone: AppCompatEditText
+    private lateinit var editTextEmail: AppCompatEditText
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -85,6 +90,11 @@ class MainActivity : AppCompatActivity() {
         editTextDisplayText = findViewById(R.id.et_displayMsg)
         editTextMerchantId = findViewById(R.id.editTextMerchantId)
         mmIdLinearLayout = findViewById(R.id.mmidLinear)
+        editTextCityTax = findViewById(R.id.cityTax)
+        editTextStateTax = findViewById(R.id.stateTax)
+        editTextReduceTax = findViewById(R.id.reduceTax)
+        editTextPhone = findViewById(R.id.ed_phone)
+        editTextEmail = findViewById(R.id.ed_email)
         val intentApplication = IntentApplication(applicationContext)
 
         val activityResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -708,6 +718,11 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("displayText", editTextDisplayText.text.toString())
         jsonRequest.put("displayAmount", displayAmount)
         jsonRequest.put("cancelOptionRequired", cancelOptionRequired)
+        jsonRequest.put("CityTax", editTextCityTax.text.toString())
+        jsonRequest.put("StateTax", editTextStateTax.text.toString())
+        jsonRequest.put("ReducedStateTax", editTextReduceTax.text.toString())
+        jsonRequest.put("PhoneNumber", editTextPhone.text.toString())
+        jsonRequest.put("EmailId", editTextEmail.text.toString())
         when (cardAcceptanceData) {
             "Empty(For Testing)" -> {
                 jsonRequest.put("cardAcceptanceTime","")

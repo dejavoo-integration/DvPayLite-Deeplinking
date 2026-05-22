@@ -43,7 +43,7 @@ public class WebAppInterface {
     }
 
     @JavascriptInterface
-    public void selectedType(String hostType, String tpn, String type, String amount, String tip, String refId, String receiptType, String paymentType, String approvalType, String isvID, String merchantId) {
+    public void selectedType(String hostType, String tpn, String type, String amount, String tip, String refId, String receiptType, String paymentType, String approvalType, String isvID, String merchantId, String cityTax, String stateTax, String reducedStateTax,String phoneNumber,String email) {
         Log.d("WebAppInterface", "Received selected type & item: " + hostType + type + amount + receiptType);
         mcontext.tpn = tpn;
         mcontext.amount = amount;
@@ -55,13 +55,18 @@ public class WebAppInterface {
         mcontext.approvalType = approvalType;
         mcontext.isvID = isvID;
         mcontext.merchantId = merchantId;
+        mcontext.cityTax = cityTax;
+        mcontext.stateTax = stateTax;
+        mcontext.reducedStateTax = reducedStateTax;
+        mcontext.phoneNumber = phoneNumber;
+        mcontext.emailId = email;
         mcontext.validateType(hostType);
     }
 
     @JavascriptInterface
     public void selectedType(String hostType, String tpn, String type, String amount, String tip, String refId, String receiptType,
                              String paymentType, String approvalType, String isvID, String merchantId, String primaryColor, String secondaryColor,
-                             String negativeColor,String font, String AVS, String loader) {
+                             String negativeColor,String font, String AVS, String loader, String cityTax, String stateTax, String reducedStateTax,String phoneNumber,String email) {
         Log.d("WebAppInterface", "Received selected type & item: " + hostType + type + amount + receiptType);
         mcontext.tpn = tpn;
         mcontext.amount = amount;
@@ -79,6 +84,11 @@ public class WebAppInterface {
         mcontext.fontType = font;
         mcontext.avs = AVS;
         mcontext.loader = loader;
+        mcontext.cityTax = cityTax;
+        mcontext.stateTax = stateTax;
+        mcontext.reducedStateTax = reducedStateTax;
+        mcontext.phoneNumber = phoneNumber;
+        mcontext.emailId = email;
         mcontext.validateType(hostType);
     }
 

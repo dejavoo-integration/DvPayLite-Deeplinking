@@ -40,6 +40,11 @@ public class SampleUriActivity extends AppCompatActivity {
     String fontType;
     String avs;
     String loader;
+    String cityTax;
+    String stateTax;
+    String reducedStateTax;
+    String phoneNumber = "";
+    String emailId = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -358,7 +363,14 @@ public class SampleUriActivity extends AppCompatActivity {
             if (!approvalType.equals("No Tag")) {
                 jsonRequest.put("isTxnStatusScreenRequired", approvalType);
             }
+            Log.d("getSaleJsonData-Tax-" ,cityTax + stateTax + reducedStateTax );
+            Log.d("getSaleJsonData-EmailPhone-" ,emailId + "|" +phoneNumber );
             jsonRequest.put("IsvId", isvID);
+            jsonRequest.put("CityTax", cityTax );
+            jsonRequest.put("StateTax", stateTax );
+            jsonRequest.put("ReducedStateTax", reducedStateTax);
+            jsonRequest.put("PhoneNumber", phoneNumber );
+            jsonRequest.put("EmailId", emailId );
 
             JSONObject customUIObj = new JSONObject();
             customUIObj.put("primaryColor", primaryColor);

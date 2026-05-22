@@ -1884,14 +1884,14 @@ class CartActivity : AppCompatActivity() {
             val currentMode = PrefsHelper.getMode(this)
 
             // Show configure only for DeepLink
-            menu.findItem(R.id.nav_configure).isVisible = currentMode == "DEEPLINK"
+//            menu.findItem(R.id.nav_configure).isVisible = currentMode == "DEEPLINK"
             menu.findItem(R.id.nav_statusCheck).isVisible = currentMode != "DEEPLINK"
 
-            if (PrefsHelper.getMode(context) == "DEEPLINK") {
+           /* if (PrefsHelper.getMode(context) == "DEEPLINK") {
                 imageViewMore.visibility = View.VISIBLE
             } else {
                 imageViewMore.visibility = View.GONE
-            }
+            }*/
 
         }
 
