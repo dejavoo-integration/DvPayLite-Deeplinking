@@ -35,6 +35,11 @@
         android:iconTint="@color/icon_purple"
         android:title="Check Status" />
     <item
+        android:id="@+id/nav_deviceInfo"
+        android:icon="@drawable/ic_settlement"
+        android:iconTint="@color/icon_purple"
+        android:title="Terminal Info" />
+    <item
         android:id="@+id/nav_configure"
         android:icon="@drawable/configure"
         android:title="Configure" />

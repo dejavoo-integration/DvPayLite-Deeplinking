@@ -18,85 +18,85 @@ class LoadItems {
         ),
         items = mutableListOf(
             Item(
-                R.drawable.ic_icecream_pista, "Gelato Ice-Cream", 100.00, 0, "", listOf(CustomInfo("tax", 0.00), CustomInfo("Discount", 0.00)),listOf(
+                R.drawable.ic_icecream_pista, "Gelato Ice-Cream", 100.00,"10001", 0, "", listOf(CustomInfo("tax", 0.00), CustomInfo("Discount", 0.00)),listOf(
                     Modifier("Toppings", listOf(Option("Pista", 100.00, 1)))
                 )
             ),
             Item(
-                R.drawable.ic_cup_choco2, "Italian Ice", 70.00, 0, "", listOf(CustomInfo("tax", 0.00)),listOf(
+                R.drawable.ic_cup_choco2, "Italian Ice", 70.00,"10002", 0, "", listOf(CustomInfo("tax", 0.00)),listOf(
                     Modifier("Toppings", listOf(Option("Pista", 70.00, 1)))
                 )
             ),
             Item(
-                R.drawable.ic_biscuit, "Ice Cream Biscuit", 5.00, 0, "", listOf(CustomInfo("tax", 0.00)),listOf(
+                R.drawable.ic_biscuit, "Ice Cream Biscuit", 5.00,"10003", 0, "", listOf(CustomInfo("tax", 0.00)),listOf(
                     Modifier("Toppings", listOf(Option("Pista", 0.50, 1)))
                 )
             ),
             Item(
-                R.drawable.ic_orange, "Orange Ice Cream", 3.00, 0, "", listOf(CustomInfo("tax", 0.00)),listOf(
+                R.drawable.ic_orange, "Orange Ice Cream", 3.00,"10004", 0, "", listOf(CustomInfo("tax", 0.00)),listOf(
                     Modifier("Toppings", listOf(Option("Pista", 0.30, 1)))
                 )
             ),
             Item(
-                R.drawable.ic_ic, "Ice Special", 7.00, 0, "", listOf(CustomInfo("tax", 0.00)),listOf(
+                R.drawable.ic_ic, "Ice Special", 7.00,"10005", 0, "", listOf(CustomInfo("tax", 0.00)),listOf(
                     Modifier("Toppings", listOf(Option("Pista", 0.70, 1)))
                 )
             ),
             Item(
-                R.drawable.ic_strawberry, "Frozen Yogurt", 15.00, 0, "",listOf(CustomInfo("tax", 0.00)),listOf(
+                R.drawable.ic_strawberry, "Frozen Yogurt", 15.00,"10006", 0, "",listOf(CustomInfo("tax", 0.00)),listOf(
                     Modifier("Toppings", listOf(Option("Pista", 0.15, 1)))
                 )
             ),
             Item(
-                R.drawable.ic_pizza2, "Pizza", 250.00, 0, "", listOf(CustomInfo("tax",0.00)), listOf(
+                R.drawable.ic_pizza2, "Pizza", 250.00,"10007", 0, "", listOf(CustomInfo("tax",0.00)), listOf(
                     Modifier("Pizza", listOf(Option("Chicj", 250.00, 1)))
                 )
             ),
             Item(
-                R.drawable.ic_burger, "Burger", 150.00, 0,"", listOf(CustomInfo("tax",0.00)), listOf(
+                R.drawable.ic_burger, "Burger", 150.00,"10008", 0,"", listOf(CustomInfo("tax",0.00)), listOf(
                     Modifier("Modifier", listOf(Option("Value 2", 150.00, 1)))
                 )
             ),
             Item(
-                R.drawable.ic_strwberry_faluda, "Japanese Mochi Ice-Cream ", 25.00, 0, "", listOf(
+                R.drawable.ic_strwberry_faluda, "Japanese Mochi Ice-Cream ", 25.00,"10009", 0, "", listOf(
                     CustomInfo("tax",0.00)
                 ), listOf(
                     Modifier("Flavors", listOf(Option("Vanilla", 25.00, 1)))
                 )
             ),
             Item(
-                R.drawable.ic_food_cream, "cream", 80.00, 0, "", listOf(CustomInfo("tax",0.00)), listOf(
+                R.drawable.ic_food_cream, "cream", 80.00,"10011", 0, "", listOf(CustomInfo("tax",0.00)), listOf(
                     Modifier("Flavors", listOf(Option("Vanilla", 80.00, 1)))
                 )
             ),
             Item(
-                R.drawable.ic_cream_pair, "Cream Pair", 150.00, 0, "", listOf(CustomInfo("tax",0.00)), listOf(
+                R.drawable.ic_cream_pair, "Cream Pair", 150.00,"10021", 0, "", listOf(CustomInfo("tax",0.00)), listOf(
                     Modifier("Flavors", listOf(Option("Vanilla", 150.00, 1)))
                 )
             ),
             Item(
-                R.drawable.ic_faluda, "Ice Falooda", 25.56, 0, "", listOf(CustomInfo("tax",0.00)), listOf(
+                R.drawable.ic_faluda, "Ice Falooda", 25.56,"10031", 0, "", listOf(CustomInfo("tax",0.00)), listOf(
                     Modifier("Flavors", listOf(Option("Vanilla", 25.56, 1)))
                 )
             ),
             Item(
-                R.drawable.ic_oreo, "Oreo Ice cream", 25.56, 0, "", listOf(CustomInfo("tax",0.00)), listOf(
+                R.drawable.ic_oreo, "Oreo Ice cream", 25.56,"10041", 0, "", listOf(CustomInfo("tax",0.00)), listOf(
                     Modifier("Flavors", listOf(Option("Vanilla", 25.56, 1)))
                 )
             ),
 
             Item(
-                R.drawable.ic_icream4, "Ice cream", 25.56, 0, "", listOf(CustomInfo("tax",0.00)), listOf(
+                R.drawable.ic_icream4, "Ice cream", 25.56,"10051", 0, "", listOf(CustomInfo("tax",0.00)), listOf(
                     Modifier("Flavors", listOf(Option("Vanilla", 25.56, 1)))
                 )
             ),
             Item(
-                R.drawable.ic_icream3, "Strawberry Cream", 10.00, 0, "", listOf(CustomInfo("tax", 9.00)),listOf(
+                R.drawable.ic_icream3, "Strawberry Cream", 10.00,"10061", 0, "", listOf(CustomInfo("tax", 9.00)),listOf(
                     Modifier("Toppings", listOf(Option("Caramel Drizzle", 10.00, 1)))
                 )
             ),
             Item(
-                R.drawable.ic_icreambb, "Ice cream", 35.10, 0,"", listOf(CustomInfo("tax",0.00)), listOf(
+                R.drawable.ic_icreambb, "Ice cream", 35.10,"10071", 0,"", listOf(CustomInfo("tax",0.00)), listOf(
                     Modifier("Flavors", listOf(Option("Blueberry", 233.00, 1)))
                 )
             )
@@ -111,6 +111,7 @@ class LoadItems {
         const val VOID: String = "VOID"
         const val TICKET: String = "TICKET"
         const val SETTLEMENT: String = "SETTLEMENT"
+        const val DEVICEINFO:String = "GetTerminalInfo"
     }
 
     fun loadTransactionTypes(context:Context,transactionTypesRecyclerView:RecyclerView,typeSelectionInterface: TypeSelectionInterface){
@@ -121,6 +122,7 @@ class LoadItems {
         transactionTypesList.add(VOID)
         transactionTypesList.add(TICKET)
         transactionTypesList.add(SETTLEMENT)
+        transactionTypesList.add(DEVICEINFO)
 
         transactionTypesRecyclerView.layoutManager = LinearLayoutManager(context,
             LinearLayoutManager.HORIZONTAL,false)
