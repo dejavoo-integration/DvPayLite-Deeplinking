@@ -24,10 +24,10 @@ import com.app.dvpaylitedeeplink.MyApp
 import com.app.dvpaylitedeeplink.R
 import com.app.dvpaylitedeeplink.UsbConnectionState
 import com.app.dvpaylitedeeplink.UsbPosCallback
+import com.app.dvpaylitedeeplink.UsbPosManager
 import com.app.dvpaylitedeeplink.UsbStatusListener
 import com.app.dvpaylitedeeplink.cart.PrefsHelper
 import com.app.dvpaylitedeeplink.logger.LoggerManager
-import com.app.dvpaylitedeeplink.usb.UsbPosManager
 import com.denovo.app.invokeiposgo.interfaces.TerminalAddListener
 import com.denovo.app.invokeiposgo.launcher.IntentApplication
 import org.json.JSONObject
@@ -596,8 +596,12 @@ class RegistrationActivity : AppCompatActivity() {
                 val usbRegisterId = edtUsbRegisterId.text.toString().trim()
                 val tpnNumber = edtUsbTPNNumber.text.toString().trim()
 
-                if (!(usbRegisterId.isEmpty() || tpnNumber.isEmpty())) {
-                    edtUsbRegisterId.error = "Enter Register ID or Tpn Number"
+                if ((usbRegisterId.isEmpty() && tpnNumber.isEmpty())) {
+                    if(usbRegisterId.isEmpty()){
+                        edtUsbRegisterId.error = "Enter Register ID  Number"
+                    }else if(tpnNumber.isEmpty()){
+                        edtUsbTPNNumber.error = "Enter Tpn Number"
+                    }
                     return
                 }
 

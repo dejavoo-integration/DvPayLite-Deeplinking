@@ -1,4 +1,4 @@
-package com.app.dvpaylitedeeplink.usb
+package com.app.dvpaylitedeeplink
 
 import android.app.PendingIntent
 import android.content.*

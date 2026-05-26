@@ -1,7 +1,6 @@
 package com.app.dvpaylitedeeplink
 
 import android.app.Application
-import com.app.dvpaylitedeeplink.usb.UsbPosManager
 
 class MyApp : Application() {
 

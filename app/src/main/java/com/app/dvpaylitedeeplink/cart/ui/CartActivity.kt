@@ -40,6 +40,7 @@ import com.app.dvpaylitedeeplink.MainActivity
 import com.app.dvpaylitedeeplink.MyApp
 import com.app.dvpaylitedeeplink.R
 import com.app.dvpaylitedeeplink.UsbPosCallback
+import com.app.dvpaylitedeeplink.UsbPosManager
 import com.app.dvpaylitedeeplink.Utils
 import com.app.dvpaylitedeeplink.cart.PrefsHelper
 import com.app.dvpaylitedeeplink.cart.adapters.CartAdapter
@@ -49,7 +50,6 @@ import com.app.dvpaylitedeeplink.cart.models.LoadItems
 import com.app.dvpaylitedeeplink.cart.ui.RegistrationActivity.RequestFormat
 import com.app.dvpaylitedeeplink.dialogs.TxnCompletePopUp
 import com.app.dvpaylitedeeplink.logger.LoggerManager
-import com.app.dvpaylitedeeplink.usb.UsbPosManager
 import com.denovo.app.invokeiposgo.interfaces.SettlementListener
 import com.denovo.app.invokeiposgo.interfaces.TransactionListener
 import com.denovo.app.invokeiposgo.launcher.IntentApplication
@@ -674,7 +674,11 @@ class CartActivity : AppCompatActivity() {
                     ticketAmt,
                     requestFormat
                 )
-                usbRequest(spinRequest)
+                if (PrefsHelper.isUsbBulkEnabled(this) && selectedTransactionType == LoadItems.SALE) {
+                    usbBulkRequest(spinRequest)
+                } else {
+                    usbRequest(spinRequest)
+                }
             } else if (transactionMode == "CLOUD") {
                 spinRequest = getPayload(
                     EXTERNAL_RRN_PREFIX + externalRRN,
@@ -1777,12 +1781,17 @@ class CartActivity : AppCompatActivity() {
 
 
 
+    private val transactionTimeout: Long = 30000 // 120 seconds
+
     fun usbRequest(request: String) {
+
         try {
             activity.runOnUiThread {
-         Log.i("usbrequest","usbRequest Main request : ${request.toString()}")
-         Log.i("usbrequest","usbRequest Main request : ${usbPosManager?.isConnected()}")
-                /*  CHECK USB CONNECTION FIRST */
+
+                Log.i("usbrequest", "usbRequest Main request : $request")
+                Log.i("usbrequest", "usbRequest Main connected : ${usbPosManager?.isConnected()}")
+
+                // CHECK USB CONNECTION
                 if (usbPosManager?.isConnected() != true) {
 
                     Toast.makeText(
@@ -1795,79 +1804,218 @@ class CartActivity : AppCompatActivity() {
 
                     return@runOnUiThread
                 }
+
                 var isTransactionRunning = true
-            val progressDialog = android.app.AlertDialog.Builder(this)
-                .setTitle("Please wait")
-                .setMessage("Processing transaction...")
-                .setNegativeButton("Cancel") { dialog, _ ->
-                    dialog.dismiss()
-                    if (isTransactionRunning) {
-                        val requestFormat = PrefsHelper.getRequestFormat(context)
-                        val abortRequest = getAbortPayload(registerId,usbTpn,requestFormat)
-                        Log.i("USB_ABORT", "Abort Request: $abortRequest")
-                        LoggerManager.log(this@CartActivity, "Sending Abort Request: $abortRequest")
+                var isResponseReceived = false
 
-                        usbPosManager?.sendAndReceive(abortRequest, object : UsbPosCallback {
+                val progressDialog = android.app.AlertDialog.Builder(this)
+                    .setTitle("Please wait")
+                    .setMessage("Processing transaction...")
+                    .setCancelable(false)
+                    .setNegativeButton("Cancel") { dialog, _ ->
 
-                            override fun onResult(response: String?, totalBytes: Int) {
-                                runOnUiThread {
+                        dialog.dismiss()
 
-                                    Log.i("USB_ABORT", "Abort Response: $response")
-                                    LoggerManager.log(this@CartActivity, "Abort Response: $response")
+                        if (isTransactionRunning) {
 
-                                    Toast.makeText(
-                                        this@CartActivity,
-                                        response ?: "Abort sent",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                            }
-                        })
+                            isTransactionRunning = false
+
+                            sendAbortRequest()
+                        }
                     }
-                }
-                .create()
-            progressDialog.show()
-            LoggerManager.log(this@CartActivity, "Processing Dialog open")
-            LoggerManager.log(this, "Processing USB Request : ${request}")
-            usbPosManager?.sendAndReceive(request, object : UsbPosCallback {
+                    .create()
 
-                override fun onResult(response: String?, totalBytes: Int) {
-                    runOnUiThread {
+                progressDialog.show()
+
+                LoggerManager.log(this@CartActivity, "Processing Dialog open")
+                LoggerManager.log(this, "Processing USB Request : $request")
+
+                // TIMEOUT HANDLER
+                val handler = android.os.Handler(android.os.Looper.getMainLooper())
+
+                val timeoutRunnable = Runnable {
+
+                    if (!isResponseReceived && isTransactionRunning) {
+
+                        isTransactionRunning = false
+
+                        LoggerManager.log(
+                            this@CartActivity,
+                            "Transaction timeout"
+                        )
 
                         if (progressDialog.isShowing) {
-                            LoggerManager.log(this@CartActivity, "Processing Dialog Close")
                             progressDialog.dismiss()
                         }
+                        val requestFormat = PrefsHelper.getRequestFormat(context)
+                        var timeoutResponse = ""
+                        if (requestFormat == RequestFormat.XML) {
+                            val refId = getTagValue(request, "RefId")
 
-                        if (response != null) {
-                            Log.i("USB", "Usb response ${response}")
-                            LoggerManager.log(this@CartActivity, "USB Result  : ${response}")
-                            Toast.makeText(
-                                this@CartActivity,
-                                response,
-                                Toast.LENGTH_LONG
-                            ).show()
-                            paymentType = "Credit"
+                            val paymentTypeValue = getTagValue(request, "PaymentType")
+
+                            val transTypeValue = getTagValue(request, "TransType")
+
+                            val tpnValue = getTagValue(request, "Tpn")
+                            // CREATE TIMEOUT RESPONSE XML
+                            timeoutResponse = """
+            <response>
+                <Message>Canceled</Message>
+                <RefId>${refId}</RefId>
+                <TPN>${tpnValue}</TPN>
+                <ResultCode>1</ResultCode>
+                <RespMSG>Transaction%20TimeOut</RespMSG>
+                <PaymentType>${paymentTypeValue}</PaymentType>
+                <Voided>false</Voided>
+                <TransType>${transTypeValue}</TransType>
+            </response>
+        """.trimIndent()
                         } else {
-                            LoggerManager.log(this@CartActivity, "USB Result  : No POS response")
-                            if (progressDialog.isShowing) {
-                                LoggerManager.log(this@CartActivity, "Processing Dialog Close")
-                                progressDialog.dismiss()
+                            val jsonObject = JSONObject(request)
+
+                            val timeoutResponse1 = JSONObject().apply {
+
+                                put("Message", "Canceled")
+                                put("RefId", jsonObject.optString("RefId"))
+                                put("TPN", jsonObject.optString("Tpn"))
+                                put("ResultCode", "1")
+                                put("RespMSG", "Transaction TimeOut")
+                                put("PaymentType", jsonObject.optString("PaymentType"))
+                                put("Voided", false)
+                                put("TransType", jsonObject.optString("TransType"))
                             }
-                            Toast.makeText(this@CartActivity,
-                                "No POS response",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            paymentType = "Credit"
+
+                            timeoutResponse = timeoutResponse1.toString()
+
                         }
+
+
+                        Log.i("USB_TIMEOUT", timeoutResponse)
+
+                        LoggerManager.log(
+                            this@CartActivity,
+                            "Timeout Response : $timeoutResponse"
+                        )
+                        Toast.makeText(
+                            this@CartActivity,
+                            "Transaction timeout",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        isResponseReceived = true
+                        isTransactionRunning = false
+                        // HANDLE SAME AS NORMAL RESPONSE
+                        paymentType = "Credit"
                     }
                 }
-            })
+
+                // START TIMEOUT
+                handler.postDelayed(timeoutRunnable, transactionTimeout)
+
+                usbPosManager?.sendAndReceive(request, object : UsbPosCallback {
+
+                    override fun onResult(response: String?, totalBytes: Int) {
+
+                        runOnUiThread {
+
+                            // STOP TIMEOUT
+                            handler.removeCallbacks(timeoutRunnable)
+
+                            if (!isTransactionRunning) {
+                                return@runOnUiThread
+                            }
+
+                            isResponseReceived = true
+                            isTransactionRunning = false
+
+                            if (progressDialog.isShowing) {
+                                LoggerManager.log(
+                                    this@CartActivity,
+                                    "Processing Dialog Close"
+                                )
+                                progressDialog.dismiss()
+                            }
+
+                            if (response != null) {
+
+                                Log.i("USB", "Usb response $response")
+
+                                LoggerManager.log(
+                                    this@CartActivity,
+                                    "USB Result : $response"
+                                )
+
+                                Toast.makeText(
+                                    this@CartActivity,
+                                    response,
+                                    Toast.LENGTH_LONG
+                                ).show()
+
+                                paymentType = "Credit"
+
+                            } else {
+
+                                LoggerManager.log(
+                                    this@CartActivity,
+                                    "USB Result : No POS response"
+                                )
+
+                                Toast.makeText(
+                                    this@CartActivity,
+                                    "No POS response",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+
+                                paymentType = "Credit"
+                            }
+                        }
+                    }
+                })
             }
+
         } catch (e: Exception) {
 
-
+            Log.e("USB_ERROR", "Exception : ${e.message}", e)
         }
+    }
+
+    private fun sendAbortRequest() {
+
+        val requestFormat = PrefsHelper.getRequestFormat(context)
+
+        val abortRequest = getAbortPayload(
+            registerId,
+            usbTpn,
+            requestFormat
+        )
+
+        Log.i("USB_ABORT", "Abort Request: $abortRequest")
+
+        LoggerManager.log(
+            this@CartActivity,
+            "Sending Abort Request: $abortRequest"
+        )
+
+        usbPosManager?.sendAndReceive(abortRequest, object : UsbPosCallback {
+
+            override fun onResult(response: String?, totalBytes: Int) {
+
+                runOnUiThread {
+
+                    Log.i("USB_ABORT", "Abort Response: $response")
+
+                    LoggerManager.log(
+                        this@CartActivity,
+                        "Abort Response: $response"
+                    )
+
+                    Toast.makeText(
+                        this@CartActivity,
+                        response ?: "Abort sent",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        })
     }
 
         private fun updateMenuVisibility() {
@@ -2166,7 +2314,7 @@ class CartActivity : AppCompatActivity() {
                 Toast.makeText(this, "USB disconnected", Toast.LENGTH_LONG).show()
                 return
             }
-            var request1 = "<request><PaymentType>Credit</PaymentType><TransType>Sale</TransType><Amount>1.00</Amount><Tip>0.00</Tip><CashbackAmount>0.00</CashbackAmount><Frequency>OneTime</Frequency><CustomFee>0.00</CustomFee><RefId>${generateTxnId()}</RefId><RegisterId>$registerId</RegisterId><AuthKey>Gw2sQBFegf</AuthKey><PrintReceipt>No</PrintReceipt><SigCapture>No</SigCapture></request>"
+            var request1 = "<request><PaymentType>Credit</PaymentType><TransType>Sale</TransType><Amount>1.00</Amount><Tip>0.00</Tip><CashbackAmount>0.00</CashbackAmount><Frequency>OneTime</Frequency><CustomFee>0.00</CustomFee><RefId>${generateTxnId()}</RefId><AuthKey>Gw2sQBFegf</AuthKey><PrintReceipt>No</PrintReceipt><Tpn>${usbTpn}</Tpn><SigCapture>No</SigCapture></request>"
             val modifiedRequest = request1.replace(
                 "<RefId>.*?</RefId>".toRegex(),
                 "<RefId>bulk_$i</RefId>"
@@ -2267,6 +2415,35 @@ class CartActivity : AppCompatActivity() {
         xmlBuilder.append("<TransType>").append("AbortTransaction").append("</TransType>")
         xmlBuilder.append("</request>")
         return xmlBuilder.toString()
+    }
+
+    private fun getTagValue(xml: String, tag: String): String {
+
+        return try {
+
+            val factory = javax.xml.parsers.DocumentBuilderFactory.newInstance()
+            val builder = factory.newDocumentBuilder()
+
+            val inputStream = org.xml.sax.InputSource(
+                java.io.StringReader(xml)
+            )
+
+            val document = builder.parse(inputStream)
+
+            val nodeList = document.getElementsByTagName(tag)
+
+            if (nodeList.length > 0) {
+                nodeList.item(0).textContent ?: ""
+            } else {
+                ""
+            }
+
+        } catch (e: Exception) {
+
+            Log.e("XML_PARSE", "Error parsing tag $tag", e)
+
+            ""
+        }
     }
 
 }

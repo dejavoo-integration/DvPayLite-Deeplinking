@@ -27,10 +27,10 @@ import com.app.dvpaylitedeeplink.MyApp
 import com.app.dvpaylitedeeplink.R
 import com.app.dvpaylitedeeplink.UsbConnectionState
 import com.app.dvpaylitedeeplink.UsbPosCallback
+import com.app.dvpaylitedeeplink.UsbPosManager
 import com.app.dvpaylitedeeplink.UsbStatusListener
 import com.app.dvpaylitedeeplink.cart.PrefsHelper
 import com.app.dvpaylitedeeplink.logger.LoggerManager
-import com.app.dvpaylitedeeplink.usb.UsbPosManager
 import com.google.android.material.card.MaterialCardView
 import com.hoho.android.usbserial.driver.UsbSerialDriver
 import com.hoho.android.usbserial.driver.UsbSerialPort
