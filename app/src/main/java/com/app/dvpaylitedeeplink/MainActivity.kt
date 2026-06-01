@@ -1095,6 +1095,7 @@ class MainActivity : AppCompatActivity() {
         val jsonRequest = JSONObject()
         jsonRequest.put("type", txnType)
         jsonRequest.put("applicationType", "DVPAYLITE")
+        jsonRequest.put("paymentType", paymentType)
         jsonRequest.put("refId", transactionRefId.text.toString())
         jsonRequest.put("receiptType", receiptType)
         jsonRequest.put("IsvId", editTextIsvID.text.toString())

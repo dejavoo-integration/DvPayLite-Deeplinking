@@ -346,6 +346,7 @@ public class SampleUriActivity extends AppCompatActivity {
             jsonRequest.put("applicationType", "DVPAYLITE");
             jsonRequest.put("refId", refId);
             jsonRequest.put("receiptType", receiptType);
+            jsonRequest.put("paymentType", paymentType);
             jsonRequest.put("MerchantId", merchantId);
             jsonRequest.put("TPN", tpn);
             jsonRequest.put("CustomerMobile", phoneNumber);
