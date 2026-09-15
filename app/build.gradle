@@ -16,38 +16,17 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    signingConfigs {
-        release {
-            storeFile file("kozen.jks")
-            storePassword "kozen"
-            keyAlias "xc-buildsrv"
-            keyPassword "kozen"
-            v1SigningEnabled true
-            v2SigningEnabled true
-        }
-        debug {
-            storeFile file("kozen.jks")
-            storePassword "kozen"
-            keyAlias "xc-buildsrv"
-            keyPassword "kozen"
-            v1SigningEnabled true
-            v2SigningEnabled true
-        }
-    }
-
     buildFeatures {
         buildConfig = true
     }
 
     buildTypes {
         debug {
-            signingConfig signingConfigs.debug
             minifyEnabled false
             /*applicationIdSuffix = ".dvcart"*/
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         release {
-            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
