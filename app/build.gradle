@@ -15,34 +15,13 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    signingConfigs {
-        debug {
-            storeFile file("kozen_p8_dvpaylite.jks")
-            storePassword "Kozen2022"
-            keyAlias "kozenossign"
-            keyPassword "Kozen2022"
-            v1SigningEnabled true
-            v2SigningEnabled true
-        }
-        debug {
-            storeFile file("kozen_p8_dvpaylite.jks")
-            storePassword "Kozen2022"
-            keyAlias "kozenossign"
-            keyPassword "Kozen2022"
-            v1SigningEnabled true
-            v2SigningEnabled true
-        }
-    }
-
     buildTypes {
         debug {
-            signingConfig signingConfigs.debug
             minifyEnabled false
             /*applicationIdSuffix = ".dvcart"*/
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         release {
-            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
