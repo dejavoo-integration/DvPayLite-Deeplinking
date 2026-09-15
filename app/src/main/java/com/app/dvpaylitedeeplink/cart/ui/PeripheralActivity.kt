@@ -1,28 +1,46 @@
 package com.app.dvpaylitedeeplink.cart.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
+import android.util.TypedValue
+import android.view.Gravity
+import android.view.View
+import android.view.ViewGroup
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.app.dvpaylitedeeplink.R
 import com.app.dvpaylitedeeplink.logger.LoggerManager
-import com.app.dvpaylitedeeplink.printer.launcher.IntentPrintApplication
-import com.app.dvpaylitedeeplink.printer.models.PrintErrorResult
-import com.app.dvpaylitedeeplink.printer.models.PrintResult
 import com.app.dvpaylitedeeplink.swipereader.common.MsrReader
 import com.denovo.app.invokekozen.printer.interfaces.PrintLauncherInterface
+import com.denovo.app.invokekozen.printer.launcher.IntentPrintApplication
 import com.denovo.app.invokekozen.scanner.IScannerResult
 import com.denovo.app.invokekozen.scanner.ScannerActivity
+import com.denovo.app.invokekozen.secondarydisplay.SecondaryDisplay
 import com.denovo.app.invokekozen.swipereader.listeners.SwipeResult
+import java.io.File
+
 
 class PeripheralActivity : AppCompatActivity() {
 
     companion object {
         private const val SCAN_TIMEOUT = 30000   // 30s
+        private const val REQ_READ_IMAGE = 1001
+        private const val SD_TAG = "SecondaryDisplay"
+        private const val SD_INIT_TIMEOUT_MS = 5000L
     }
 
     private lateinit var scannerStartBtn: AppCompatButton
@@ -33,17 +51,39 @@ class PeripheralActivity : AppCompatActivity() {
     private lateinit var scannerData: AppCompatTextView
     private lateinit var printStatus: AppCompatTextView
     private lateinit var swipeData: AppCompatTextView
+    private var btnShowImage: AppCompatButton? = null
+    private var btnShowView: AppCompatButton? = null
+    private var btnClearDisplay: AppCompatButton? = null
+    private var isLibLoadedSD = false
+    private var sdInitMessage: String? = null
+    private var sdContentShowing = false
+    private var pendingDisplayAction: (() -> Unit)? = null
+    private val sdHandler = Handler(Looper.getMainLooper())
+    private val sdInitTimeout = Runnable {
+        if (pendingDisplayAction != null) {
+            pendingDisplayAction = null
+            reportShowImageFailure(
+                "Secondary display init timed out: ${sdInitMessage ?: "no response from component service"}"
+            )
+        }
+    }
+    val displayObject = SecondaryDisplay()
+
 
 
     private lateinit var  scannerActivity: ScannerActivity
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.i("My_tag","check device model: ${ Build.MODEL}")
-        if( Build.MODEL == "P18"){
+        if (Build.MODEL == "P18") {
             scannerActivity = ScannerActivity(this, iscanResult, SCAN_TIMEOUT)
             setContentView(R.layout.activity_peripheral)
-        }else{
-            scannerActivity = ScannerActivity(iscanResult, SCAN_TIMEOUT)
+        } else {
+            // K1352 (Kozen P8) and other non-P18 devices
+            if (Build.MODEL == "P8") {
+                scannerActivity = ScannerActivity(iscanResult, SCAN_TIMEOUT)
+            }
+            initSecondaryDisplay()
             setContentView(R.layout.activity_peripheral_p8)
         }
         LoggerManager.log(this, "Open peripheralActivity")
@@ -56,6 +96,27 @@ class PeripheralActivity : AppCompatActivity() {
         scannerData = findViewById(R.id.scanner_result)
         printStatus = findViewById(R.id.printer_result)
         swipeData = findViewById(R.id.swipe_result)
+        btnShowImage = findViewById(R.id.btn_show_image)
+        btnShowView = findViewById(R.id.btn_show_view)
+        btnClearDisplay = findViewById(R.id.btn_clear_display)
+
+        btnShowImage?.setOnClickListener {
+            val path = (Environment.getExternalStorageDirectory().getAbsolutePath()
+                    + "/Download/sample_378x172.gif")
+            Log.d("Sample", "path --$path")
+            LoggerManager.log(this, "path --$path")
+            showOnSecondaryDisplay(path)
+        }
+
+        btnShowView?.setOnClickListener {
+            LoggerManager.log(this, "Clicked Show Text Layout Button")
+            showWelcomeLayoutOnSecondaryDisplay()
+        }
+
+        btnClearDisplay?.setOnClickListener {
+            LoggerManager.log(this, "Clicked Clear Display Button")
+            clearSecondaryDisplay()
+        }
 
 
         ivBack.setOnClickListener {
@@ -274,5 +335,188 @@ class PeripheralActivity : AppCompatActivity() {
         scannerData.text = ""
         printStatus.text = ""
         swipeData.text = ""
+    }
+
+    private fun initSecondaryDisplay() {
+        displayObject.init(this) { code, message ->
+            runOnUiThread {
+                sdHandler.removeCallbacks(sdInitTimeout)
+                isLibLoadedSD = code == 0
+                sdInitMessage = message
+                if (isLibLoadedSD) {
+                    Log.i(SD_TAG, "init ok: $message")
+                } else {
+                    Log.e(SD_TAG, "init failed: $code $message")
+                }
+                LoggerManager.log(this, "Secondary display init code=$code message=$message")
+
+                val pending = pendingDisplayAction
+                pendingDisplayAction = null
+                if (pending != null) {
+                    if (displayObject.isReady) {
+                        pending.invoke()
+                    } else {
+                        reportShowImageFailure("Secondary display not ready: $message")
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Runs [action] once the secondary display is bound. init is asynchronous, so when the SDK has
+     * been released the action is queued and replayed from the init callback.
+     */
+    private fun withSecondaryDisplay(action: () -> Unit) {
+        if (displayObject.isReady) {
+            action()
+            return
+        }
+        pendingDisplayAction = action
+        sdHandler.removeCallbacks(sdInitTimeout)
+        sdHandler.postDelayed(sdInitTimeout, SD_INIT_TIMEOUT_MS)
+        initSecondaryDisplay()
+    }
+
+    private fun showOnSecondaryDisplay(path: String) {
+        val readPermission =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) Manifest.permission.READ_MEDIA_IMAGES
+            else Manifest.permission.READ_EXTERNAL_STORAGE
+        if (ContextCompat.checkSelfPermission(this, readPermission) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(readPermission), REQ_READ_IMAGE)
+            return
+        }
+
+        val file = File(path)
+        if (!file.exists() || !file.canRead()) {
+            reportShowImageFailure("Image not found or not readable: $path")
+            return
+        }
+
+        withSecondaryDisplay {
+            when (val code = displayObject.showImage(path)) {
+                0 -> {
+                    sdContentShowing = true
+                    LoggerManager.log(this, "Secondary display showImage success")
+                    Toast.makeText(this, "Image shown on secondary display", Toast.LENGTH_SHORT).show()
+                }
+                -2 -> reportShowImageFailure("Unsupported image type (use jpg/jpeg/png/gif): $path")
+                -10 -> reportShowImageFailure("Secondary display not ready: ${sdInitMessage ?: "init did not complete"}")
+                else -> reportShowImageFailure("showImage failed with code $code")
+            }
+        }
+    }
+
+    private fun showWelcomeLayoutOnSecondaryDisplay() {
+        withSecondaryDisplay {
+            when (val code = displayObject.showView(buildWelcomeLayout())) {
+                0 -> {
+                    sdContentShowing = true
+                    LoggerManager.log(this, "Secondary display showView success")
+                    Toast.makeText(this, "Layout shown on secondary display", Toast.LENGTH_SHORT).show()
+                }
+                -10 -> reportShowImageFailure("Secondary display not ready: ${sdInitMessage ?: "init did not complete"}")
+                else -> reportShowImageFailure("showView failed with code $code")
+            }
+        }
+    }
+
+    /** Customer-facing welcome screen built in code, sized by the SDK to the secondary display. */
+    private fun buildWelcomeLayout(): View {
+        val root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setBackgroundColor(Color.WHITE)
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        }
+
+        val welcome = TextView(this).apply {
+            text = getString(R.string.welcome_title)
+            setTextColor(Color.BLACK)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 26f)
+            gravity = Gravity.CENTER
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+        }
+
+        val subtitle = TextView(this).apply {
+            text = getString(R.string.welcome_subtitle)
+            setTextColor(Color.DKGRAY)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+            gravity = Gravity.CENTER
+        }
+
+        root.addView(welcome)
+        root.addView(subtitle)
+        return root
+    }
+
+    private fun clearSecondaryDisplay() {
+        if (!displayObject.isReady) {
+            LoggerManager.log(this, "Secondary display already released")
+            Toast.makeText(this, "Secondary display is not in use", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        when (val code = displayObject.clear()) {
+            0 -> {
+                LoggerManager.log(this, "Secondary display clear success")
+                Toast.makeText(this, "Secondary display cleared", Toast.LENGTH_SHORT).show()
+            }
+            else -> reportShowImageFailure("clear failed with code $code")
+        }
+        sdContentShowing = false
+
+        // Nothing is on the customer screen anymore — drop the Kozen binding until next show.
+        releaseSecondaryDisplayIfUnused()
+    }
+
+    private fun releaseSecondaryDisplayIfUnused() {
+        if (sdContentShowing) {
+            return
+        }
+        pendingDisplayAction = null
+        sdHandler.removeCallbacks(sdInitTimeout)
+        if (displayObject.isReady) {
+            displayObject.release()
+            isLibLoadedSD = false
+            sdInitMessage = null
+            Log.i(SD_TAG, "SDK released; not in use")
+            LoggerManager.log(this, "Secondary display SDK released")
+        }
+    }
+
+    private fun reportShowImageFailure(reason: String) {
+        Log.e(SD_TAG, reason)
+        LoggerManager.log(this, reason)
+        Toast.makeText(this, reason, Toast.LENGTH_LONG).show()
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQ_READ_IMAGE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                btnShowImage?.performClick()
+            } else {
+                reportShowImageFailure("Storage permission denied, cannot read the image")
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        pendingDisplayAction = null
+        sdHandler.removeCallbacks(sdInitTimeout)
+        if (displayObject.isReady) {
+            displayObject.release()
+            isLibLoadedSD = false
+            sdContentShowing = false
+        }
+        super.onDestroy()
     }
 }
