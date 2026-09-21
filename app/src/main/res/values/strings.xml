@@ -12,6 +12,12 @@
     <string name="swiped_data">Swiped Data:</string>
     <string name="print">PRINT</string>
     <string name="swipe_test">SWIPE_TEST</string>
+    <string name="secondary_display">Secondary Display</string>
+    <string name="show_image">Show Image</string>
+    <string name="show_text_layout">Show Text Layout</string>
+    <string name="welcome_title">Welcome</string>
+    <string name="welcome_subtitle">Thank you for shopping with us</string>
+    <string name="clear_display">Clear Display</string>
 
     <string-array name="Transactions">
         <item>SALE</item>
