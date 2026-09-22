@@ -1,0 +1,54 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_registration"
+        android:icon="@drawable/ic_register"
+        android:iconTint="@color/icon_purple"
+        android:title="Registration" />
+    <item
+        android:id="@+id/nav_sale"
+        android:icon="@drawable/ic_sale"
+        android:title="Sale" />
+    <item
+        android:id="@+id/nav_refund"
+        android:icon="@drawable/ic_refund"
+        android:title="Refund" />
+    <item
+        android:id="@+id/nav_preAuth"
+        android:icon="@drawable/ic_pre_auth"
+        android:title="PreAuth" />
+    <item
+        android:id="@+id/nav_void"
+        android:icon="@drawable/ic_void"
+        android:title="Void" />
+    <item
+        android:id="@+id/nav_ticket"
+        android:icon="@drawable/ic_ticket"
+        android:title="Ticket" />
+    <item
+        android:id="@+id/nav_settlement"
+        android:icon="@drawable/ic_settlement"
+        android:iconTint="@color/icon_purple"
+        android:title="Settlement" />
+    <item
+        android:id="@+id/nav_statusCheck"
+        android:icon="@drawable/ic_settlement"
+        android:iconTint="@color/icon_purple"
+        android:title="Check Status" />
+    <item
+        android:id="@+id/nav_deviceInfo"
+        android:icon="@drawable/ic_settlement"
+        android:iconTint="@color/icon_purple"
+        android:title="Terminal Info" />
+    <item
+        android:id="@+id/nav_configure"
+        android:icon="@drawable/configure"
+        android:title="Configure" />
+    <item
+        android:id="@+id/nav_peripheral"
+        android:icon="@drawable/pheripherals"
+        android:title="Peripheral" />
+    <item
+        android:id="@+id/nav_uri"
+        android:icon="@drawable/baseline_webhook_24"
+        android:title="URI" />
+</menu>

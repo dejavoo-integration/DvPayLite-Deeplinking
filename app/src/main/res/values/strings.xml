@@ -1,0 +1,80 @@
+<resources>
+    <string name="app_name">DvDemo</string>
+    <string name="configuration">Configuration</string>
+    <string name="peripheral">Peripheral</string>
+    <string name="scanner_text">SCANNER</string>
+    <string name="start">START</string>
+    <string name="stop">STOP</string>
+    <string name="read">READ</string>
+    <string name="printer">PRINTER</string>
+    <string name="scanned_data">Scanned Data:</string>
+    <string name="printed_status">Print Status:</string>
+    <string name="swiped_data">Swiped Data:</string>
+    <string name="print">PRINT</string>
+    <string name="swipe_test">SWIPE_TEST</string>
+
+    <string-array name="Transactions">
+        <item>SALE</item>
+        <item>REFUND</item>
+        <item>VOID</item>
+        <item>TIP ADJUST</item>
+        <item>PRE_AUTH</item>
+        <item>INC_AUTH</item>
+        <item>TICKET</item>
+        <item>SETTLE</item>
+        <item>BALANCE</item>
+    </string-array>
+    <string-array name="CardAcceptanceTime">
+        <item>Never</item>
+        <item>Empty(For Testing)</item>
+        <item>No Tag</item>
+        <item>Random Value(30sec)</item>
+    </string-array>
+    <string-array name="PaymentTypes">
+        <item>CREDIT</item>
+        <item>DEBIT</item>
+        <item>EBT_FOOD</item>
+        <item>EBT_CASH</item>
+        <item>GIFT</item>
+        <item>LOYALTY</item>
+    </string-array>
+    <string-array name="RecieptTypes">
+        <item>No</item>
+        <item>Both</item>
+        <item>Merchant</item>
+        <item>Customer</item>
+        <item>Empty(For Testing)</item>
+    </string-array>
+    <string name="transactionDetails"><u>Transaction Details</u></string>
+    <string-array name="ApprovalType">
+        <item>Yes</item>
+        <item>No</item>
+        <item>No Tag(For Testing)</item>
+        <item>Empty(For Testing)</item>
+    </string-array>
+    <string-array name="Transactions_Gift">
+        <item>ACTIVATE</item>
+        <item>REDEEM</item>
+        <item>REFUND</item>
+        <item>RELOAD</item>
+        <item>INQUIRE</item>
+        <item>DEACTIVATE</item>
+        <item>REISSUE</item>
+        <item>VOID</item>
+    </string-array>
+    <string-array name="Transactions_Loyalty">
+        <item>ACTIVATE</item>
+        <item>REDEEM</item>
+        <item>REFUND</item>
+        <item>RELOAD</item>
+        <item>INQUIRE</item>
+        <item>DEACTIVATE</item>
+        <item>REISSUE</item>
+        <item>VOID</item>
+        <item>ADDPOINTS</item>
+    </string-array>
+    <string-array name="DisplayAmount">
+        <item>Yes</item>
+        <item>No</item>
+    </string-array>
+</resources>

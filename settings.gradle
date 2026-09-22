@@ -1,0 +1,24 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+        flatDir { dirs 'libs' }
+        jcenter()
+        maven { url "https://jitpack.io" }
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        flatDir { dirs 'libs' }
+        jcenter()
+        //s3 creds
+        // JitPack repository
+        maven { url "https://jitpack.io" }
+    }
+}
+rootProject.name = "DvPayLite DeepLink"
+include ':app'
