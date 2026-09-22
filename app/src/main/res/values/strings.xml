@@ -1,0 +1,26 @@
+<resources>
+    <string name="app_name">DeepLinking app</string>
+    <string-array name="Transactions">
+        <item>SALE</item>
+        <item>REFUND</item>
+        <item>VOID</item>
+        <item>TIP ADJUST</item>
+        <item>PRE_AUTH</item>
+        <item>TICKET</item>
+        <item>SETTLE</item>
+    </string-array>
+    <string-array name="PaymentTypes">
+        <item>CREDIT</item>
+        <item>DEBIT</item>
+        <item>EBT_FOOD</item>
+        <item>EBT_CASH</item>
+    </string-array>
+    <string-array name="RecieptTypes">
+        <item>No</item>
+        <item>Both</item>
+        <item>Merchant</item>
+        <item>Customer</item>
+        <item>Empty(For Testing)</item>
+    </string-array>
+    <string name="transactionDetails"><u>Transaction Details</u></string>
+</resources>
