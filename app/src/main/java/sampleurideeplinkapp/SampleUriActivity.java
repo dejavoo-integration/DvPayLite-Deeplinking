@@ -25,6 +25,7 @@ public class SampleUriActivity extends AppCompatActivity {
     private WebView webView;
     String amount;
     String tip;
+    String tipAdjustIndicator;
     String type;
     String refId;
     String tpn;
@@ -272,11 +273,12 @@ public class SampleUriActivity extends AppCompatActivity {
             jsonRequest.put("amount", amount);
             jsonRequest.put("tip", tip);
             jsonRequest.put("applicationType", "DVPAYLITE");
-            jsonRequest.put("refId", refId);
+            jsonRequest.put("refId","DL"+refId);
             jsonRequest.put("MerchantId", merchantId);
             jsonRequest.put("TPN", tpn);
             jsonRequest.put("CustomerMobile", phoneNumber);
             jsonRequest.put("CustomerEmail", emailId);
+            jsonRequest.put("tipIndicator", tipAdjustIndicator);
             if (!approvalType.equals("No Tag")) {
                 jsonRequest.put("isTxnStatusScreenRequired", approvalType);
             }

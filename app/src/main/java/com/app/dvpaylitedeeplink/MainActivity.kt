@@ -42,6 +42,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var editTextIsvID:AppCompatEditText
     private lateinit var editTextDisplayText:AppCompatEditText
     private lateinit var transactionSpinner: Spinner
+    private lateinit var tipAdjustSpinner: Spinner
     private lateinit var cardAcceptanceSpinner: Spinner
     private lateinit var paymentSpinner: Spinner
     private lateinit var receiptSpinner: Spinner
@@ -49,6 +50,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cancelSpinner: Spinner
     private lateinit var approvalSpinner: Spinner
     private lateinit var txnType:String
+    private lateinit var tipAdjustType:String
     private lateinit var cardAcceptanceData:String
     private var paymentType:String = ""
     private lateinit var receiptType:String
@@ -73,6 +75,7 @@ class MainActivity : AppCompatActivity() {
         registerApp = findViewById(R.id.register_app)
         makeTransaction = findViewById(R.id.make_transaction)
         transactionSpinner = findViewById(R.id.transaction_spinner)
+        tipAdjustSpinner = findViewById(R.id.tip_adjust_spinner)
         cardAcceptanceSpinner = findViewById(R.id.acceptance_spinner)
         paymentSpinner = findViewById(R.id.payment_spinner)
         receiptSpinner = findViewById(R.id.receipt_spinner)
@@ -157,6 +160,26 @@ class MainActivity : AppCompatActivity() {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 txnType = parent?.getItemAtPosition(position).toString()
                 // Do something with the selected item
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                // Do something when nothing is selected
+            }
+        }
+        tipAdjustSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                val selected = parent?.getItemAtPosition(position).toString()
+                tipAdjustType = when (selected) {
+                    "Empty(For Testing)" -> {
+                        ""
+                    }
+                    "No Tag(For Testing)" -> {
+                        "No Tag"
+                    }
+                    else -> {
+                        parent?.getItemAtPosition(position).toString()
+                    }
+                }
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
@@ -636,6 +659,7 @@ class MainActivity : AppCompatActivity() {
         jsonRequest.put("amount", transactionAmout.text.toString())
         jsonRequest.put("tip", editTextTip.text.toString())
         jsonRequest.put("applicationType", "DVPAYLITE")
+        jsonRequest.put("tipIndicator", tipAdjustType.toString())
         jsonRequest.put("refId", transactionRefId.text.toString())
         jsonRequest.put("IsvId", editTextIsvID.text.toString())
         jsonRequest.put("TPN", terminalTPN.text.toString().trim())

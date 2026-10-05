@@ -38,7 +38,7 @@
             margin-bottom: 10px;
             margin-top: 10px;
         }
-        approval-div {
+        .approval-div {
            display: flex;
            flex-direction: column;
            gap: 10px;
@@ -68,7 +68,19 @@
 
 <input type="number" id="amountTextInput" placeholder="Enter Amount"/>
 <input type="number" id="tipInput" placeholder="Enter Tip"/>
-<input type="text" id="refIdtextInput" placeholder="Enter Ref Id if Tip Adjust/Ticket"/>
+<div class="approval-div">
+    <div class="dropdown-container">
+        <input type="number" id="refIdtextInput" placeholder="Enter Ref Id if Tip Adjust/Ticket"/>
+
+        <select id="TipAdjustIndicator"
+                onchange="tipAdjustIndicatorDropdownChange()">
+            <option value="Add">Add</option>
+            <option value="Replace">Replace</option>
+            <option value="No Tag(For Testing)">No Tag(For Testing)</option>
+            <option value="">Empty(For Testing)</option>
+        </select>
+    </div>
+</div>
 <input type="text" id="merchantIdTextInput" placeholder="Enter MerchantId"/>
 <input type="text" id="primaryColortextInput" placeholder="Enter Primary color"/>
 <input type="text" id="secondaryColortextInput" placeholder="Enter Secondary color"/>
@@ -168,6 +180,7 @@
     let approvalSelected = "";
     let selectedAvsOption = "";
     let selectedLoaderOption = "";
+    let tipAdjustIndicatorSelected = "";
 
     function receiveUrl(url) {
         console.log("Received URL: " + url);
@@ -203,13 +216,18 @@
             approvalSelected === "No Tag(For Testing)" ? "No Tag" :
             approvalSelected || "Yes";
 
+        const tipAdjustIndicator =
+            tipAdjustIndicatorSelected === "Empty(For Testing)" ? "" :
+            tipAdjustIndicatorSelected === "No Tag(For Testing)" ? "No Tag" :
+            tipAdjustIndicatorSelected || "Yes";
+
         const cityTax = document.getElementById("cityTaxInput").value;
         const stateTax = document.getElementById("stateTaxInput").value;
         const reducedStateTax = document.getElementById("reduceTaxInput").value;
 
         Android.selectedType(
             hostType, tpn, type, amount, tipInput, refId,
-            receiptType, paymentType, approvalType, isvID, merchantId,
+            receiptType, paymentType, approvalType,tipAdjustIndicator, isvID, merchantId,
             primaryColor, secondaryColor, negativeColor, font,
             avs, removeLoader,
             cityTax, stateTax, reducedStateTax,
@@ -339,6 +357,11 @@
     function approvalDropdownChange() {
         const dropdown = document.getElementById("ApprovalScreenType");
         approvalSelected = dropdown.options[dropdown.selectedIndex].text;
+    }
+
+    function tipAdjustIndicatorDropdownChange() {
+        const dropdown = document.getElementById("TipAdjustIndicator");
+        tipAdjustIndicatorSelected = dropdown.options[dropdown.selectedIndex].text;
     }
 
 </script>

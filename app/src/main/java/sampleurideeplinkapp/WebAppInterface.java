@@ -65,13 +65,14 @@ public class WebAppInterface {
 
     @JavascriptInterface
     public void selectedType(String hostType, String tpn, String type, String amount, String tip, String refId, String receiptType,
-                             String paymentType, String approvalType, String isvID, String merchantId, String primaryColor, String secondaryColor,
+                             String paymentType, String approvalType,String tipAdjustIndicator, String isvID, String merchantId, String primaryColor, String secondaryColor,
                              String negativeColor,String font, String AVS, String loader, String cityTax, String stateTax, String reducedStateTax,String phoneNumber,String email) {
         Log.d("WebAppInterface", "Received selected type & item: " + hostType + type + amount + receiptType);
         mcontext.tpn = tpn;
         mcontext.amount = amount;
         mcontext.type = type;
         mcontext.tip = tip;
+        mcontext.tipAdjustIndicator = tipAdjustIndicator;
         mcontext.refId = refId;
         mcontext.receiptType = receiptType;
         mcontext.paymentType = paymentType;

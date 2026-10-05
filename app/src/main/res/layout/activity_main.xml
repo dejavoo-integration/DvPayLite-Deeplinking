@@ -78,14 +78,32 @@
                     android:hint="Enter Tip" />
             </androidx.appcompat.widget.LinearLayoutCompat>
 
-            <androidx.appcompat.widget.AppCompatEditText
-                android:id="@+id/transaction_refId"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_marginTop="45dp"
                 android:gravity="center"
-                android:hint="Enter Ref Id if Tip Adjust/Ticket" />
+                android:orientation="horizontal">
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/transaction_refId"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:textSize="@dimen/text_size_16sp"
+                    android:hint="Enter Ref Id if Tip Adjust/Ticket" />
+
+                <Spinner
+                    android:id="@+id/tip_adjust_spinner"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:drawable/btn_dropdown"
+                    android:entries="@array/TipAdjustIndicator"
+                    android:textSize="@dimen/text_size_10sp"
+                    android:padding="12dp" />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -172,6 +190,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="45dp"
                 android:background="@android:drawable/btn_dropdown"
+                android:entries="@array/CardAcceptanceTime"
                 android:padding="15dp" />
 
             <androidx.appcompat.widget.AppCompatEditText
