@@ -10,16 +10,28 @@ android {
         applicationId "com.app.dvpaylitedeeplink"
         minSdk 23
         targetSdk 33
-        versionCode 21
-        versionName "21.0"
+        versionCode 27
+        versionName "27.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
-
+    signingConfigs {
+        debug {
+            storeFile file("kozen_p8_dvpaylite.jks")
+            storePassword "Kozen2022"
+            keyAlias "kozenossign"
+            keyPassword "Kozen2022"
+            v1SigningEnabled true
+            v2SigningEnabled true
+        }
+    }
     buildTypes {
         debug {
+            signingConfig signingConfigs.debug
             minifyEnabled false
-            /*applicationIdSuffix = ".dvcart"*/
+            shrinkResources false
+            debuggable true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            buildConfigField "String", 'BUILD_MODE', '"DEBUG"'
         }
         release {
             minifyEnabled false
@@ -38,7 +50,6 @@ android {
         aidl true
     }
 }
-
 dependencies {
 
     implementation fileTree(dir: 'libs', include: ['*.aar'])
@@ -49,7 +60,7 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-    implementation 'com.denovo:invoke-dvpay-lite:1.2.2.5'
+   // implementation 'com.denovo:invoke-dvpay-lite:1.2.2.5'
     implementation 'com.github.bumptech.glide:glide:4.15.1'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.15.1'
     implementation 'com.google.code.gson:gson:2.8.9'
