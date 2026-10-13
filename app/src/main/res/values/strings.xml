@@ -1,6 +1,12 @@
 <resources>
     <string name="app_name">DvDemo</string>
     <string name="configuration">Configuration</string>
+    <string name="response_check">Response Check</string>
+    <string name="response_check_request">Request</string>
+    <string name="response_check_response">Response</string>
+    <string name="response_check_empty">No transaction has been sent yet.</string>
+    <string name="response_check_no_response">No response received.</string>
+    <string name="waiting_for_response">Waiting for response</string>
     <string name="peripheral">Peripheral</string>
     <string name="scanner_text">SCANNER</string>
     <string name="start">START</string>

@@ -43,6 +43,7 @@ import com.app.dvpaylitedeeplink.R
 import com.app.dvpaylitedeeplink.UsbPosCallback
 import com.app.dvpaylitedeeplink.Utils
 import com.app.dvpaylitedeeplink.cart.PrefsHelper
+import com.app.dvpaylitedeeplink.cart.TransactionResponseTracker
 import com.app.dvpaylitedeeplink.cart.adapters.CartAdapter
 import com.app.dvpaylitedeeplink.cart.interfaces.TypeSelectionInterface
 import com.app.dvpaylitedeeplink.cart.models.Item
@@ -194,6 +195,13 @@ class CartActivity : AppCompatActivity() {
                 R.id.nav_configure -> {
                     LoggerManager.log(this, "Select Configure")
                     val intent = Intent(this, OptionSelectionActivity::class.java)
+                    startActivity(intent)
+                    drawerLayout.closeDrawers()
+                }
+
+                R.id.nav_response_check -> {
+                    LoggerManager.log(this, "Select Response Check")
+                    val intent = Intent(this, ResponseCheckActivity::class.java)
                     startActivity(intent)
                     drawerLayout.closeDrawers()
                 }
@@ -1270,6 +1278,7 @@ class CartActivity : AppCompatActivity() {
 
             json.put("PrintReceipt", "No")
             json.put("SigCapture", "No")
+            json.put("GetExtendedData", true)
 
             if (selectedTransactionType != LoadItems.SETTLEMENT && selectedTransactionType != "STATUS") {
 
@@ -1838,6 +1847,7 @@ class CartActivity : AppCompatActivity() {
             progressDialog.show()
             LoggerManager.log(this@CartActivity, "Processing Dialog open")
             LoggerManager.log(this, "Processing USB Request : ${request}")
+            TransactionResponseTracker.recordSpinRequest(request)
             usbPosManager?.sendAndReceive(request, object : UsbPosCallback {
 
                 override fun onResult(response: String?, totalBytes: Int) {
@@ -1851,6 +1861,7 @@ class CartActivity : AppCompatActivity() {
                         if (response != null) {
                             Log.i("USB", "Usb response ${response}")
                             LoggerManager.log(this@CartActivity, "USB Result  : ${response}")
+                            TransactionResponseTracker.recordSpinResponse(response)
                             Toast.makeText(
                                 this@CartActivity,
                                 response,
@@ -1859,6 +1870,7 @@ class CartActivity : AppCompatActivity() {
                             paymentType = "Credit"
                         } else {
                             LoggerManager.log(this@CartActivity, "USB Result  : No POS response")
+                            TransactionResponseTracker.recordSpinResponse("No POS response")
                             if (progressDialog.isShowing) {
                                 LoggerManager.log(this@CartActivity, "Processing Dialog Close")
                                 progressDialog.dismiss()
@@ -1934,7 +1946,6 @@ class CartActivity : AppCompatActivity() {
         }
 
     fun cloudRequest(xmlRequest: String) {
-
         val progressDialog = android.app.AlertDialog.Builder(this)
             .setTitle("Please wait")
             .setMessage("Processing transaction...")
@@ -1950,7 +1961,9 @@ class CartActivity : AppCompatActivity() {
             .addPathSegments("spin/cgi.html")
             .addQueryParameter("TerminalTransaction", xmlRequest)
             .build()
-        Log.d("SPIN_REQUEST", url.toString())
+        val spinRequestLog = url.toString()
+        Log.d("SPIN_REQUEST", spinRequestLog)
+        TransactionResponseTracker.recordSpinRequest(spinRequestLog)
         val client = OkHttpClient.Builder()
             .protocols(listOf(Protocol.HTTP_1_1))
             .connectTimeout(90, TimeUnit.SECONDS)
@@ -1972,6 +1985,7 @@ class CartActivity : AppCompatActivity() {
 
                 Log.d("SPIN_RESPONSE", result)
                 LoggerManager.log(this@CartActivity, " CLOUD Response  : ${result}")
+                TransactionResponseTracker.recordSpinResponse(result)
 
                 //  Switch to Main Thread to show Toast
                 Handler(Looper.getMainLooper()).post {
@@ -2033,7 +2047,9 @@ class CartActivity : AppCompatActivity() {
                 .addQueryParameter("TerminalTransaction", xmlRequest)
                 .build()
 
-            Log.i("LOCAL_URL", url.toString())
+            val localRequestLog = url.toString()
+            Log.i("LOCAL_URL", localRequestLog)
+            TransactionResponseTracker.recordSpinRequest(localRequestLog)
 
             val client = OkHttpClient.Builder()
                 .protocols(listOf(Protocol.HTTP_1_1))
@@ -2057,6 +2073,7 @@ class CartActivity : AppCompatActivity() {
 
                     Log.d("LOCAL_RESPONSE", result)
                     LoggerManager.log(this@CartActivity, "  Local Response  : ${result}")
+                    TransactionResponseTracker.recordSpinResponse(result)
                     //  Show Toast on Main Thread
                     Handler(Looper.getMainLooper()).post {
                         if (progressDialog.isShowing) {

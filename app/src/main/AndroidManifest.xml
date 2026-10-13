@@ -31,6 +31,9 @@
             android:name=".cart.ui.OptionSelectionActivity"
             android:exported="false" />
         <activity
+            android:name=".cart.ui.ResponseCheckActivity"
+            android:exported="false" />
+        <activity
             android:name=".cart.ui.RegistrationActivity"
             android:exported="false" />
         <activity
