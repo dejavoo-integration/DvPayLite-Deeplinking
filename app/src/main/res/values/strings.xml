@@ -80,7 +80,7 @@
     <string-array name="TipAdjustIndicator">
         <item>Add</item>
         <item>Replace</item>
-<!--        <item>No Tag(For Testing)</item>-->
-<!--        <item>Empty(For Testing)</item>-->
+        <item>No Tag(For Testing)</item>
+        <item>Empty(For Testing)</item>
     </string-array>
 </resources>
