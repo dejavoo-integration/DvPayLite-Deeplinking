@@ -6,10 +6,12 @@ import java.io.FileWriter
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.Executors
 
 object LoggerManager {
 
     private val lock = Any()
+    private val writeExecutor = Executors.newSingleThreadExecutor()
 
     private fun getTodayFile(context: Context): File {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
@@ -19,24 +21,22 @@ object LoggerManager {
     }
 
     fun log(context: Context, message: String) {
-        try {
-            synchronized(lock) {
-
-                val file = getTodayFile(context)
-
-                val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
-                val time = timeFormat.format(Date())
-
-                val logMessage = "$time -> $message\n"
-
-                val writer = FileWriter(file, true)
-                writer.append(logMessage)
-                writer.flush()
-                writer.close()
+        val appContext = context.applicationContext
+        writeExecutor.execute {
+            try {
+                synchronized(lock) {
+                    val file = getTodayFile(appContext)
+                    val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+                    val time = timeFormat.format(Date())
+                    val logMessage = "$time -> $message\n"
+                    FileWriter(file, true).use { writer ->
+                        writer.append(logMessage)
+                        writer.flush()
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
-
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
     }
 }

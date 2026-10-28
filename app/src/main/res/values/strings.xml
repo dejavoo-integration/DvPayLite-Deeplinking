@@ -3,10 +3,17 @@
     <string name="configuration">Configuration</string>
     <string name="peripheral">Peripheral</string>
     <string name="scanner_text">SCANNER</string>
+    <string name="restricted_text">Status Bar Restricted Mode</string>
+    <string name="enable">Enable</string>
+    <string name="disable">Disable</string>
+    <string name="restricted_status_label">Status:</string>
+    <string name="restricted_status_true">True</string>
+    <string name="restricted_status_false">False</string>
     <string name="start">START</string>
     <string name="stop">STOP</string>
     <string name="read">READ</string>
     <string name="printer">PRINTER</string>
+    <string name="scanner_initializing">Initializing scanner…</string>
     <string name="scanned_data">Scanned Data:</string>
     <string name="printed_status">Print Status:</string>
     <string name="swiped_data">Swiped Data:</string>

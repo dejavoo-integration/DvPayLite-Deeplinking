@@ -9,6 +9,7 @@ import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import com.app.dvpaylitedeeplink.R
+import com.app.dvpaylitedeeplink.cart.PrefsHelper
 import com.app.dvpaylitedeeplink.logger.LoggerManager
 import com.app.dvpaylitedeeplink.printer.launcher.IntentPrintApplication
 import com.app.dvpaylitedeeplink.printer.models.PrintErrorResult
@@ -18,6 +19,11 @@ import com.denovo.app.invokekozen.printer.interfaces.PrintLauncherInterface
 import com.denovo.app.invokekozen.scanner.IScannerResult
 import com.denovo.app.invokekozen.scanner.ScannerActivity
 import com.denovo.app.invokekozen.swipereader.listeners.SwipeResult
+import com.denovo.app.invokewizor.restrictedmode.RestrictedModeSdk
+import com.denovo.app.invokewizor.restrictedmode.RestrictedModeSdkFactory
+import com.denovo.app.invokewizor.restrictedmode.models.RestrictedModeResult
+import java.util.concurrent.Executors
+
 
 class PeripheralActivity : AppCompatActivity() {
 
@@ -33,22 +39,24 @@ class PeripheralActivity : AppCompatActivity() {
     private lateinit var scannerData: AppCompatTextView
     private lateinit var printStatus: AppCompatTextView
     private lateinit var swipeData: AppCompatTextView
+    private var restrictedEnableBtn: AppCompatButton? = null
+    private var restrictedDisableBtn: AppCompatButton? = null
+    private var restrictedStatus: AppCompatTextView? = null
+    private var restrictedModeSdk: RestrictedModeSdk? = null
+    private var scannerActivity: ScannerActivity? = null
+    private val peripheralExecutor = Executors.newSingleThreadExecutor()
 
-
-    private lateinit var  scannerActivity: ScannerActivity
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.i("My_tag","check device model: ${ Build.MODEL}")
-        if( Build.MODEL == "P18"){
-            scannerActivity = ScannerActivity(this, iscanResult, SCAN_TIMEOUT)
+        if (Build.MODEL == "P18") {
             setContentView(R.layout.activity_peripheral)
-        }else{
-            scannerActivity = ScannerActivity(iscanResult, SCAN_TIMEOUT)
+        } else {
             setContentView(R.layout.activity_peripheral_p8)
         }
         LoggerManager.log(this, "Open peripheralActivity")
 
-        ivBack = findViewById<AppCompatImageView>(R.id.iv_back)
+        ivBack = findViewById(R.id.iv_back)
         scannerStartBtn = findViewById(R.id.btn_start)
         scannerStopBtn = findViewById(R.id.btn_stop)
         printerBtn = findViewById(R.id.btn_print)
@@ -57,45 +65,56 @@ class PeripheralActivity : AppCompatActivity() {
         printStatus = findViewById(R.id.printer_result)
         swipeData = findViewById(R.id.swipe_result)
 
+        restrictedEnableBtn = findViewById(R.id.btn_restricted_enable)
+        restrictedDisableBtn = findViewById(R.id.btn_restricted_disable)
+        restrictedStatus = findViewById(R.id.tv_restricted_status)
+        restrictedModeSdk = RestrictedModeSdkFactory.create()
+        refreshRestrictedStatusFromPrefs()
+        setupRestrictedModeUi()
+
 
         ivBack.setOnClickListener {
             LoggerManager.log(this, "Clicked back button")
             onBackPressed()
         }
 
-        swipeReaderBtn.setOnClickListener{
+        swipeReaderBtn.setOnClickListener {
             LoggerManager.log(this, "Clicked Swipe Reader Button")
             Toast.makeText(this@PeripheralActivity, "Please swipe card", Toast.LENGTH_SHORT).show()
             clearAllData()
             swipeData.text = "Please swipe your card ...."
-            val msrReader = MsrReader(this, 30) // timeout is in seconds (your class expects seconds, not ms)
-            msrReader.read(object : SwipeResult {
+            swipeReaderBtn.isEnabled = false
+            peripheralExecutor.execute {
+                val msrReader = MsrReader(this@PeripheralActivity, 30)
+                msrReader.read(object : SwipeResult {
                 override fun onSuccess(data: String) {
-                    // Show card swipe data in TextView
                     runOnUiThread {
+                        swipeReaderBtn.isEnabled = true
                         Toast.makeText(this@PeripheralActivity, "Swipe success", Toast.LENGTH_SHORT).show()
                         swipeData.text = data
-                        LoggerManager.log(this@PeripheralActivity, "Swipe Reader Data : ${data}")
+                        LoggerManager.log(this@PeripheralActivity, "Swipe Reader Data : $data")
                     }
                 }
 
                 override fun onFailure(error: String) {
-                    // Show error
                     runOnUiThread {
+                        swipeReaderBtn.isEnabled = true
                         Toast.makeText(this@PeripheralActivity, "Swipe failed: $error", Toast.LENGTH_SHORT).show()
                         swipeData.text = error
-                        LoggerManager.log(this@PeripheralActivity, "Swipe Reader Data Failed : ${error}")
+                        LoggerManager.log(this@PeripheralActivity, "Swipe Reader Data Failed : $error")
                     }
                 }
 
                 override fun onTimeOut(response: String?) {
                     runOnUiThread {
+                        swipeReaderBtn.isEnabled = true
                         swipeData.text = "Swipe time out"
                         LoggerManager.log(this@PeripheralActivity, "Swipe Reader TimeOut")
                         Toast.makeText(this@PeripheralActivity, "Swipe time out", Toast.LENGTH_SHORT).show()
                     }
                 }
-            })
+                })
+            }
         }
 
 
@@ -204,49 +223,69 @@ class PeripheralActivity : AppCompatActivity() {
 
 
 
-            val intentPrintApplication = IntentPrintApplication(this)
-            intentPrintApplication.setLaunchInterface(object : PrintLauncherInterface {
-
-                override fun onPrintSuccess(printResult: com.denovo.app.invokekozen.printer.models.PrintResult?) {
-                    Log.e("printer", "onPrintSuccess")
-                    runOnUiThread {
-                        Toast.makeText(this@PeripheralActivity, "Print success", Toast.LENGTH_SHORT).show()
-                        printStatus.text = "SUCCESS"
-                        LoggerManager.log(this@PeripheralActivity, "Printer Success")
-                    }
-                }
-
-                override fun onPrintFailed(errorResult: com.denovo.app.invokekozen.printer.models.PrintErrorResult?) {
-                    errorResult?.let {
+            printerBtn.isEnabled = false
+            peripheralExecutor.execute {
+                val intentPrintApplication = IntentPrintApplication(this@PeripheralActivity)
+                intentPrintApplication.setLaunchInterface(object : PrintLauncherInterface {
+                    override fun onPrintSuccess(printResult: com.denovo.app.invokekozen.printer.models.PrintResult?) {
+                        Log.e("printer", "onPrintSuccess")
                         runOnUiThread {
-                            Toast.makeText(this@PeripheralActivity, "Print Failed", Toast.LENGTH_SHORT).show()
-                            printStatus.text = "Failed"
-                            LoggerManager.log(this@PeripheralActivity, "Printer Failed")
+                            printerBtn.isEnabled = true
+                            Toast.makeText(this@PeripheralActivity, "Print success", Toast.LENGTH_SHORT).show()
+                            printStatus.text = "SUCCESS"
+                            LoggerManager.log(this@PeripheralActivity, "Printer Success")
                         }
-                        Log.e("printer", "onPrintFailed----${it.errorMessage}")
-                        Log.e("printer", "onPrintFailed----${it.errorCode}")
-                        Log.e("printer", "onPrintFailed----${it.errorException}")
                     }
-                }
-            })
-                 Log.i("my_tag","check request"+request);
-            intentPrintApplication.launchPrinter(request)
+
+                    override fun onPrintFailed(errorResult: com.denovo.app.invokekozen.printer.models.PrintErrorResult?) {
+                        errorResult?.let {
+                            runOnUiThread {
+                                printerBtn.isEnabled = true
+                                Toast.makeText(this@PeripheralActivity, "Print Failed", Toast.LENGTH_SHORT).show()
+                                printStatus.text = "Failed"
+                                LoggerManager.log(this@PeripheralActivity, "Printer Failed")
+                            }
+                            Log.e("printer", "onPrintFailed----${it.errorMessage}")
+                            Log.e("printer", "onPrintFailed----${it.errorCode}")
+                            Log.e("printer", "onPrintFailed----${it.errorException}")
+                        }
+                    }
+                })
+                Log.i("my_tag", "check request$request")
+                intentPrintApplication.launchPrinter(request)
+            }
         }
 
-        scannerStartBtn.setOnClickListener{
+        scannerStartBtn.setOnClickListener {
             LoggerManager.log(this@PeripheralActivity, "Clicked Scanner start Button")
             Toast.makeText(this@PeripheralActivity, "Scanner Start Button Clicked", Toast.LENGTH_SHORT).show()
             clearAllData()
-            scannerData.text = "Please Scan barcode...."
-            scannerActivity.startScan()
+            withScannerReady {
+                scannerData.text = "Please Scan barcode...."
+                it.startScan()
+            }
         }
-        scannerStopBtn.setOnClickListener{
+        scannerStopBtn.setOnClickListener {
             LoggerManager.log(this@PeripheralActivity, "Clicked Scanner Stop Button")
             clearAllData()
             Toast.makeText(this@PeripheralActivity, "Scanner Stop Button Clicked", Toast.LENGTH_SHORT).show()
-            scannerActivity.stopScan()
+            scannerActivity?.stopScan()
         }
 
+    }
+
+    override fun onResume() {
+        super.onResume()
+        refreshRestrictedStatusFromPrefs()
+    }
+
+    override fun onDestroy() {
+        scannerActivity?.stopScan()
+        scannerActivity = null
+        restrictedModeSdk?.release()
+        restrictedModeSdk = null
+        peripheralExecutor.shutdownNow()
+        super.onDestroy()
     }
 
     val iscanResult = object : IScannerResult {
@@ -255,8 +294,8 @@ class PeripheralActivity : AppCompatActivity() {
             runOnUiThread {
                 scannerData.text = result
                 LoggerManager.log(this@PeripheralActivity, "Scanner Result : $result")
+                stopScannerIfReady()
             }
-            scannerActivity.stopScan()
         }
 
         override fun onFailure(errorMessage: String) {
@@ -264,15 +303,176 @@ class PeripheralActivity : AppCompatActivity() {
             runOnUiThread {
                 scannerData.text = errorMessage
                 LoggerManager.log(this@PeripheralActivity, "Scanner Result Failure : $errorMessage")
+                stopScannerIfReady()
             }
-            scannerActivity.stopScan()
+        }
+    }
+
+    private fun stopScannerIfReady() {
+        scannerActivity?.stopScan()
+    }
+
+    /** Scanner SDK may invoke callbacks from its constructor; create only after views are bound. */
+    private fun withScannerReady(onReady: (ScannerActivity) -> Unit) {
+        scannerActivity?.let(onReady) ?: initScannerThen(onReady)
+    }
+
+    private fun initScannerThen(onReady: (ScannerActivity) -> Unit) {
+        scannerStartBtn.isEnabled = false
+        scannerStopBtn.isEnabled = false
+        scannerData.text = getString(R.string.scanner_initializing)
+
+        val finishInit: (ScannerActivity) -> Unit = { scanner ->
+            scannerActivity = scanner
+            scannerStartBtn.isEnabled = true
+            scannerStopBtn.isEnabled = true
+            onReady(scanner)
+        }
+
+        val onError: (Exception) -> Unit = { e ->
+            Log.e("PeripheralActivity", "Scanner init failed", e)
+            scannerStartBtn.isEnabled = true
+            scannerStopBtn.isEnabled = true
+            scannerData.text = e.message ?: "Scanner init failed"
+        }
+
+        if (Build.MODEL == "P18") {
+            // P18 scanner ctor needs Activity — must run on main thread after first frame.
+            window.decorView.post {
+                if (isFinishing) return@post
+                try {
+                    finishInit(createScannerActivity())
+                } catch (e: Exception) {
+                    onError(e)
+                }
+            }
+        } else {
+            peripheralExecutor.execute {
+                try {
+                    val scanner = createScannerActivity()
+                    runOnUiThread {
+                        if (!isFinishing) finishInit(scanner)
+                    }
+                } catch (e: Exception) {
+                    runOnUiThread { if (!isFinishing) onError(e) }
+                }
+            }
+        }
+    }
+
+    private fun createScannerActivity(): ScannerActivity {
+        return if (Build.MODEL == "P18") {
+            ScannerActivity(this, iscanResult, SCAN_TIMEOUT)
+        } else {
+            ScannerActivity(iscanResult, SCAN_TIMEOUT)
         }
     }
 
 
-    private fun clearAllData(){
+    /** Clears scanner, printer, and swipe results only — restricted status is never cleared here. */
+    private fun clearAllData() {
         scannerData.text = ""
         printStatus.text = ""
         swipeData.text = ""
+    }
+
+    private fun setupRestrictedModeUi() {
+        restrictedEnableBtn?.setOnClickListener {
+            LoggerManager.log(this, "Clicked Restricted Enable")
+            runRestrictedOperation(
+                operation = {
+                    val sdk = restrictedModeSdk ?: RestrictedModeSdkFactory.create().also {
+                        restrictedModeSdk = it
+                    }
+                    sdk.initialize(applicationContext)
+                    sdk.enterUnattendedRestrictedMode(applicationContext, this@PeripheralActivity)
+                },
+                operationName = "enterUnattendedRestrictedMode"
+            )
+        }
+        restrictedDisableBtn?.setOnClickListener {
+            LoggerManager.log(this, "Clicked Restricted Disable")
+            val sdk = restrictedModeSdk ?: return@setOnClickListener
+            runRestrictedOperation(
+                operation = {
+                    sdk.exitUnattendedRestrictedMode(applicationContext, this@PeripheralActivity)
+                },
+                operationName = "exitUnattendedRestrictedMode"
+            )
+        }
+    }
+
+    private fun runRestrictedOperation(
+        operation: () -> RestrictedModeResult,
+        operationName: String
+    ) {
+        restrictedEnableBtn?.isEnabled = false
+        restrictedDisableBtn?.isEnabled = false
+        peripheralExecutor.execute {
+            val result = try {
+                operation()
+            } catch (e: Exception) {
+                Log.e("RestrictedMode", operationName, e)
+                runOnUiThread {
+                    restrictedEnableBtn?.isEnabled = true
+                    restrictedDisableBtn?.isEnabled = true
+                    Toast.makeText(this, e.message ?: "Restricted mode failed", Toast.LENGTH_LONG).show()
+                }
+                return@execute
+            }
+            runOnUiThread {
+                if (!isFinishing) {
+                    showRestrictedModeResult(operationName, result)
+                    restrictedEnableBtn?.isEnabled = true
+                    restrictedDisableBtn?.isEnabled = true
+                }
+            }
+        }
+    }
+
+    private fun showRestrictedModeResult(operation: String, result: RestrictedModeResult) {
+        val summary = "$operation: ${result.code} - ${result.message}"
+        Log.d("RestrictedMode", summary)
+        LoggerManager.log(this, summary)
+        Toast.makeText(this, summary, Toast.LENGTH_LONG).show()
+        if (result.isSuccess) {
+            when (operation) {
+                "enterUnattendedRestrictedMode" ->
+                    PrefsHelper.setRestrictedModeEnabled(this, true)
+                "exitUnattendedRestrictedMode" ->
+                    PrefsHelper.setRestrictedModeEnabled(this, false)
+            }
+        }
+        refreshRestrictedStatusFromPrefs()
+    }
+
+    private fun refreshRestrictedStatusFromPrefs() {
+        val active = PrefsHelper.isRestrictedModeEnabled(this)
+        restrictedStatus?.text = getString(
+            if (active) R.string.restricted_status_true else R.string.restricted_status_false
+        )
+    }
+
+    private fun refreshRestrictedStatusDisplay() {
+        val sdk = restrictedModeSdk
+        if (sdk == null) {
+            refreshRestrictedStatusFromPrefs()
+            return
+        }
+        peripheralExecutor.execute {
+            val active = try {
+                sdk.isUnattendedRestrictedModeActive()
+            } catch (e: Exception) {
+                Log.e("RestrictedMode", "isUnattendedRestrictedModeActive", e)
+                PrefsHelper.isRestrictedModeEnabled(this@PeripheralActivity)
+            }
+            runOnUiThread {
+                if (isFinishing) return@runOnUiThread
+                PrefsHelper.setRestrictedModeEnabled(this@PeripheralActivity, active)
+                restrictedStatus?.text = getString(
+                    if (active) R.string.restricted_status_true else R.string.restricted_status_false
+                )
+            }
+        }
     }
 }

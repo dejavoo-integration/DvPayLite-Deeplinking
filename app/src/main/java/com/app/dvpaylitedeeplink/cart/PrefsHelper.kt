@@ -28,6 +28,7 @@ object PrefsHelper {
     private const val KEY_REQUEST_FORMAT = "request_format"
     private const val KEY_USB_BULK_ENABLED = "usb_bulk_enabled"
     private const val KEY_USB_BULK_COUNT = "usb_bulk_count"
+    private const val KEY_RESTRICTED_MODE_ENABLED = "restricted_mode_enabled"
 
     fun saveSettings(context: Context, approval: Boolean, breakup: Boolean, tipScreen: Boolean, dual: Boolean , showLineItems:Boolean, sendL2L3: Boolean,showJsonPreview :Boolean) {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -217,4 +218,14 @@ object PrefsHelper {
 
     fun getJsonPreviewStatus(context: Context): Boolean =
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE).getBoolean(KEY_JSON_PREVIEW, false)
+
+    fun setRestrictedModeEnabled(context: Context, enabled: Boolean) {
+        context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE).edit()
+            .putBoolean(KEY_RESTRICTED_MODE_ENABLED, enabled)
+            .apply()
+    }
+
+    fun isRestrictedModeEnabled(context: Context): Boolean =
+        context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+            .getBoolean(KEY_RESTRICTED_MODE_ENABLED, false)
 }
