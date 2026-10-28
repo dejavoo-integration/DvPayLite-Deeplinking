@@ -1276,9 +1276,19 @@ class CartActivity : AppCompatActivity() {
                 json.put("Tpn", usbTpn)
             }
 
-            json.put("PrintReceipt", "No")
+            json.put("PrintReceipt", "Both")
             json.put("SigCapture", "No")
             json.put("GetExtendedData", true)
+                json.put(
+                    "CustomFields",
+                    JSONObject().apply {
+                        put("Tag1Value", "12")
+                        put("Tag2Value", "13")
+                        put("Tag3Value", "14")
+                        put("CustomerMobile", "+918778341617")
+                        put("CustomerEmail", "gvenkataramana@denovosystem.com")
+                    }
+                )
 
             if (selectedTransactionType != LoadItems.SETTLEMENT && selectedTransactionType != "STATUS") {
 
