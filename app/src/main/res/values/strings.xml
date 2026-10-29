@@ -9,6 +9,10 @@
     <string name="restricted_status_label">Status:</string>
     <string name="restricted_status_true">True</string>
     <string name="restricted_status_false">False</string>
+    <string name="exit_app_dialog_title">Exit application?</string>
+    <string name="exit_app_dialog_message">Do you want to exit the app?</string>
+    <string name="exit_app_dialog_confirm">Exit</string>
+    <string name="exit_app_dialog_cancel">Cancel</string>
     <string name="start">START</string>
     <string name="stop">STOP</string>
     <string name="read">READ</string>

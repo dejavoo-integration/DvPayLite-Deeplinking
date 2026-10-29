@@ -3,7 +3,10 @@ package com.app.dvpaylitedeeplink.cart.ui
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.AppCompatImageView
@@ -45,6 +48,10 @@ class PeripheralActivity : AppCompatActivity() {
     private var restrictedModeSdk: RestrictedModeSdk? = null
     private var scannerActivity: ScannerActivity? = null
     private val peripheralExecutor = Executors.newSingleThreadExecutor()
+    private var exitDialogShowing = false
+
+    private val statusBarLockedByApp: Boolean
+        get() = PrefsHelper.isRestrictedModeEnabled(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,10 +79,18 @@ class PeripheralActivity : AppCompatActivity() {
         refreshRestrictedStatusFromPrefs()
         setupRestrictedModeUi()
 
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    showExitApplicationDialog()
+                }
+            }
+        )
 
         ivBack.setOnClickListener {
             LoggerManager.log(this, "Clicked back button")
-            onBackPressed()
+            showExitApplicationDialog()
         }
 
         swipeReaderBtn.setOnClickListener {
@@ -87,32 +102,32 @@ class PeripheralActivity : AppCompatActivity() {
             peripheralExecutor.execute {
                 val msrReader = MsrReader(this@PeripheralActivity, 30)
                 msrReader.read(object : SwipeResult {
-                override fun onSuccess(data: String) {
-                    runOnUiThread {
-                        swipeReaderBtn.isEnabled = true
-                        Toast.makeText(this@PeripheralActivity, "Swipe success", Toast.LENGTH_SHORT).show()
-                        swipeData.text = data
-                        LoggerManager.log(this@PeripheralActivity, "Swipe Reader Data : $data")
+                    override fun onSuccess(data: String) {
+                        runOnUiThread {
+                            swipeReaderBtn.isEnabled = true
+                            Toast.makeText(this@PeripheralActivity, "Swipe success", Toast.LENGTH_SHORT).show()
+                            swipeData.text = data
+                            LoggerManager.log(this@PeripheralActivity, "Swipe Reader Data : $data")
+                        }
                     }
-                }
 
-                override fun onFailure(error: String) {
-                    runOnUiThread {
-                        swipeReaderBtn.isEnabled = true
-                        Toast.makeText(this@PeripheralActivity, "Swipe failed: $error", Toast.LENGTH_SHORT).show()
-                        swipeData.text = error
-                        LoggerManager.log(this@PeripheralActivity, "Swipe Reader Data Failed : $error")
+                    override fun onFailure(error: String) {
+                        runOnUiThread {
+                            swipeReaderBtn.isEnabled = true
+                            Toast.makeText(this@PeripheralActivity, "Swipe failed: $error", Toast.LENGTH_SHORT).show()
+                            swipeData.text = error
+                            LoggerManager.log(this@PeripheralActivity, "Swipe Reader Data Failed : $error")
+                        }
                     }
-                }
 
-                override fun onTimeOut(response: String?) {
-                    runOnUiThread {
-                        swipeReaderBtn.isEnabled = true
-                        swipeData.text = "Swipe time out"
-                        LoggerManager.log(this@PeripheralActivity, "Swipe Reader TimeOut")
-                        Toast.makeText(this@PeripheralActivity, "Swipe time out", Toast.LENGTH_SHORT).show()
+                    override fun onTimeOut(response: String?) {
+                        runOnUiThread {
+                            swipeReaderBtn.isEnabled = true
+                            swipeData.text = "Swipe time out"
+                            LoggerManager.log(this@PeripheralActivity, "Swipe Reader TimeOut")
+                            Toast.makeText(this@PeripheralActivity, "Swipe time out", Toast.LENGTH_SHORT).show()
+                        }
                     }
-                }
                 })
             }
         }
@@ -274,6 +289,23 @@ class PeripheralActivity : AppCompatActivity() {
 
     }
 
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.keyCode == KeyEvent.KEYCODE_HOME) {
+            if (event.action == KeyEvent.ACTION_DOWN) {
+                showExitApplicationDialog()
+            }
+            return true
+        }
+        return super.dispatchKeyEvent(event)
+    }
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (statusBarLockedByApp && !exitDialogShowing) {
+            showExitApplicationDialog()
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         refreshRestrictedStatusFromPrefs()
@@ -282,7 +314,13 @@ class PeripheralActivity : AppCompatActivity() {
     override fun onDestroy() {
         scannerActivity?.stopScan()
         scannerActivity = null
-        restrictedModeSdk?.release()
+        restrictedModeSdk?.let { sdk ->
+            if (PrefsHelper.isRestrictedModeEnabled(this)) {
+                sdk.releaseStatusBarPullDownRestriction(applicationContext)
+                PrefsHelper.setRestrictedModeEnabled(this, false)
+            }
+            sdk.release()
+        }
         restrictedModeSdk = null
         peripheralExecutor.shutdownNow()
         super.onDestroy()
@@ -378,26 +416,30 @@ class PeripheralActivity : AppCompatActivity() {
 
     private fun setupRestrictedModeUi() {
         restrictedEnableBtn?.setOnClickListener {
-            LoggerManager.log(this, "Clicked Restricted Enable")
+            LoggerManager.log(this, "Clicked Restricted Enable (lock status bar pull-down)")
             runRestrictedOperation(
                 operation = {
                     val sdk = restrictedModeSdk ?: RestrictedModeSdkFactory.create().also {
                         restrictedModeSdk = it
                     }
-                    sdk.initialize(applicationContext)
-                    sdk.enterUnattendedRestrictedMode(applicationContext, this@PeripheralActivity)
+                    val init = sdk.initialize(applicationContext)
+                    if (!init.isSuccess) {
+                        init
+                    } else {
+                        sdk.setStatusBarPullDownAllowed(false, applicationContext)
+                    }
                 },
-                operationName = "enterUnattendedRestrictedMode"
+                operationName = "setStatusBarPullDownAllowed(false)"
             )
         }
         restrictedDisableBtn?.setOnClickListener {
-            LoggerManager.log(this, "Clicked Restricted Disable")
+            LoggerManager.log(this, "Clicked Restricted Disable (release pull-down lock)")
             val sdk = restrictedModeSdk ?: return@setOnClickListener
             runRestrictedOperation(
                 operation = {
-                    sdk.exitUnattendedRestrictedMode(applicationContext, this@PeripheralActivity)
+                    sdk.releaseStatusBarPullDownRestriction(applicationContext)
                 },
-                operationName = "exitUnattendedRestrictedMode"
+                operationName = "releaseStatusBarPullDownRestriction"
             )
         }
     }
@@ -437,9 +479,9 @@ class PeripheralActivity : AppCompatActivity() {
         Toast.makeText(this, summary, Toast.LENGTH_LONG).show()
         if (result.isSuccess) {
             when (operation) {
-                "enterUnattendedRestrictedMode" ->
+                "setStatusBarPullDownAllowed(false)" ->
                     PrefsHelper.setRestrictedModeEnabled(this, true)
-                "exitUnattendedRestrictedMode" ->
+                "releaseStatusBarPullDownRestriction" ->
                     PrefsHelper.setRestrictedModeEnabled(this, false)
             }
         }
@@ -453,26 +495,45 @@ class PeripheralActivity : AppCompatActivity() {
         )
     }
 
-    private fun refreshRestrictedStatusDisplay() {
-        val sdk = restrictedModeSdk
-        if (sdk == null) {
-            refreshRestrictedStatusFromPrefs()
+    private fun showExitApplicationDialog() {
+        if (exitDialogShowing || isFinishing || isDestroyed) {
             return
         }
-        peripheralExecutor.execute {
-            val active = try {
-                sdk.isUnattendedRestrictedModeActive()
-            } catch (e: Exception) {
-                Log.e("RestrictedMode", "isUnattendedRestrictedModeActive", e)
-                PrefsHelper.isRestrictedModeEnabled(this@PeripheralActivity)
+        exitDialogShowing = true
+        AlertDialog.Builder(this)
+            .setTitle(R.string.exit_app_dialog_title)
+            .setMessage(R.string.exit_app_dialog_message)
+            .setPositiveButton(R.string.exit_app_dialog_confirm) { _, _ ->
+                exitDialogShowing = false
+                confirmExitApplication()
             }
-            runOnUiThread {
-                if (isFinishing) return@runOnUiThread
-                PrefsHelper.setRestrictedModeEnabled(this@PeripheralActivity, active)
-                restrictedStatus?.text = getString(
-                    if (active) R.string.restricted_status_true else R.string.restricted_status_false
-                )
+            .setNegativeButton(R.string.exit_app_dialog_cancel) { dialog, _ ->
+                exitDialogShowing = false
+                dialog.dismiss()
             }
+            .setOnCancelListener { exitDialogShowing = false }
+            .show()
+    }
+
+    private fun confirmExitApplication() {
+        val sdk = restrictedModeSdk
+        if (statusBarLockedByApp && sdk != null) {
+            peripheralExecutor.execute {
+                try {
+                    sdk.releaseStatusBarPullDownRestriction(applicationContext)
+                    PrefsHelper.setRestrictedModeEnabled(this@PeripheralActivity, false)
+                } catch (e: Exception) {
+                    Log.e("RestrictedMode", "confirmExitApplication", e)
+                }
+                runOnUiThread {
+                    if (!isFinishing) {
+                        refreshRestrictedStatusFromPrefs()
+                        finishAffinity()
+                    }
+                }
+            }
+        } else {
+            finishAffinity()
         }
     }
 }
